@@ -12,7 +12,6 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <Routes>
-
         {/* 기본 루트 */}
         <Route path="/" element={<Navigate to="/home" replace />} />
 
@@ -23,7 +22,6 @@ export default function App() {
 
         {/* 404 */}
         <Route path="*" element={<NotFoundPage />} />
-
       </Routes>
     </QueryClientProvider>
   );
