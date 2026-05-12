@@ -26,8 +26,6 @@ export function InputBox({
 
 // 사용예시
 // <InputBox placeholder="비밀번호" type="password" />
-//   <InputBox placeholder="가로 꽉 채우기" className="w-full" />
+//  <InputBox placeholder="가로 꽉 채우기" className="w-full" />
 // <InputBox placeholder="이름" />
-// // 디폴트: gray-500/50 보더 + 흰배경 100%
 // <InputBox placeholder="이름" strokeNone />
-// // 보더 없음 + 배경 70% (이전 모습)

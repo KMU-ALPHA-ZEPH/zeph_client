@@ -3,6 +3,9 @@ import { textStyles } from '@/styles/tokens';
 import { InputBox } from '@/components/common/InputBox';
 import { Input } from '@/components/common/Input';
 import { Button } from '@/components/common/Button';
+import { HeaderBack } from '@/components/common/Header/HeaderBack';
+import { HeaderCategory } from '@/components/common/Header/HeaderCategory';
+import { HeaderTitle } from '@/components/common/Header/HeaderTitle';
 
 export default function TokensSample() {
   return (
@@ -106,6 +109,21 @@ export default function TokensSample() {
           <Button className="w-full">가로 꽉 채우기</Button>
         </div>
       </section>
+      <section>
+        <h2 className={textStyles['heading-h2']}>Header</h2>
+        <div className="mt-3 space-y-3">
+          <div className="rounded-md border border-gray-300">
+            <HeaderBack title="타이틀" />
+          </div>
+          <div className="rounded-md border border-gray-300">
+            <HeaderCategory title="카테고리 추가" />
+          </div>
+          <div className="rounded-md border border-gray-300">
+            <HeaderTitle title="홈" onMenuClick={() => alert('메뉴 클릭')} />
+          </div>
+        </div>
+      </section>
+
       <section>
         <h2 className={textStyles['heading-h2']}>Radius</h2>
         <div className="mt-3 flex flex-wrap gap-3">
