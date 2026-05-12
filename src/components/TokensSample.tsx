@@ -1,5 +1,7 @@
 import React from 'react';
 import { textStyles } from '@/styles/tokens';
+import { InputBox } from '@/components/common/InputBox';
+import { Input } from '@/components/common/Input';
 
 export default function TokensSample() {
   return (
@@ -68,6 +70,30 @@ export default function TokensSample() {
           <p className={textStyles['caption-default']}>caption-default</p>
           <p className={textStyles['footnote']}>footnote</p>
           <p className={textStyles['number-large']}>number-large 1,234</p>
+        </div>
+      </section>
+
+      <section>
+        <h2 className={textStyles['heading-h2']}>InputBox</h2>
+        <div className="mt-3 space-y-3">
+          <InputBox placeholder="default (stroke gray-500/50)" />
+          <InputBox placeholder="strokeNone (배경 70%)" strokeNone />
+          <InputBox placeholder="비밀번호" type="password" />
+          <InputBox placeholder="가로 꽉 채우기" className="w-full" />
+        </div>
+      </section>
+
+      <section>
+        <h2 className={textStyles['heading-h2']}>Input</h2>
+        <div className="mt-3 space-y-4">
+          <Input label="닉네임" placeholder="ex) 러닝하는오랑이" />
+          <Input label="이메일" placeholder="email@zeph.com" type="email" />
+          <Input
+            label="비밀번호"
+            placeholder="********"
+            type="password"
+            strokeNone
+          />
         </div>
       </section>
 
