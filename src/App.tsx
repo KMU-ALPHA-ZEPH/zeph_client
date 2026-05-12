@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Routes, Route, Navigate } from 'react-router-dom';
 
 import AppLayout from './components/layout/AppLayout';
-import HomePage from './pages/HomePage';
+import SamplePage from './pages/SamplePage';
 import NotFoundPage from './pages/NotFoundPage';
 
 const queryClient = new QueryClient();
@@ -17,7 +17,7 @@ export default function App() {
 
         {/* 공통 레이아웃 */}
         <Route element={<AppLayout />}>
-          <Route path="/home" element={<HomePage />} />
+          <Route path="/sample" element={<SamplePage />} />
         </Route>
 
         {/* 404 */}
