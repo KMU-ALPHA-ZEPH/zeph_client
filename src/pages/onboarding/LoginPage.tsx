@@ -1,11 +1,16 @@
+import { useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import ZephIcon from '@/assets/icons/zeph.svg?react';
 import { Icon } from '@/components/common/Icon';
 import { InputBox } from '@/components/common/InputBox';
 import { Button } from '@/components/common/Button';
 import backgroundImage from '@/assets/backgroundImage.png';
 import { textStyles } from '@/styles/tokens';
+import SignupModal from './SignupModal';
 
 export default function LoginPage() {
+  const [isSignupOpen, setIsSignupOpen] = useState(false);
+
   return (
     <div className="relative mx-auto h-screen w-full max-w-md overflow-hidden bg-black">
       <img
@@ -32,7 +37,14 @@ export default function LoginPage() {
           <p
             className={`${textStyles['caption-medium']} text-center text-white`}
           >
-            아이디 찾기 | 비밀번호 찾기 | 회원가입
+            아이디 찾기 | 비밀번호 찾기 |{' '}
+            <button
+              type="button"
+              onClick={() => setIsSignupOpen(true)}
+              className="text-white"
+            >
+              회원가입
+            </button>
           </p>
 
           <div className="mt-6 flex w-76 items-center gap-3">
@@ -46,6 +58,20 @@ export default function LoginPage() {
           <Button className="!bg-[#ffea00] !text-black">카카오 로그인</Button>
         </div>
       </div>
+
+      <AnimatePresence>
+        {isSignupOpen && (
+          <motion.div
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', damping: 30, stiffness: 280 }}
+            className="absolute inset-x-0 bottom-0 top-[52px] z-50"
+          >
+            <SignupModal onClose={() => setIsSignupOpen(false)} />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

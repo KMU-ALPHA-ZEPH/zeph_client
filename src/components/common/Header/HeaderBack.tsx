@@ -4,16 +4,18 @@ import { BackIcon } from '@/components/common/Icon/BackIcon';
 
 interface HeaderBackProps {
   title: string;
+  onBack?: () => void;
 }
 
-export function HeaderBack({ title }: HeaderBackProps) {
+export function HeaderBack({ title, onBack }: HeaderBackProps) {
   const navigate = useNavigate();
+  const handleBack = onBack ?? (() => navigate(-1));
 
   return (
     <header className="flex h-[60px] w-full items-center gap-3 px-3">
       <button
         type="button"
-        onClick={() => navigate(-1)}
+        onClick={handleBack}
         aria-label="뒤로 가기"
         className="flex size-7 items-center justify-center text-black"
       >
