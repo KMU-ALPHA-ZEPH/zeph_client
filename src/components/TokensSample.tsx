@@ -2,6 +2,7 @@ import React from 'react';
 import { textStyles } from '@/styles/tokens';
 import { InputBox } from '@/components/common/InputBox';
 import { Input } from '@/components/common/Input';
+import { Button } from '@/components/common/Button';
 
 export default function TokensSample() {
   return (
@@ -97,6 +98,14 @@ export default function TokensSample() {
         </div>
       </section>
 
+      <section>
+        <h2 className={textStyles['heading-h2']}>Button</h2>
+        <div className="mt-3 space-y-3">
+          <Button>다음</Button>
+          <Button inactive>다음</Button>
+          <Button className="w-full">가로 꽉 채우기</Button>
+        </div>
+      </section>
       <section>
         <h2 className={textStyles['heading-h2']}>Radius</h2>
         <div className="mt-3 flex flex-wrap gap-3">
