@@ -13,7 +13,7 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <Routes>
         {/* 기본 루트 */}
-        <Route path="/" element={<Navigate to="/home" replace />} />
+        <Route path="/" element={<Navigate to="/sample" replace />} />
 
         {/* 공통 레이아웃 */}
         <Route element={<AppLayout />}>
