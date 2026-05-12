@@ -96,7 +96,7 @@ import { colors } from '@/styles/tokens/colors';
 | `--text-h1` | `text-h1` | 페이지 헤딩 |
 | `--text-body-md` | `text-body-md` | 기본 본문 |
 
-> **🚨 Hex 직접 사용 금지** — 반드시 토큰을 통해 사용해 주세요.
+> **🚨 Hex 직접 사용 금지** — 토큰이 없을경우만 사용해주세요.
 
 ## 📝 Code Convention
 
