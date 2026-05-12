@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { textStyles } from '@/styles/tokens';
+import { BackIcon } from '@/components/common/Icon/BackIcon';
 
 interface HeaderBackProps {
   title: string;
@@ -16,23 +17,9 @@ export function HeaderBack({ title }: HeaderBackProps) {
         aria-label="뒤로 가기"
         className="flex size-7 items-center justify-center text-black"
       >
-        <BackIcon />
+        <BackIcon className="size-6 text-black" />
       </button>
       <h1 className={`${textStyles['heading-h2']} text-black`}>{title}</h1>
     </header>
-  );
-}
-
-function BackIcon() {
-  return (
-    <svg viewBox="0 0 28 28" fill="none" className="size-full">
-      <path
-        d="M17.5 6L9.5 14L17.5 22"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
   );
 }

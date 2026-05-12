@@ -1,4 +1,5 @@
 import { textStyles } from '@/styles/tokens';
+import { MenuIcon } from '@/components/common/Icon/MenuIcon';
 
 interface HeaderTitleProps {
   title: string;
@@ -18,18 +19,5 @@ export function HeaderTitle({ title, onMenuClick }: HeaderTitleProps) {
         <MenuIcon />
       </button>
     </header>
-  );
-}
-
-function MenuIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className="size-full">
-      <path
-        d="M4 7h16M4 12h16M4 17h16"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-    </svg>
   );
 }
