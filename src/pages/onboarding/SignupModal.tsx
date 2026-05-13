@@ -1,13 +1,19 @@
+import { useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { HeaderBack } from '@/components/common/Header/HeaderBack';
 import { Input } from '@/components/common/Input';
 import { Button } from '@/components/common/Button';
 import { textStyles } from '@/styles/tokens';
+import TermsModal from './TermsModal';
 
 interface SignupModalProps {
   onClose?: () => void;
 }
 
 export default function SignupModal({ onClose }: SignupModalProps) {
+  const [isTermsOpen, setIsTermsOpen] = useState(false);
+  const [agreed, setAgreed] = useState(false);
+
   return (
     <div className="relative mx-auto flex w-full max-w-md flex-col overflow-hidden rounded-t-2xl bg-white pt-[11px]">
       <HeaderBack title="회원가입" onBack={onClose} />
@@ -47,13 +53,15 @@ export default function SignupModal({ onClose }: SignupModalProps) {
           개인정보 처리에 동의합니다
           <input
             type="checkbox"
-            className="size-[15px] rounded-[3px] border border-gray-500"
+            checked={agreed}
+            onChange={() => setIsTermsOpen(true)}
+            className="size-[15px] cursor-pointer rounded-[3px] border border-gray-500 accent-black"
           />
         </label>
       </div>
 
       <div className="mt-60 px-9 pb-22">
-        <Button inactive className="w-full">
+        <Button inactive={!agreed} className="w-full">
           회원가입
         </Button>
         <p className={`${textStyles['body-small']} mt-6 text-center`}>
@@ -61,12 +69,35 @@ export default function SignupModal({ onClose }: SignupModalProps) {
           <button
             type="button"
             onClick={onClose}
-            className={`${textStyles['body-small']} text-black`}
+            className={`${textStyles['body-small']} text-black cursor-pointer`}
           >
             로그인하기
           </button>
         </p>
       </div>
+
+      <AnimatePresence>
+        {isTermsOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="absolute inset-0 z-50"
+          >
+            <TermsModal
+              onClose={() => {
+                setAgreed(false);
+                setIsTermsOpen(false);
+              }}
+              onConfirm={() => {
+                setAgreed(true);
+                setIsTermsOpen(false);
+              }}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

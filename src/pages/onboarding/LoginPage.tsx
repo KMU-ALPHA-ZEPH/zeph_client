@@ -41,7 +41,7 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => setIsSignupOpen(true)}
-              className="text-white"
+              className="text-white cursor-pointer"
             >
               회원가입
             </button>
