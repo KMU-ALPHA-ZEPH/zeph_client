@@ -3,7 +3,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Routes, Route, Navigate } from 'react-router-dom';
 
 import AppLayout from './components/layout/AppLayout';
-import SamplePage from './pages/SamplePage';
 import NotFoundPage from './pages/NotFoundPage';
 import CourseCardPreviewPage from './pages/popular/CourseCardPreviewPage';
 import PopularWayPage from './pages/popular/PopularWayPage';
@@ -28,7 +27,6 @@ export default function App() {
 
         {/* 헤더 있는 레이아웃 */}
         <Route element={<AppLayout headerVariant="title" title="인기 코스" />}>
-          <Route path="/sample" element={<SamplePage />} />
           <Route path="/course-preview" element={<CourseCardPreviewPage />} />
           <Route path="/popular-way" element={<PopularWayPage />} />
         </Route>
