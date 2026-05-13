@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { HeaderBack } from '@/components/common/Header/HeaderBack';
+import Header from '@/components/common/Header';
 import { Input } from '@/components/common/Input';
 import { Button } from '@/components/common/Button';
 import { textStyles } from '@/styles/tokens';
@@ -16,7 +16,7 @@ export default function SignupModal({ onClose }: SignupModalProps) {
 
   return (
     <div className="relative mx-auto flex w-full max-w-md flex-col overflow-hidden rounded-t-2xl bg-white pt-[11px]">
-      <HeaderBack title="회원가입" onBack={onClose} />
+      <Header variant="back" title="회원가입" onBack={onClose} />
 
       <div className="px-9 pt-[10px]">
         <p className={`${textStyles['body-medium']} leading-6 text-black`}>
