@@ -11,7 +11,7 @@ const sampleCourses: Course[] = [
     city: '서울시',
     district: '광진구 광장동',
     distance: 8,
-    description: '벚꽃 길 특화 산책 경로~!',
+    description: '벚꽃 길 특화 산책 코스~!',
     imageUrl: 'https://placehold.co/347x140',
     isBookmarked: false,
   },
@@ -20,7 +20,7 @@ const sampleCourses: Course[] = [
     city: '서울시',
     district: '광진구 광장동',
     distance: 8,
-    description: '벚꽃 길 특화 산책 경로~!',
+    description: '벚꽃 길 특화 산책 코스~!',
     imageUrl: 'https://placehold.co/347x140',
     isBookmarked: false,
   },
@@ -29,7 +29,52 @@ const sampleCourses: Course[] = [
     city: '서울시',
     district: '광진구 광장동',
     distance: 8,
-    description: '벚꽃 길 특화 산책 경로~!',
+    description: '벚꽃 길 특화 산책 코스~!',
+    imageUrl: 'https://placehold.co/347x140',
+    isBookmarked: false,
+  },
+  {
+    rank: 1,
+    city: '서울시',
+    district: '광진구 광장동',
+    distance: 8,
+    description: '벚꽃 길 특화 산책 코스~!',
+    imageUrl: 'https://placehold.co/347x140',
+    isBookmarked: false,
+  },
+  {
+    rank: 1,
+    city: '서울시',
+    district: '광진구 광장동',
+    distance: 8,
+    description: '벚꽃 길 특화 산책 코스~!',
+    imageUrl: 'https://placehold.co/347x140',
+    isBookmarked: false,
+  },
+  {
+    rank: 1,
+    city: '서울시',
+    district: '광진구 광장동',
+    distance: 8,
+    description: '벚꽃 길 특화 산책 코스~!',
+    imageUrl: 'https://placehold.co/347x140',
+    isBookmarked: false,
+  },
+  {
+    rank: 1,
+    city: '서울시',
+    district: '광진구 광장동',
+    distance: 8,
+    description: '벚꽃 길 특화 산책 코스~!',
+    imageUrl: 'https://placehold.co/347x140',
+    isBookmarked: false,
+  },
+  {
+    rank: 1,
+    city: '서울시',
+    district: '광진구 광장동',
+    distance: 8,
+    description: '벚꽃 길 특화 산책 코스~!',
     imageUrl: 'https://placehold.co/347x140',
     isBookmarked: false,
   },
@@ -55,7 +100,6 @@ const sampleCourses: Course[] = [
 export default function CourseCardPreviewPage() {
   const [activeTab, setActiveTab] = useState<PopularWayTab>('walk');
   const [activeBottomTab, setActiveBottomTab] = useState<TabBarKey>('popular');
-  const [courses, setCourses] = useState(sampleCourses);
   const [compact, setCompact] = useState(false);
   const lastScrollY = useRef(0);
 
@@ -91,20 +135,12 @@ export default function CourseCardPreviewPage() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const toggleBookmark = (rank: number) => {
-    setCourses((prev) =>
-      prev.map((c) =>
-        c.rank === rank ? { ...c, isBookmarked: !c.isBookmarked } : c,
-      ),
-    );
-  };
-
   return (
     <>
       <PopularWayHeader
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        count={courses.length}
+        count={sampleCourses.length}
         onSearchClick={() => {}}
         onFilterClick={() => {}}
         onSortClick={() => {}}
@@ -116,12 +152,9 @@ export default function CourseCardPreviewPage() {
           compact ? 'mt-4' : 'mt-[100px]'
         }`}
       >
-        {courses.map((course) => (
-          <li key={course.rank}>
-            <CourseCard
-              course={course}
-              onBookmarkToggle={() => toggleBookmark(course.rank)}
-            />
+        {sampleCourses.map((course, idx) => (
+          <li key={`${course.rank}-${idx}`}>
+            <CourseCard course={course} />
           </li>
         ))}
       </ul>

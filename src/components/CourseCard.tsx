@@ -1,7 +1,5 @@
-import { textStyles } from '@/styles/tokens';
-
 export type Course = {
-  rank: number;
+  rank?: number;
   city: string;
   district: string;
   distance: number;
@@ -12,87 +10,59 @@ export type Course = {
 
 type Props = {
   course: Course;
-  onBookmarkToggle?: () => void;
+  onClick?: () => void;
 };
 
-export default function CourseCard({ course, onBookmarkToggle }: Props) {
-  const {
-    rank,
-    city,
-    district,
-    distance,
-    description,
-    imageUrl,
-    isBookmarked,
-  } = course;
+export default function CourseCard({ course, onClick }: Props) {
+  const { city, district, distance, description, imageUrl } = course;
 
   return (
-    <div className="flex h-48 w-full max-w-[350px] flex-col overflow-hidden rounded-[5px] bg-surface-white shadow-[0px_2px_6px_rgba(0,0,0,0.10)]">
-      <div
-        className="relative h-[140px] w-full bg-gray-300 bg-cover bg-center"
-        style={imageUrl ? { backgroundImage: `url(${imageUrl})` } : undefined}
-      >
-        <div className="absolute inset-x-0 top-2 flex items-center justify-between px-5">
-          <div className="leading-tight">
-            <p className="text-body-lg font-semibold text-text-primary">
-              {city}
-            </p>
-            <p className="text-body-sm font-semibold text-text-primary">
-              {district}
-            </p>
-          </div>
-          <button
-            type="button"
-            aria-label={isBookmarked ? '북마크 해제' : '북마크'}
-            aria-pressed={!!isBookmarked}
-            onClick={onBookmarkToggle}
-            className="grid h-11 place-items-center"
-          >
-            <BookmarkIcon active={!!isBookmarked} />
-          </button>
-        </div>
+    <div
+      role={onClick ? 'button' : undefined}
+      onClick={onClick}
+      className="flex h-[70px] w-full max-w-[350px] items-center gap-3 rounded-[10px] bg-surface-white px-[13px] py-[11px] shadow-[0px_2px_6px_rgba(0,0,0,0.10)]"
+    >
+      <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-[5px] bg-gray-300">
+        {imageUrl && (
+          <img src={imageUrl} alt="" className="h-full w-full object-cover" />
+        )}
       </div>
 
-      <div className="flex flex-1 items-center justify-between px-3">
-        <span className="font-['Potta_One'] text-number-md leading-none text-text-primary">
-          {rank}
-        </span>
-        <div className="flex flex-col items-end gap-1">
-          <p className="text-right">
-            <span className="text-h3 font-semibold text-text-primary">
-              {distance}
+      <div className="flex flex-1 items-center justify-between self-stretch">
+        <div className="flex flex-col items-start gap-1">
+          <div className="flex items-center gap-[5px]">
+            <span className="text-body-md font-normal text-text-primary">
+              {distance} km
             </span>
-            <span className="text-body-sm font-semibold text-text-primary">
-              {' '}
-              km
+            <span className="text-body-md font-normal text-gray-500">
+              {city} {district}
             </span>
-          </p>
-          <p
-            className={`${textStyles['body-small']} font-semibold text-text-secondary`}
-          >
+          </div>
+          <p className="text-body-sm font-normal text-gray-500">
             {description}
           </p>
         </div>
+
+        <ChevronRightIcon />
       </div>
     </div>
   );
 }
 
-function BookmarkIcon({ active }: { active: boolean }) {
+function ChevronRightIcon() {
   return (
     <svg
-      width="18"
-      height="26"
-      viewBox="0 0 13 19"
+      width="7"
+      height="13"
+      viewBox="0 0 7 13"
       fill="none"
-      xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
     >
       <path
-        d="M1 1H12V18L6.5 14.75L1 18V1Z"
-        fill={active ? 'var(--color-primary)' : 'none'}
-        stroke={active ? 'var(--color-primary)' : 'var(--color-gray-500)'}
-        strokeWidth="1.2"
+        d="M1 1L6 6.5L1 12"
+        stroke="#8D8D8D"
+        strokeWidth="1.5"
+        strokeLinecap="round"
         strokeLinejoin="round"
       />
     </svg>

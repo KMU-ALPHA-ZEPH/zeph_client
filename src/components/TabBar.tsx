@@ -21,7 +21,7 @@ const TABS: {
     Icon: BookmarkIcon,
     ActiveIcon: BookmarkFilledIcon,
   },
-  { key: 'popular', label: '인기 경로', Icon: FireIcon },
+  { key: 'popular', label: '인기 코스', Icon: FireIcon },
   { key: 'stats', label: '통계', Icon: BarChartIcon },
 ];
 

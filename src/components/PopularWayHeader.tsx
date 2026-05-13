@@ -3,9 +3,9 @@ import { textStyles } from '@/styles/tokens';
 export type PopularWayTab = 'walk' | 'safety' | 'general';
 
 const TABS: { key: PopularWayTab; label: string }[] = [
-  { key: 'walk', label: '산책 경로' },
-  { key: 'safety', label: '안전 경로' },
-  { key: 'general', label: '일반 경로' },
+  { key: 'walk', label: '산책 코스' },
+  { key: 'safety', label: '안전 코스' },
+  { key: 'general', label: '일반 코스' },
 ];
 
 type Props = {
@@ -24,7 +24,7 @@ export default function PopularWayHeader({
   activeTab,
   onTabChange,
   count,
-  title = '인기 경로',
+  title = '인기 코스',
   sortLabel = '인기순',
   onSortClick,
   onFilterClick,
@@ -108,7 +108,7 @@ export default function PopularWayHeader({
             <div className="flex items-center justify-between">
               <p>
                 <span className="text-body-md font-semibold text-text-primary">
-                  경로{' '}
+                  코스{' '}
                 </span>
                 <span className="text-body-sm font-semibold text-text-secondary">
                   {count.toLocaleString()}
