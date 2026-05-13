@@ -1,3 +1,6 @@
+import BookmarkIcon from '@/assets/icons/circum_bookmark.svg?react';
+import BookmarkFilledIcon from '@/assets/icons/circum_bookmark_filled.svg?react';
+
 export type Course = {
   rank?: number;
   city: string;
@@ -11,10 +14,16 @@ export type Course = {
 type Props = {
   course: Course;
   onClick?: () => void;
+  onBookmarkToggle?: () => void;
 };
 
-export default function CourseCard({ course, onClick }: Props) {
-  const { city, district, distance, description, imageUrl } = course;
+export default function CourseCard({
+  course,
+  onClick,
+  onBookmarkToggle,
+}: Props) {
+  const { city, district, distance, description, imageUrl, isBookmarked } =
+    course;
 
   return (
     <div
@@ -32,10 +41,10 @@ export default function CourseCard({ course, onClick }: Props) {
         <div className="flex flex-col items-start gap-1">
           <div className="flex items-center gap-[5px]">
             <span className="text-body-md font-normal text-text-primary">
-              {distance} km
+              {city} {district}
             </span>
             <span className="text-body-md font-normal text-gray-500">
-              {city} {district}
+              - {distance} km
             </span>
           </div>
           <p className="text-body-sm font-normal text-gray-500">
@@ -43,28 +52,21 @@ export default function CourseCard({ course, onClick }: Props) {
           </p>
         </div>
 
-        <ChevronRightIcon />
+        <button
+          type="button"
+          aria-label={isBookmarked ? '북마크 해제' : '북마크'}
+          aria-pressed={!!isBookmarked}
+          onClick={(e) => {
+            e.stopPropagation();
+            onBookmarkToggle?.();
+          }}
+          className={`-mr-2 grid h-11 w-11 place-items-center ${
+            isBookmarked ? 'text-primary' : 'text-gray-500'
+          }`}
+        >
+          {isBookmarked ? <BookmarkFilledIcon /> : <BookmarkIcon />}
+        </button>
       </div>
     </div>
-  );
-}
-
-function ChevronRightIcon() {
-  return (
-    <svg
-      width="7"
-      height="13"
-      viewBox="0 0 7 13"
-      fill="none"
-      aria-hidden="true"
-    >
-      <path
-        d="M1 1L6 6.5L1 12"
-        stroke="#8D8D8D"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
   );
 }

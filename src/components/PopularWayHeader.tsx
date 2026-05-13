@@ -1,4 +1,6 @@
+import { AnimatePresence, motion } from 'framer-motion';
 import { textStyles } from '@/styles/tokens';
+import SearchBar from '@/components/SearchBar';
 
 export type PopularWayTab = 'walk' | 'safety' | 'general';
 
@@ -18,6 +20,10 @@ type Props = {
   onFilterClick?: () => void;
   onSearchClick?: () => void;
   compact?: boolean;
+  searchOpen?: boolean;
+  searchValue?: string;
+  onSearchValueChange?: (v: string) => void;
+  onSearchClose?: () => void;
 };
 
 export default function PopularWayHeader({
@@ -30,23 +36,59 @@ export default function PopularWayHeader({
   onFilterClick,
   onSearchClick,
   compact = false,
+  searchOpen = false,
+  searchValue = '',
+  onSearchValueChange,
+  onSearchClose,
 }: Props) {
   return (
     <div className="sticky top-0 z-20 -mx-5 bg-surface-white">
       <div className="relative">
         <div className="relative z-10 bg-surface-white">
-          <div className="flex items-center justify-between px-5 pt-5">
+          <div className="flex items-center justify-between px-5 pt-[14.5px]">
             <h1 className="text-number-md font-bold text-text-primary">
               {title}
             </h1>
-            <button
-              type="button"
-              aria-label="검색"
-              onClick={onSearchClick}
-              className="-mr-3 grid h-11 w-11 place-items-center"
+            <motion.div
+              initial={false}
+              animate={{ width: searchOpen ? 260 : 44 }}
+              transition={{ type: 'spring', damping: 28, stiffness: 320 }}
+              className="-mr-3 flex h-11 items-center justify-end overflow-hidden"
             >
-              <SearchIcon />
-            </button>
+              <AnimatePresence mode="wait" initial={false}>
+                {searchOpen ? (
+                  <motion.div
+                    key="searchbar"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.15, delay: 0.1 }}
+                    className="w-full"
+                  >
+                    <SearchBar
+                      value={searchValue}
+                      onChange={onSearchValueChange ?? (() => {})}
+                      autoFocus
+                      onClose={onSearchClose}
+                    />
+                  </motion.div>
+                ) : (
+                  <motion.button
+                    key="searchbtn"
+                    type="button"
+                    aria-label="검색"
+                    onClick={onSearchClick}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.15, delay: 0.1 }}
+                    className="grid h-11 w-11 place-items-center"
+                  >
+                    <SearchIcon />
+                  </motion.button>
+                )}
+              </AnimatePresence>
+            </motion.div>
           </div>
 
           <div className="mt-[13px] px-5">
