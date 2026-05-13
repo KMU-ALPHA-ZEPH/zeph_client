@@ -1,3 +1,4 @@
+import type { FC, SVGProps } from 'react';
 import RouteIcon from '@/assets/icons/material-symbols-light_route.svg?react';
 import BookmarkIcon from '@/assets/icons/circum_bookmark.svg?react';
 import BookmarkFilledIcon from '@/assets/icons/circum_bookmark_filled.svg?react';
@@ -6,7 +7,7 @@ import BarChartIcon from '@/assets/icons/bar-chart.svg?react';
 
 export type TabBarKey = 'create' | 'scrap' | 'popular' | 'stats';
 
-type IconComponent = React.FC<React.SVGProps<SVGSVGElement>>;
+type IconComponent = FC<SVGProps<SVGSVGElement>>;
 
 const TABS: {
   key: TabBarKey;

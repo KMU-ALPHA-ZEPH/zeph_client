@@ -4,6 +4,10 @@ import PopularWayHeader, {
   type PopularWayTab,
 } from '@/components/PopularWayHeader';
 import TabBar, { type TabBarKey } from '@/components/TabBar';
+import AlignModal, {
+  ALIGN_OPTIONS,
+  type AlignKey,
+} from '@/components/AlignModal';
 
 const sampleCourses: Course[] = [
   {
@@ -101,7 +105,16 @@ export default function CourseCardPreviewPage() {
   const [activeTab, setActiveTab] = useState<PopularWayTab>('walk');
   const [activeBottomTab, setActiveBottomTab] = useState<TabBarKey>('popular');
   const [compact, setCompact] = useState(false);
+  const [alignValue, setAlignValue] = useState<AlignKey>('popular');
+  const [isAlignOpen, setIsAlignOpen] = useState(false);
   const lastScrollY = useRef(0);
+  const compactRef = useRef(false);
+  const lastToggleAt = useRef(0);
+
+  compactRef.current = compact;
+
+  const alignLabel =
+    ALIGN_OPTIONS.find((o) => o.key === alignValue)?.label ?? '인기순';
 
   useEffect(() => {
     let ticking = false;
@@ -111,19 +124,26 @@ export default function CourseCardPreviewPage() {
       ticking = true;
 
       requestAnimationFrame(() => {
+        const now = Date.now();
         const y = window.scrollY;
         const delta = y - lastScrollY.current;
         const threshold = 30;
         const minDelta = 8;
+        const lockMs = 350;
 
-        if (y < threshold) {
-          setCompact(false);
-          lastScrollY.current = y;
-        } else if (delta > minDelta) {
-          setCompact(true);
-          lastScrollY.current = y;
-        } else if (delta < -minDelta) {
-          setCompact(false);
+        let next: boolean | null = null;
+        if (y < threshold) next = false;
+        else if (delta > minDelta) next = true;
+        else if (delta < -minDelta) next = false;
+
+        if (next !== null) {
+          if (
+            next !== compactRef.current &&
+            now - lastToggleAt.current >= lockMs
+          ) {
+            setCompact(next);
+            lastToggleAt.current = now;
+          }
           lastScrollY.current = y;
         }
 
@@ -141,9 +161,10 @@ export default function CourseCardPreviewPage() {
         activeTab={activeTab}
         onTabChange={setActiveTab}
         count={sampleCourses.length}
+        sortLabel={alignLabel}
         onSearchClick={() => {}}
         onFilterClick={() => {}}
-        onSortClick={() => {}}
+        onSortClick={() => setIsAlignOpen(true)}
         compact={compact}
       />
 
@@ -168,6 +189,13 @@ export default function CourseCardPreviewPage() {
           />
         </div>
       </div>
+
+      <AlignModal
+        isOpen={isAlignOpen}
+        onClose={() => setIsAlignOpen(false)}
+        value={alignValue}
+        onChange={setAlignValue}
+      />
     </>
   );
 }
