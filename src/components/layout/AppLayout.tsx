@@ -13,7 +13,6 @@ export default function AppLayout({
   return (
     <div className="mx-auto flex min-h-[100dvh] w-full max-w-[390px] flex-col break-keep bg-surface-white">
       <Header variant={headerVariant} title={title} />
-
       <main className="flex flex-1 flex-col px-5 pb-[env(safe-area-inset-bottom)]">
         <Outlet />
       </main>
