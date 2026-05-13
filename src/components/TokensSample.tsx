@@ -1,5 +1,10 @@
 import React from 'react';
 import { textStyles } from '@/styles/tokens';
+import { InputBox } from '@/components/common/InputBox';
+import { Input } from '@/components/common/Input';
+import { Button } from '@/components/common/Button';
+import Header from '@/components/common/Header';
+import { HeaderCategory } from '@/components/common/Header/HeaderCategory';
 
 export default function TokensSample() {
   return (
@@ -68,6 +73,57 @@ export default function TokensSample() {
           <p className={textStyles['caption-default']}>caption-default</p>
           <p className={textStyles['footnote']}>footnote</p>
           <p className={textStyles['number-large']}>number-large 1,234</p>
+        </div>
+      </section>
+
+      <section>
+        <h2 className={textStyles['heading-h2']}>InputBox</h2>
+        <div className="mt-3 space-y-3">
+          <InputBox placeholder="default (stroke gray-500/50)" />
+          <InputBox placeholder="strokeNone (배경 70%)" strokeNone />
+          <InputBox placeholder="비밀번호" type="password" />
+          <InputBox placeholder="가로 꽉 채우기" className="w-full" />
+        </div>
+      </section>
+
+      <section>
+        <h2 className={textStyles['heading-h2']}>Input</h2>
+        <div className="mt-3 space-y-4">
+          <Input label="닉네임" placeholder="ex) 러닝하는오랑이" />
+          <Input label="이메일" placeholder="email@zeph.com" type="email" />
+          <Input
+            label="비밀번호"
+            placeholder="********"
+            type="password"
+            strokeNone
+          />
+        </div>
+      </section>
+
+      <section>
+        <h2 className={textStyles['heading-h2']}>Button</h2>
+        <div className="mt-3 space-y-3">
+          <Button>다음</Button>
+          <Button inactive>다음</Button>
+          <Button className="w-full">가로 꽉 채우기</Button>
+        </div>
+      </section>
+      <section>
+        <h2 className={textStyles['heading-h2']}>Header</h2>
+        <div className="mt-3 space-y-3">
+          <div className="rounded-md border border-gray-300">
+            <Header variant="back" title="타이틀" />
+          </div>
+          <div className="rounded-md border border-gray-300">
+            <HeaderCategory title="카테고리 추가" />
+          </div>
+          <div className="rounded-md border border-gray-300">
+            <Header
+              variant="title"
+              title="홈"
+              onMenuClick={() => alert('메뉴 클릭')}
+            />
+          </div>
         </div>
       </section>
 

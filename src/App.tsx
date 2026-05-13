@@ -7,6 +7,10 @@ import SamplePage from './pages/SamplePage';
 import NotFoundPage from './pages/NotFoundPage';
 import CourseCardPreviewPage from './pages/CourseCardPreviewPage';
 import PopularWayPage from './pages/PopularWayPage';
+import SplashPage from './pages/onboarding/SplashPage';
+import StartPage from './pages/onboarding/StartPage';
+import LoginPage from '@/pages/onboarding/LoginPage';
+import EmptyLayout from '@/components/layout/EmptyLayout';
 
 const queryClient = new QueryClient();
 
@@ -14,11 +18,16 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <Routes>
-        {/* 기본 루트 */}
-        <Route path="/" element={<Navigate to="/home" replace />} />
+        {/* 헤더 없는 레이아웃 */}
+        <Route element={<EmptyLayout />}>
+          <Route path="/" element={<Navigate to="/start" replace />} />
+          <Route path="/splash" element={<SplashPage />} />
+          <Route path="/start" element={<StartPage />} />
+          <Route path="/login" element={<LoginPage />} />
+        </Route>
 
-        {/* 공통 레이아웃 */}
-        <Route element={<AppLayout />}>
+        {/* 헤더 있는 레이아웃 */}
+        <Route element={<AppLayout headerVariant="title" title="인기 코스" />}>
           <Route path="/sample" element={<SamplePage />} />
           <Route path="/course-preview" element={<CourseCardPreviewPage />} />
           <Route path="/popular-way" element={<PopularWayPage />} />

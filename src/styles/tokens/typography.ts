@@ -3,7 +3,7 @@
  */
 export const textStyles = {
   'display-hero': 'text-display font-normal',
-  'heading-h1': 'text-h1 font-semibold',
+  'heading-h1': 'text-h1 font-bold',
   'heading-h2': 'text-h2 font-bold',
   'heading-h3': 'text-h3 font-bold',
   'heading-h3-onboarding': 'text-h3 font-medium leading-7',
