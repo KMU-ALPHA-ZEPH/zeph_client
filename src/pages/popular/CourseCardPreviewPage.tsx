@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
-import CourseCard, { type Course } from '@/components/CourseCard';
+import CourseCard, { type Course } from '@/pages/popular/CourseCard';
 import PopularWayHeader, {
   type PopularWayTab,
-} from '@/components/PopularWayHeader';
-import TabBar, { type TabBarKey } from '@/components/TabBar';
+} from '@/pages/popular/PopularWayHeader';
+import TabBar, { type TabBarKey } from '@/components/common/TabBar';
 import AlignModal, {
   ALIGN_OPTIONS,
   type AlignKey,
-} from '@/components/AlignModal';
+} from '@/pages/popular/AlignModal';
 import BookmarkToast from '@/components/BookmarkToast';
 
 type SampleCourse = Course & { id: string; tab: PopularWayTab };

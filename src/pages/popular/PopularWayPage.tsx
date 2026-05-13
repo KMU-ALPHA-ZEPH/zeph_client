@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import CourseCard, { type Course } from '@/components/CourseCard';
+import CourseCard, { type Course } from '@/pages/popular/CourseCard';
 import PopularWayHeader, {
   type PopularWayTab,
-} from '@/components/PopularWayHeader';
+} from '@/pages/popular/PopularWayHeader';
 
 const sampleCourses: Course[] = [
   {
