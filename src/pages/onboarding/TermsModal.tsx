@@ -63,7 +63,7 @@ export default function TermsModal({ onClose, onConfirm }: TermsModalProps) {
   const canConfirm = requiredChecked && optionalChecked;
 
   return (
-    <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 px-8">
+    <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 px-8 pb-24">
       <div className="flex w-full max-w-[320px] flex-col gap-5 overflow-hidden rounded-[20px] bg-surface-white px-6 pb-6 pt-7">
         <div className="flex w-full flex-col gap-2">
           <p className={`${textStyles['heading-h3']} text-black`}>
