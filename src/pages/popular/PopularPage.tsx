@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import CourseCard, { type Course } from '@/pages/popular/CourseCard';
-import PopularWayHeader, {
+import PopularWayCourseChoose, {
   type PopularWayTab,
-} from '@/pages/popular/PopularWayHeader';
+} from '@/components/common/Header/PopularWayCourseChoose';
 import TabBar, { type TabBarKey } from '@/components/common/TabBar';
 import AlignModal, {
   ALIGN_OPTIONS,
@@ -150,15 +150,13 @@ const initialCourses: SampleCourse[] = [
   },
 ];
 
-export default function CourseCardPreviewPage() {
+export default function PopularPage() {
   const [activeTab, setActiveTab] = useState<PopularWayTab>('walk');
   const [activeBottomTab, setActiveBottomTab] = useState<TabBarKey>('popular');
   const [compact, setCompact] = useState(false);
   const [alignValue, setAlignValue] = useState<AlignKey>('popular');
   const [isAlignOpen, setIsAlignOpen] = useState(false);
   const [courses, setCourses] = useState(initialCourses);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
   const [toastId, setToastId] = useState<string | null>(null);
   const lastScrollY = useRef(0);
 
@@ -222,19 +220,14 @@ export default function CourseCardPreviewPage() {
 
   return (
     <>
-      <PopularWayHeader
+      <PopularWayCourseChoose
         activeTab={activeTab}
         onTabChange={setActiveTab}
         count={visibleCourses.length}
         sortLabel={alignLabel}
-        onSearchClick={() => setIsSearchOpen(true)}
         onFilterClick={() => {}}
         onSortClick={() => setIsAlignOpen(true)}
         compact={compact}
-        searchOpen={isSearchOpen}
-        searchValue={searchQuery}
-        onSearchValueChange={setSearchQuery}
-        onSearchClose={() => setIsSearchOpen(false)}
       />
 
       <ul

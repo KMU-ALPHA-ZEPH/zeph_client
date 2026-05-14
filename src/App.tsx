@@ -4,8 +4,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 
 import AppLayout from './components/layout/AppLayout';
 import NotFoundPage from './pages/NotFoundPage';
-import CourseCardPreviewPage from './pages/popular/CourseCardPreviewPage';
-import PopularWayPage from './pages/popular/PopularWayPage';
+import PopularPage from './pages/popular/PopularPage';
 import SplashPage from './pages/onboarding/SplashPage';
 import StartPage from './pages/onboarding/StartPage';
 import LoginPage from '@/pages/onboarding/LoginPage';
@@ -23,14 +22,11 @@ export default function App() {
           <Route path="/splash" element={<SplashPage />} />
           <Route path="/start" element={<StartPage />} />
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/course-preview" element={<CourseCardPreviewPage />} />
-          <Route path="/popular-way" element={<PopularWayPage />} />
         </Route>
 
         {/* 헤더 있는 레이아웃 */}
-        <Route element={<AppLayout headerVariant="title" title="스크랩" />}>
-          {/*<Route path="/course-preview" element={<CourseCardPreviewPage />} />*/}
-          {/*<Route path="/popular-way" element={<PopularWayPage />} />*/}
+        <Route element={<AppLayout headerVariant="search" title="인기 코스" />}>
+          <Route path="/popular-page" element={<PopularPage />} />
         </Route>
 
         {/* 404 */}
