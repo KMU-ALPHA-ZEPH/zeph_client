@@ -7,6 +7,13 @@ import BarChartIcon from '@/assets/icons/bar-chart.svg?react';
 
 export type TabBarKey = 'create' | 'scrap' | 'popular' | 'stats';
 
+export const TABBAR_ROUTES: Record<TabBarKey, string> = {
+  create: '/create',
+  scrap: '/scrap',
+  popular: '/popular-page',
+  stats: '/stats',
+};
+
 type IconComponent = FC<SVGProps<SVGSVGElement>>;
 
 const TABS: {

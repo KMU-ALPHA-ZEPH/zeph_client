@@ -4,7 +4,10 @@ import CourseCard, { type Course } from '@/pages/popular/CourseCard';
 import PopularWayCourseChoose, {
   type PopularWayTab,
 } from '@/components/common/Header/PopularWayCourseChoose';
-import TabBar, { type TabBarKey } from '@/components/common/TabBar';
+import TabBar, {
+  type TabBarKey,
+  TABBAR_ROUTES,
+} from '@/components/common/TabBar';
 import AlignModal, {
   ALIGN_OPTIONS,
   type AlignKey,
@@ -203,7 +206,6 @@ function haversineKm(
 export default function PopularPage() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<PopularWayTab>('walk');
-  const [activeBottomTab, setActiveBottomTab] = useState<TabBarKey>('popular');
   const [compact, setCompact] = useState(false);
   const [alignValue, setAlignValue] = useState<AlignKey>('popular');
   const [isAlignOpen, setIsAlignOpen] = useState(false);
@@ -346,8 +348,8 @@ export default function PopularPage() {
         <div className="mx-auto w-full max-w-[390px]">
           <div className="pointer-events-none h-4 bg-gradient-to-t from-surface-white to-transparent" />
           <TabBar
-            activeTab={activeBottomTab}
-            onTabChange={setActiveBottomTab}
+            activeTab="popular"
+            onTabChange={(key: TabBarKey) => navigate(TABBAR_ROUTES[key])}
           />
         </div>
       </div>

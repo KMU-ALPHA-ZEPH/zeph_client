@@ -10,6 +10,7 @@ import StartPage from './pages/onboarding/StartPage';
 import LoginPage from '@/pages/onboarding/LoginPage';
 import EmptyLayout from '@/components/layout/EmptyLayout';
 import FilterPage from '@/components/common/Header/FilterPage';
+import StatsPage from '@/pages/stats/StatsPage';
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,10 @@ export default function App() {
 
         <Route element={<AppLayout headerVariant="back" title="상세 필터" />}>
           <Route path="/filter" element={<FilterPage />} />
+        </Route>
+
+        <Route element={<AppLayout headerVariant="profile" title="통계" />}>
+          <Route path="/stats" element={<StatsPage />} />
         </Route>
 
         {/* 404 */}
