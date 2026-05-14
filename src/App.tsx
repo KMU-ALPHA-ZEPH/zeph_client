@@ -9,6 +9,7 @@ import SplashPage from './pages/onboarding/SplashPage';
 import StartPage from './pages/onboarding/StartPage';
 import LoginPage from '@/pages/onboarding/LoginPage';
 import EmptyLayout from '@/components/layout/EmptyLayout';
+import FilterPage from '@/components/common/Header/FilterPage';
 
 const queryClient = new QueryClient();
 
@@ -22,6 +23,7 @@ export default function App() {
           <Route path="/splash" element={<SplashPage />} />
           <Route path="/start" element={<StartPage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/filter" element={<FilterPage />} />
         </Route>
 
         {/* 헤더 있는 레이아웃 */}
