@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import ZephIcon from '@/assets/icons/zeph.svg?react';
-import { Icon } from '@/components/common/Icon';
+import { useNavigate } from 'react-router-dom';
 import { InputBox } from '@/components/common/InputBox';
 import { Button } from '@/components/common/Button';
 import backgroundImage from '@/assets/backgroundImage.png';
@@ -10,6 +9,7 @@ import SignupModal from './SignupModal';
 
 export default function LoginPage() {
   const [isSignupOpen, setIsSignupOpen] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <div className="relative mx-auto h-screen w-full max-w-md overflow-hidden bg-black">
@@ -22,17 +22,22 @@ export default function LoginPage() {
 
       <div className="relative flex h-full flex-col pb-22">
         <div className="flex flex-1 items-center justify-center">
-          <Icon as={ZephIcon} size="sm" />
+          <div className="h-[100px] w-[100px]" />
         </div>
 
-        <div className="items-center flex flex-col gap-3">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 1.0, ease: [0.4, 0, 0.2, 1] }}
+          className="items-center flex flex-col gap-3"
+        >
           <InputBox strokeNone type="email" placeholder="이메일을 입력하세요" />
           <InputBox
             strokeNone
             type="password"
             placeholder="비밀번호를 입력하세요"
           />
-          <Button>로그인</Button>
+          <Button onClick={() => navigate('/splash')}>로그인</Button>
 
           <p
             className={`${textStyles['caption-medium']} text-center text-white`}
@@ -56,7 +61,7 @@ export default function LoginPage() {
           </div>
 
           <Button className="!bg-[#ffea00] !text-black">카카오 로그인</Button>
-        </div>
+        </motion.div>
       </div>
 
       <AnimatePresence>
@@ -65,7 +70,7 @@ export default function LoginPage() {
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
-            transition={{ type: 'spring', damping: 30, stiffness: 280 }}
+            transition={{ type: 'spring', damping: 50, stiffness: 280 }}
             className="absolute inset-x-0 bottom-0 top-[52px] z-50"
           >
             <SignupModal onClose={() => setIsSignupOpen(false)} />
