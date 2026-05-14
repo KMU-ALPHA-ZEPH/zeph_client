@@ -105,12 +105,14 @@ export default function PopularWayHeader({
                     className="flex min-h-11 w-[112px] flex-col items-center justify-start gap-1"
                   >
                     <span
-                      className={`${textStyles['body-large']} text-text-primary`}
+                      className={`${textStyles['body-medium']} ${
+                        isActive ? 'text-text-primary' : 'text-gray-500'
+                      }`}
                     >
                       {tab.label}
                     </span>
                     <span
-                      className={`h-[3px] w-[110px] rounded-full ${
+                      className={`h-[3px] w-[100px] rounded-full ${
                         isActive ? 'bg-primary' : 'bg-transparent'
                       }`}
                     />
