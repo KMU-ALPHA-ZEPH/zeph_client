@@ -91,7 +91,7 @@ export default function PopularWayCourseChoose({
 
             <div className="flex items-center justify-between">
               <p>
-                <span className="text-body-md font-semibold text-text-primary">
+                <span className="text-body-sm font-semibold text-text-primary">
                   코스{' '}
                 </span>
                 <span className="text-body-sm font-semibold text-text-secondary">

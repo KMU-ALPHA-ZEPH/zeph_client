@@ -23,12 +23,15 @@ export default function App() {
           <Route path="/splash" element={<SplashPage />} />
           <Route path="/start" element={<StartPage />} />
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/filter" element={<FilterPage />} />
         </Route>
 
         {/* 헤더 있는 레이아웃 */}
         <Route element={<AppLayout headerVariant="search" title="인기 코스" />}>
           <Route path="/popular-page" element={<PopularPage />} />
+        </Route>
+
+        <Route element={<AppLayout headerVariant="back" title="상세 필터" />}>
+          <Route path="/filter" element={<FilterPage />} />
         </Route>
 
         {/* 404 */}

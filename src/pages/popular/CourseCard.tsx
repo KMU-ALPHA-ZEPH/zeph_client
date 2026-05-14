@@ -41,7 +41,7 @@ export default function CourseCard({
       </div>
 
       <div className="flex flex-1 items-center justify-between self-stretch">
-        <div className="flex flex-col items-start gap-1">
+        <div className="flex flex-col items-start gap-0">
           <div className="flex items-center gap-[5px]">
             <span className="text-body-md font-normal text-text-primary">
               {city} {district}

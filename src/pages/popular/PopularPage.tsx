@@ -208,7 +208,10 @@ export default function PopularPage() {
   const [alignValue, setAlignValue] = useState<AlignKey>('popular');
   const [isAlignOpen, setIsAlignOpen] = useState(false);
   const [courses, setCourses] = useState(initialCourses);
-  const [toastId, setToastId] = useState<string | null>(null);
+  const [toast, setToast] = useState<{
+    id: string;
+    action: 'added' | 'removed';
+  } | null>(null);
   const [filter, setFilter] = useState(() => readFilter());
   const lastScrollY = useRef(0);
 
@@ -257,12 +260,13 @@ export default function PopularPage() {
 
   const toggleBookmark = (id: string) => {
     const target = courses.find((c) => c.id === id);
+    if (!target) return;
     setCourses((prev) =>
       prev.map((c) =>
         c.id === id ? { ...c, isBookmarked: !c.isBookmarked } : c,
       ),
     );
-    if (target && !target.isBookmarked) setToastId(id);
+    setToast({ id, action: target.isBookmarked ? 'removed' : 'added' });
   };
   const compactRef = useRef(false);
   const lastToggleAt = useRef(0);
@@ -356,12 +360,22 @@ export default function PopularPage() {
       />
 
       <BookmarkToast
-        isOpen={toastId !== null}
-        onClose={() => setToastId(null)}
-        onAction={() => {
-          if (toastId !== null) toggleBookmark(toastId);
-          setToastId(null);
-        }}
+        isOpen={toast !== null}
+        onClose={() => setToast(null)}
+        message={
+          toast?.action === 'removed'
+            ? '좋아요 표시한 코스에서 삭제되었습니다'
+            : '좋아요 표시한 코스에 추가되었습니다'
+        }
+        actionLabel={toast?.action === 'added' ? '변경' : undefined}
+        onAction={
+          toast?.action === 'added'
+            ? () => {
+                setToast(null);
+                navigate('/scrap');
+              }
+            : undefined
+        }
       />
     </>
   );

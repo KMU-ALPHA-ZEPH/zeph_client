@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import XIcon from '@/assets/icons/lineicons_xmark.svg?react';
 import MyLocationIcon from '@/assets/icons/Vector.svg?react';
 import GroupIcon from '@/assets/icons/Group.svg?react';
 import PlusIcon from '@/assets/icons/ei_plus.svg?react';
 import MinusIcon from '@/assets/icons/lsicon_minus-outline.svg?react';
+import { Button } from '@/components/common/Button';
+import { InputBox } from '@/components/common/InputBox';
 
 const RECENT_REGIONS_KEY = 'zeph.recentRegions';
 export const FILTER_KEY = 'zeph.filter';
@@ -298,20 +299,6 @@ export default function FilterPage() {
   return (
     <div className="flex flex-col gap-[51px] py-[14.5px] pb-12">
       <section className="flex flex-col gap-[17px]">
-        <div className="flex items-start justify-between">
-          <h1 className="text-number-md font-bold text-text-primary">
-            상세 필터
-          </h1>
-          <button
-            type="button"
-            aria-label="닫기"
-            onClick={() => navigate(-1)}
-            className="-mr-2 grid h-11 w-11 place-items-center text-gray-500"
-          >
-            <XIcon className="size-[25px]" />
-          </button>
-        </div>
-
         <div className="flex flex-col gap-[11px]">
           <h2 className="text-[15px] font-semibold text-text-primary">
             지역 검색
@@ -479,12 +466,10 @@ export default function FilterPage() {
       <section className="flex flex-col gap-[14px]">
         <h2 className="text-[15px] font-semibold text-text-primary">거리</h2>
         <div className="flex flex-col gap-[14px]">
-          <div className="flex flex-col gap-[7px]">
-            <label className="text-[11px] font-semibold text-text-secondary">
-              최소
-            </label>
-            <div className="flex h-[23px] w-[165px] items-center gap-3 rounded-[5px] border-[0.6px] border-gray-400 px-[6px]">
-              <input
+          <div className="flex flex-col gap-1.5">
+            <label className="text-body-medium text-text-primary">최소</label>
+            <div className="relative">
+              <InputBox
                 type="text"
                 inputMode="numeric"
                 value={minStr}
@@ -492,19 +477,17 @@ export default function FilterPage() {
                   setMinStr(e.target.value.replace(/[^0-9]/g, ''))
                 }
                 placeholder="0"
-                className="flex-1 bg-transparent text-[11px] font-medium text-text-secondary outline-none placeholder:text-text-secondary"
+                className="w-full pr-10"
               />
-              <span className="text-[11px] font-medium text-text-secondary">
+              <span className="absolute inset-y-0 right-4 flex items-center text-body-sm text-text-secondary">
                 Km
               </span>
             </div>
           </div>
-          <div className="flex flex-col gap-[7px]">
-            <label className="text-[11px] font-semibold text-text-secondary">
-              최대
-            </label>
-            <div className="flex h-[23px] w-[165px] items-center gap-3 rounded-[5px] border-[0.6px] border-gray-400 px-[6px]">
-              <input
+          <div className="flex flex-col gap-1.5">
+            <label className="text-body-medium text-text-primary">최대</label>
+            <div className="relative">
+              <InputBox
                 type="text"
                 inputMode="numeric"
                 value={maxStr}
@@ -512,15 +495,19 @@ export default function FilterPage() {
                   setMaxStr(e.target.value.replace(/[^0-9]/g, ''))
                 }
                 placeholder="0"
-                className="flex-1 bg-transparent text-[11px] font-medium text-text-secondary outline-none placeholder:text-text-secondary"
+                className="w-full pr-10"
               />
-              <span className="text-[11px] font-medium text-text-secondary">
+              <span className="absolute inset-y-0 right-4 flex items-center text-body-sm text-text-secondary">
                 Km
               </span>
             </div>
           </div>
         </div>
       </section>
+
+      <Button onClick={() => navigate(-1)} className="w-full">
+        완료
+      </Button>
     </div>
   );
 }
