@@ -9,6 +9,9 @@ export type Course = {
   description: string;
   imageUrl?: string;
   isBookmarked?: boolean;
+  lat?: number;
+  lng?: number;
+  roundTrip?: boolean;
 };
 
 type Props = {
