@@ -44,22 +44,64 @@ type KakaoAddressDoc = {
   y: string;
 };
 
+type KakaoKeywordDoc = {
+  place_name: string;
+  address_name: string;
+  road_address_name?: string;
+  x: string;
+  y: string;
+};
+
 async function searchKakaoRegions(query: string): Promise<Region[]> {
   if (!KAKAO_REST_API_KEY || !query.trim()) return [];
+  const headers = { Authorization: `KakaoAK ${KAKAO_REST_API_KEY}` };
+  const q = encodeURIComponent(query);
+
   try {
-    const url = `https://dapi.kakao.com/v2/local/search/address.json?query=${encodeURIComponent(
-      query,
-    )}&size=15`;
-    const res = await fetch(url, {
-      headers: { Authorization: `KakaoAK ${KAKAO_REST_API_KEY}` },
-    });
-    if (!res.ok) return [];
-    const data = (await res.json()) as { documents?: KakaoAddressDoc[] };
-    return (data.documents ?? []).map((d) => ({
+    const [addrRes, kwRes] = await Promise.all([
+      fetch(
+        `https://dapi.kakao.com/v2/local/search/address.json?query=${q}&size=30`,
+        { headers },
+      ),
+      fetch(
+        `https://dapi.kakao.com/v2/local/search/keyword.json?query=${q}&size=15`,
+        { headers },
+      ),
+    ]);
+
+    const addrData = addrRes.ok
+      ? ((await addrRes.json()) as { documents?: KakaoAddressDoc[] })
+      : { documents: [] };
+    const kwData = kwRes.ok
+      ? ((await kwRes.json()) as { documents?: KakaoKeywordDoc[] })
+      : { documents: [] };
+
+    const fromAddr: Region[] = (addrData.documents ?? []).map((d) => ({
       name: d.address_name,
       lat: Number(d.y),
       lng: Number(d.x),
     }));
+
+    const fromKw: Region[] = (kwData.documents ?? []).map((d) => ({
+      name: d.road_address_name || d.address_name || d.place_name,
+      lat: Number(d.y),
+      lng: Number(d.x),
+    }));
+
+    const seen = new Set<string>();
+    const merged: Region[] = [];
+    for (const r of [...fromAddr, ...fromKw]) {
+      if (
+        r.name &&
+        !seen.has(r.name) &&
+        Number.isFinite(r.lat) &&
+        Number.isFinite(r.lng)
+      ) {
+        seen.add(r.name);
+        merged.push(r);
+      }
+    }
+    return merged;
   } catch {
     return [];
   }
