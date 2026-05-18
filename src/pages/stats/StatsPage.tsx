@@ -348,6 +348,19 @@ export default function StatsPage() {
   const navigate = useNavigate();
   const [category, setCategory] = useState<StatsCategory>('walk');
   const [period, setPeriod] = useState<Period>('month');
+  const [datesByPeriod, setDatesByPeriod] = useState<Record<Period, Date>>(
+    () => ({
+      week: new Date(),
+      month: new Date(),
+      year: new Date(),
+      all: new Date(),
+    }),
+  );
+
+  const chartDate = datesByPeriod[period];
+  const handleDateChange = (d: Date) => {
+    setDatesByPeriod((prev) => ({ ...prev, [period]: d }));
+  };
 
   const stats = useMemo(() => SAMPLE[category][period], [category, period]);
   const recentRecords = RECENT_RECORDS[category];
@@ -368,7 +381,8 @@ export default function StatsPage() {
 
       <StatsChart
         period={period}
-        date={new Date()}
+        date={chartDate}
+        onDateChange={handleDateChange}
         joinYear={2024}
         totalDistanceKm={stats.totalDistanceKm}
         runCount={stats.runCount}

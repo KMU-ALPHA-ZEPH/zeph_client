@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Routes, Route, Navigate } from 'react-router-dom';
 
@@ -11,8 +11,26 @@ import LoginPage from '@/pages/onboarding/LoginPage';
 import EmptyLayout from '@/components/layout/EmptyLayout';
 import FilterPage from '@/components/common/Header/FilterPage';
 import StatsPage from '@/pages/stats/StatsPage';
+import AccountModal from '@/components/AccountModal';
 
 const queryClient = new QueryClient();
+
+function ProfileLayout() {
+  const [isAccountOpen, setIsAccountOpen] = useState(false);
+  return (
+    <>
+      <AppLayout
+        headerVariant="profile"
+        title="통계"
+        onProfileClick={() => setIsAccountOpen(true)}
+      />
+      <AccountModal
+        isOpen={isAccountOpen}
+        onClose={() => setIsAccountOpen(false)}
+      />
+    </>
+  );
+}
 
 export default function App() {
   return (
@@ -35,7 +53,7 @@ export default function App() {
           <Route path="/filter" element={<FilterPage />} />
         </Route>
 
-        <Route element={<AppLayout headerVariant="profile" title="통계" />}>
+        <Route element={<ProfileLayout />}>
           <Route path="/stats" element={<StatsPage />} />
         </Route>
 

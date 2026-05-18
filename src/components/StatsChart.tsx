@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import ArrowDownIcon from '@/assets/icons/ep_arrow-down.svg?react';
 import { type Period } from '@/components/common/PeriodSelector';
 
@@ -12,7 +13,7 @@ type Props = {
   avgPace: number;
   totalDurationSec: number;
   data: ChartDataPoint[];
-  onLabelClick?: () => void;
+  onDateChange?: (date: Date) => void;
 };
 
 const WEEK_LABELS = ['월', '화', '수', '목', '금', '토', '일'];
@@ -131,7 +132,7 @@ export default function StatsChart({
   avgPace,
   totalDurationSec,
   data,
-  onLabelClick,
+  onDateChange,
 }: Props) {
   const dateObj = typeof date === 'string' ? new Date(date) : date;
   const { xMin, xMax, labels } = getXAxisInfo(period, dateObj, joinYear);
@@ -141,18 +142,98 @@ export default function StatsChart({
   const xRange = xMax - xMin || 1;
   const barWidth = getBarWidth(period);
 
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const pickerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!pickerOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
+        setPickerOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [pickerOpen]);
+
+  const pickerCanOpen = period !== 'all';
+
+  const pickerOptions: { label: string; date: Date }[] = (() => {
+    const today = new Date();
+    if (period === 'week') {
+      return [0, 1, 2].map((offset) => {
+        const d = new Date(today);
+        d.setDate(d.getDate() - offset * 7);
+        const labels = ['이번주', '저번주', '저저번주'];
+        return { label: labels[offset], date: d };
+      });
+    }
+    if (period === 'month') {
+      const list: { label: string; date: Date }[] = [];
+      for (let i = 0; i < 36; i++) {
+        const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+        if (d.getFullYear() < joinYear) break;
+        list.push({
+          label: `${d.getFullYear()}년 ${d.getMonth() + 1}월`,
+          date: d,
+        });
+      }
+      return list;
+    }
+    if (period === 'year') {
+      const current = today.getFullYear();
+      const list: { label: string; date: Date }[] = [];
+      for (let y = current; y >= joinYear; y--) {
+        list.push({ label: `${y}년`, date: new Date(y, 0, 1) });
+      }
+      return list;
+    }
+    return [];
+  })();
+
+  const handlePick = (d: Date) => {
+    onDateChange?.(d);
+    setPickerOpen(false);
+  };
+
   return (
     <div className="flex w-full max-w-[350px] flex-col gap-3">
-      <button
-        type="button"
-        onClick={onLabelClick}
-        className="flex items-center gap-1 text-text-primary"
-      >
-        <span className="text-body-sm">
-          {formatDateLabel(dateObj, period, joinYear)}
-        </span>
-        <ArrowDownIcon className="size-3" />
-      </button>
+      <div ref={pickerRef} className="relative">
+        <button
+          type="button"
+          onClick={() => pickerCanOpen && setPickerOpen((v) => !v)}
+          className="flex items-center gap-1 text-text-primary"
+        >
+          <span className="text-body-sm">
+            {formatDateLabel(dateObj, period, joinYear)}
+          </span>
+          {pickerCanOpen && <ArrowDownIcon className="size-3" />}
+        </button>
+
+        {pickerOpen && period === 'month' && (
+          <MonthPicker
+            date={dateObj}
+            joinYear={joinYear}
+            onChange={(d) => onDateChange?.(d)}
+          />
+        )}
+
+        {pickerOpen && period !== 'month' && pickerOptions.length > 0 && (
+          <ul className="absolute left-0 top-full z-30 mt-1 flex max-h-[240px] w-[140px] flex-col overflow-y-auto rounded-[5px] border border-gray-400 bg-surface-white shadow-base">
+            {pickerOptions.map((opt, idx) => (
+              <li key={`${opt.label}-${idx}`}>
+                <button
+                  type="button"
+                  onClick={() => handlePick(opt.date)}
+                  className="block w-full px-3 py-2 text-left text-body-sm text-text-primary hover:bg-gray-100"
+                >
+                  {opt.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
 
       <div className="relative h-[320px] w-full overflow-hidden rounded-t-[10px] bg-surface-white px-4 pb-8 pt-2">
         <div className="leading-[60px]">
@@ -240,6 +321,68 @@ export default function StatsChart({
           })}
         </div>
       </div>
+    </div>
+  );
+}
+
+function MonthPicker({
+  date,
+  joinYear,
+  onChange,
+}: {
+  date: Date;
+  joinYear: number;
+  onChange: (d: Date) => void;
+}) {
+  const currentYear = new Date().getFullYear();
+  const selectedYear = date.getFullYear();
+  const selectedMonth = date.getMonth() + 1;
+  const years: number[] = [];
+  for (let y = currentYear; y >= joinYear; y--) years.push(y);
+  const months = Array.from({ length: 12 }, (_, i) => i + 1);
+
+  return (
+    <div className="absolute left-0 top-full z-30 mt-1 flex w-[180px] gap-1 rounded-[5px] border border-gray-400 bg-surface-white p-1 shadow-base">
+      <ul className="flex max-h-[200px] flex-1 flex-col overflow-y-auto">
+        {years.map((y) => {
+          const isActive = y === selectedYear;
+          return (
+            <li key={y}>
+              <button
+                type="button"
+                onClick={() => onChange(new Date(y, selectedMonth - 1, 1))}
+                className={`block w-full rounded px-3 py-1.5 text-center text-body-sm ${
+                  isActive
+                    ? 'bg-primary font-semibold text-white'
+                    : 'text-text-primary hover:bg-gray-100'
+                }`}
+              >
+                {y}년
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+      <ul className="flex max-h-[200px] flex-1 flex-col overflow-y-auto">
+        {months.map((m) => {
+          const isActive = m === selectedMonth;
+          return (
+            <li key={m}>
+              <button
+                type="button"
+                onClick={() => onChange(new Date(selectedYear, m - 1, 1))}
+                className={`block w-full rounded px-3 py-1.5 text-center text-body-sm ${
+                  isActive
+                    ? 'bg-primary font-semibold text-white'
+                    : 'text-text-primary hover:bg-gray-100'
+                }`}
+              >
+                {m}월
+              </button>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }
