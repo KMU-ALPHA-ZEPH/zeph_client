@@ -11,6 +11,8 @@ import LoginPage from '@/pages/onboarding/LoginPage';
 import EmptyLayout from '@/components/layout/EmptyLayout';
 import CourseMainPage from '@/pages/course/CourseMainPage';
 import FilterPage from '@/components/common/Header/FilterPage';
+import CourseLocationPage from '@/pages/course/CourseLocationPage';
+import CoursePrefPage from '@/pages/course/CoursePrefPage';
 
 const queryClient = new QueryClient();
 
@@ -24,13 +26,21 @@ export default function App() {
           <Route path="/splash" element={<SplashPage />} />
           <Route path="/start" element={<StartPage />} />
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/main" element={<CourseMainPage />} />
+          <Route path="/course/main" element={<CourseMainPage />} />
           <Route path="/filter" element={<FilterPage />} />
         </Route>
 
         {/* 헤더 있는 레이아웃 */}
         <Route element={<AppLayout headerVariant="search" title="인기 코스" />}>
           <Route path="/popular-page" element={<PopularPage />} />
+        </Route>
+
+        <Route
+          element={<AppLayout headerVariant="back" title="코스 생성하기" />}
+        >
+          <Route path="/popular" element={<PopularPage />} />
+          <Route path="/course/main/step01" element={<CourseLocationPage />} />
+          <Route path="/course/main/step02" element={<CoursePrefPage />} />
         </Route>
 
         {/* 404 */}
