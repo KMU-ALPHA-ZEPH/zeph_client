@@ -13,6 +13,8 @@ import CourseMainPage from '@/pages/course/CourseMainPage';
 import FilterPage from '@/components/common/Header/FilterPage';
 import CourseLocationPage from '@/pages/course/CourseLocationPage';
 import CoursePrefPage from '@/pages/course/CoursePrefPage';
+import CourseAIPage from '@/pages/course/CourseAIPage';
+import CourseLoadingPage from '@/pages/course/CourseLoadingPage';
 
 const queryClient = new QueryClient();
 
@@ -27,7 +29,9 @@ export default function App() {
           <Route path="/start" element={<StartPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/course/main" element={<CourseMainPage />} />
+          <Route path="/course/main/step04" element={<CourseLoadingPage />} />
           <Route path="/filter" element={<FilterPage />} />
+          <Route path="course/loading" element={<CourseLoadingPage />} />
         </Route>
 
         {/* 헤더 있는 레이아웃 */}
@@ -41,6 +45,7 @@ export default function App() {
           <Route path="/popular" element={<PopularPage />} />
           <Route path="/course/main/step01" element={<CourseLocationPage />} />
           <Route path="/course/main/step02" element={<CoursePrefPage />} />
+          <Route path="/course/main/step03" element={<CourseAIPage />} />
         </Route>
 
         {/* 404 */}

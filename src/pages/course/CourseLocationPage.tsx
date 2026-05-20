@@ -100,7 +100,7 @@ export default function CourseLocationPage() {
   };
 
   return (
-    <div className="flex h-full w-full flex-col bg-surface-white pb-9">
+    <div className="flex h-full w-full flex-col bg-surface-white pb-[110px]">
       <div className="px-6 pt-[3px]">
         <CourseStepBar currentStep={0} />
       </div>
@@ -201,9 +201,9 @@ export default function CourseLocationPage() {
         </div>
       </div>
 
-      <div className="mt-auto flex justify-center px-[35px]">
+      <div className="fixed inset-x-0 bottom-9 z-30 mx-auto w-full max-w-[390px] px-5">
         <Button
-          className="absolute bottom-[50px] w-[340px]"
+          className="w-full"
           onClick={() => navigate('/course/main/step02')}
         >
           다음
