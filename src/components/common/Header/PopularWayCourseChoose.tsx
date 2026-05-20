@@ -1,6 +1,4 @@
-import { AnimatePresence, motion } from 'framer-motion';
 import { textStyles } from '@/styles/tokens';
-import SearchBar from '@/components/SearchBar';
 
 export type PopularWayTab = 'walk' | 'safety' | 'general';
 
@@ -14,84 +12,26 @@ type Props = {
   activeTab: PopularWayTab;
   onTabChange: (tab: PopularWayTab) => void;
   count: number;
-  title?: string;
   sortLabel?: string;
   onSortClick?: () => void;
   onFilterClick?: () => void;
-  onSearchClick?: () => void;
   compact?: boolean;
-  searchOpen?: boolean;
-  searchValue?: string;
-  onSearchValueChange?: (v: string) => void;
-  onSearchClose?: () => void;
 };
 
-export default function PopularWayHeader({
+export default function PopularWayCourseChoose({
   activeTab,
   onTabChange,
   count,
-  title = '인기 코스',
   sortLabel = '인기순',
   onSortClick,
   onFilterClick,
-  onSearchClick,
   compact = false,
-  searchOpen = false,
-  searchValue = '',
-  onSearchValueChange,
-  onSearchClose,
 }: Props) {
   return (
     <div className="sticky top-0 z-20 -mx-5 bg-surface-white">
       <div className="relative">
         <div className="relative z-10 bg-surface-white">
-          <div className="flex items-center justify-between px-5 pt-[14.5px]">
-            <h1 className="text-number-md font-bold text-text-primary">
-              {title}
-            </h1>
-            <motion.div
-              initial={false}
-              animate={{ width: searchOpen ? 260 : 44 }}
-              transition={{ type: 'spring', damping: 28, stiffness: 320 }}
-              className="-mr-3 flex h-11 items-center justify-end overflow-hidden"
-            >
-              <AnimatePresence mode="wait" initial={false}>
-                {searchOpen ? (
-                  <motion.div
-                    key="searchbar"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.15, delay: 0.1 }}
-                    className="w-full"
-                  >
-                    <SearchBar
-                      value={searchValue}
-                      onChange={onSearchValueChange ?? (() => {})}
-                      autoFocus
-                      onClose={onSearchClose}
-                    />
-                  </motion.div>
-                ) : (
-                  <motion.button
-                    key="searchbtn"
-                    type="button"
-                    aria-label="검색"
-                    onClick={onSearchClick}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.15, delay: 0.1 }}
-                    className="grid h-11 w-11 place-items-center"
-                  >
-                    <SearchIcon />
-                  </motion.button>
-                )}
-              </AnimatePresence>
-            </motion.div>
-          </div>
-
-          <div className="mt-[13px] px-5">
+          <div className="px-5 pt-3">
             <div role="tablist" className="flex items-start gap-2">
               {TABS.map((tab) => {
                 const isActive = tab.key === activeTab;
@@ -102,7 +42,7 @@ export default function PopularWayHeader({
                     role="tab"
                     aria-selected={isActive}
                     onClick={() => onTabChange(tab.key)}
-                    className="flex min-h-11 w-[112px] flex-col items-center justify-start gap-1"
+                    className="flex min-h-9 w-[112px] flex-col items-center justify-start gap-1"
                   >
                     <span
                       className={`${textStyles['body-medium']} ${
@@ -130,7 +70,7 @@ export default function PopularWayHeader({
               : 'translate-y-0 opacity-100'
           }`}
         >
-          <div className="flex flex-col gap-[13px] px-5 py-[13px]">
+          <div className="flex flex-col gap-[13px] px-5 pb-[13px] pt-0">
             <div className="flex justify-end">
               <button
                 type="button"
@@ -175,26 +115,6 @@ export default function PopularWayHeader({
         </div>
       </div>
     </div>
-  );
-}
-
-function SearchIcon() {
-  return (
-    <svg
-      width="19"
-      height="19"
-      viewBox="0 0 19 19"
-      fill="none"
-      aria-hidden="true"
-    >
-      <circle cx="8" cy="8" r="6.25" stroke="#0F172A" strokeWidth="1.5" />
-      <path
-        d="M12.5 12.5L17 17"
-        stroke="#0F172A"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
-    </svg>
   );
 }
 
