@@ -10,6 +10,7 @@ import SplashPage from './pages/onboarding/SplashPage';
 import StartPage from './pages/onboarding/StartPage';
 import LoginPage from '@/pages/onboarding/LoginPage';
 import EmptyLayout from '@/components/layout/EmptyLayout';
+import CourseMainPage from '@/pages/course/CourseMainPage';
 
 const queryClient = new QueryClient();
 
@@ -24,6 +25,7 @@ export default function App() {
           <Route path="/start" element={<StartPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/course-preview" element={<CourseCardPreviewPage />} />
+          <Route path="/main" element={<CourseMainPage />} />
           <Route path="/popular-way" element={<PopularWayPage />} />
         </Route>
 

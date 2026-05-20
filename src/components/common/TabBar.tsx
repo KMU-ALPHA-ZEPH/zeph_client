@@ -50,7 +50,7 @@ export default function TabBar({
             type="button"
             aria-current={isActive ? 'page' : undefined}
             onClick={() => onTabChange?.(key)}
-            className={`flex w-[43px] flex-col items-center gap-0.5 ${
+            className={`flex w-[55px] touch-manipulation flex-col items-center gap-0.5 rounded-[20px] px-1.5 py-1 select-none transition-colors duration-500 active:bg-black/10 ${
               isActive ? 'text-text-primary' : 'text-gray-500'
             }`}
           >
