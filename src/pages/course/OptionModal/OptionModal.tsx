@@ -37,7 +37,7 @@ export default function OptionModal({
         onClick={onClose}
         aria-hidden="true"
       />
-      <div className="relative flex w-full max-w-[390px] flex-col gap-4 rounded-t-[20px] bg-surface-white px-6 pb-6 pt-7">
+      <div className="relative flex w-full max-w-[390px] flex-col gap-2 rounded-t-[20px] bg-surface-white px-6 pb-6 pt-7">
         <h2 className={`text-text-primary ${textStyles['heading-h3']}`}>
           {title}
         </h2>

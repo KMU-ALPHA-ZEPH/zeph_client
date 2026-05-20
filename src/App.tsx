@@ -15,6 +15,7 @@ import CourseLocationPage from '@/pages/course/CourseLocationPage';
 import CoursePrefPage from '@/pages/course/CoursePrefPage';
 import CourseAIPage from '@/pages/course/CourseAIPage';
 import CourseLoadingPage from '@/pages/course/CourseLoadingPage';
+import CourseDetailPage from '@/pages/course/CourseDetailPage';
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,8 @@ export default function App() {
           <Route path="/course/main/step04" element={<CourseLoadingPage />} />
           <Route path="/filter" element={<FilterPage />} />
           <Route path="course/loading" element={<CourseLoadingPage />} />
+          <Route path="/course/detail" element={<CourseDetailPage />} />
+          {/*<Route path="/tracking/start" element={<CourseDetailPage />} />*/}
         </Route>
 
         {/* 헤더 있는 레이아웃 */}

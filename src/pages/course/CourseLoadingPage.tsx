@@ -1,9 +1,29 @@
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { textStyles } from '@/styles/tokens';
 
+const LOADING_DURATION_MS = 3000;
+const NEXT_PATH = '/course/detail';
+
 export default function CourseLoadingPage() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      navigate(NEXT_PATH, { replace: true });
+    }, LOADING_DURATION_MS);
+    return () => clearTimeout(timer);
+  }, [navigate]);
+
   return (
-    <div className="relative flex h-dvh w-full flex-col items-center ">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
+      className="relative flex h-dvh w-full flex-col items-center "
+    >
       <div className="flex flex-1 flex-col items-center justify-center gap-8">
         <div className="relative grid size-[60px] place-items-center">
           <motion.span
@@ -20,7 +40,7 @@ export default function CourseLoadingPage() {
             className="absolute inset-0 rounded-full bg-primary/25"
             animate={{ scale: [1, 0.9, 1] }}
             transition={{
-              duration: 1.8,
+              duration: 4.0,
               repeat: Infinity,
               ease: 'easeInOut',
             }}
@@ -42,6 +62,6 @@ export default function CourseLoadingPage() {
           </p>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
