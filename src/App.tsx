@@ -9,7 +9,13 @@ import SplashPage from './pages/onboarding/SplashPage';
 import StartPage from './pages/onboarding/StartPage';
 import LoginPage from '@/pages/onboarding/LoginPage';
 import EmptyLayout from '@/components/layout/EmptyLayout';
+import CourseMainPage from '@/pages/course/CourseMainPage';
 import FilterPage from '@/components/common/Header/FilterPage';
+import CourseLocationPage from '@/pages/course/CourseLocationPage';
+import CoursePrefPage from '@/pages/course/CoursePrefPage';
+import CourseAIPage from '@/pages/course/CourseAIPage';
+import CourseLoadingPage from '@/pages/course/CourseLoadingPage';
+import CourseDetailPage from '@/pages/course/CourseDetailPage';
 
 const queryClient = new QueryClient();
 
@@ -23,12 +29,26 @@ export default function App() {
           <Route path="/splash" element={<SplashPage />} />
           <Route path="/start" element={<StartPage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/course/main" element={<CourseMainPage />} />
+          <Route path="/course/main/step04" element={<CourseLoadingPage />} />
           <Route path="/filter" element={<FilterPage />} />
+          <Route path="course/loading" element={<CourseLoadingPage />} />
+          <Route path="/course/detail" element={<CourseDetailPage />} />
+          {/*<Route path="/tracking/start" element={<CourseDetailPage />} />*/}
         </Route>
 
         {/* 헤더 있는 레이아웃 */}
         <Route element={<AppLayout headerVariant="search" title="인기 코스" />}>
           <Route path="/popular-page" element={<PopularPage />} />
+        </Route>
+
+        <Route
+          element={<AppLayout headerVariant="back" title="코스 생성하기" />}
+        >
+          <Route path="/popular" element={<PopularPage />} />
+          <Route path="/course/main/step01" element={<CourseLocationPage />} />
+          <Route path="/course/main/step02" element={<CoursePrefPage />} />
+          <Route path="/course/main/step03" element={<CourseAIPage />} />
         </Route>
 
         {/* 404 */}
