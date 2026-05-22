@@ -4,7 +4,6 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 
 import AppLayout from './components/layout/AppLayout';
 import ProfileLayout from '@/components/layout/ProfileLayout';
-import EmptyLayout from '@/components/layout/EmptyLayout';
 import NotFoundPage from './pages/NotFoundPage';
 import PopularPage from './pages/popular/PopularPage';
 import SplashPage from './pages/onboarding/SplashPage';
@@ -16,7 +15,6 @@ import ScrapPage from '@/pages/scrap/ScrapPage';
 import ScrapDetailPage from '@/pages/scrap/ScrapDetailPage';
 import EmptyLayout from '@/components/layout/EmptyLayout';
 import CourseMainPage from '@/pages/course/CourseMainPage';
-import FilterPage from '@/components/common/Header/FilterPage';
 import CourseLocationPage from '@/pages/course/CourseLocationPage';
 import CoursePrefPage from '@/pages/course/CoursePrefPage';
 import CourseAIPage from '@/pages/course/CourseAIPage';
@@ -41,7 +39,7 @@ export default function App() {
           <Route path="/course/detail" element={<CourseDetailPage />} />
           {/*<Route path="/tracking/start" element={<CourseDetailPage />} />*/}
         </Route>
-        
+
         <Route
           element={<AppLayout headerVariant="back" title="코스 생성하기" />}
         >
@@ -70,8 +68,6 @@ export default function App() {
         <Route element={<EmptyLayout />}>
           <Route path="/scrap/:id" element={<ScrapDetailPage />} />
         </Route>
-
-       
 
         {/* 404 */}
         <Route path="*" element={<NotFoundPage />} />
