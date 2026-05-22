@@ -1,5 +1,3 @@
-import ZephIcon from '@/assets/icons/zeph.svg?react';
-import { Icon } from '@/components/common/Icon';
 import backgroundImage from '@/assets/backgroundImage.png';
 import { textStyles } from '@/styles/tokens';
 import { useNavigate } from 'react-router-dom';
@@ -27,8 +25,8 @@ export default function StartPage() {
       />
       <div className="absolute inset-0 bg-black/50" />
 
-      <div className="relative flex h-full flex-col items-center justify-center ">
-        <Icon as={ZephIcon} size="sm" />
+      <div className="relative flex h-full flex-col items-center justify-center">
+        <div className="h-[100px] w-[100px]" />
         <div
           className={`-mt-1 ${textStyles['heading-h3-onboarding']} text-center text-white`}
         >
