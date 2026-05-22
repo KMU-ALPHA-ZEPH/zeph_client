@@ -1,5 +1,6 @@
 import BookmarkIcon from '@/assets/icons/circum_bookmark.svg?react';
 import BookmarkFilledIcon from '@/assets/icons/circum_bookmark_filled.svg?react';
+import ZephIcon from '@/assets/icons/zeph.svg?react';
 
 export type Course = {
   rank?: number;
@@ -35,8 +36,10 @@ export default function CourseCard({
       className="flex h-[70px] w-full max-w-[350px] items-center gap-3 rounded-[10px] bg-surface-white px-[13px] py-[11px] shadow-[0px_2px_6px_rgba(0,0,0,0.10)]"
     >
       <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-[5px] bg-gray-300">
-        {imageUrl && (
+        {imageUrl ? (
           <img src={imageUrl} alt="" className="h-full w-full object-cover" />
+        ) : (
+          <ZephIcon className="h-full w-full" />
         )}
       </div>
 

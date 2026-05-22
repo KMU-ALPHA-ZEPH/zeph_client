@@ -1,6 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import ArrowDownIcon from '@/assets/icons/ep_arrow-down.svg?react';
-import { type Period } from '@/components/common/PeriodSelector';
+import { type Period } from '@/pages/stats/PeriodSelector';
+import MonthPicker from '@/pages/stats/MonthPicker';
+import { formatDuration, formatPace } from '@/utils/format';
 
 export type ChartDataPoint = { x: number; value: number };
 
@@ -17,21 +19,6 @@ type Props = {
 };
 
 const WEEK_LABELS = ['월', '화', '수', '목', '금', '토', '일'];
-
-function formatPace(secPerKm: number): string {
-  const total = Math.max(0, Math.floor(secPerKm));
-  const m = Math.floor(total / 60);
-  const s = total % 60;
-  return `${m}'${String(s).padStart(2, '0')}"`;
-}
-
-function formatDuration(sec: number): string {
-  const total = Math.max(0, Math.floor(sec));
-  const h = Math.floor(total / 3600);
-  const m = Math.floor((total % 3600) / 60);
-  const s = total % 60;
-  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-}
 
 function daysInMonth(d: Date) {
   return new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
@@ -156,9 +143,13 @@ export default function StatsChart({
     return () => document.removeEventListener('mousedown', handleClick);
   }, [pickerOpen]);
 
+  useEffect(() => {
+    setPickerOpen(false);
+  }, [period]);
+
   const pickerCanOpen = period !== 'all';
 
-  const pickerOptions: { label: string; date: Date }[] = (() => {
+  const pickerOptions = useMemo<{ label: string; date: Date }[]>(() => {
     const today = new Date();
     if (period === 'week') {
       return [0, 1, 2].map((offset) => {
@@ -167,18 +158,6 @@ export default function StatsChart({
         const labels = ['이번주', '저번주', '저저번주'];
         return { label: labels[offset], date: d };
       });
-    }
-    if (period === 'month') {
-      const list: { label: string; date: Date }[] = [];
-      for (let i = 0; i < 36; i++) {
-        const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
-        if (d.getFullYear() < joinYear) break;
-        list.push({
-          label: `${d.getFullYear()}년 ${d.getMonth() + 1}월`,
-          date: d,
-        });
-      }
-      return list;
     }
     if (period === 'year') {
       const current = today.getFullYear();
@@ -189,7 +168,7 @@ export default function StatsChart({
       return list;
     }
     return [];
-  })();
+  }, [period, joinYear]);
 
   const handlePick = (d: Date) => {
     onDateChange?.(d);
@@ -214,7 +193,7 @@ export default function StatsChart({
           <MonthPicker
             date={dateObj}
             joinYear={joinYear}
-            onChange={(d) => onDateChange?.(d)}
+            onChange={handlePick}
           />
         )}
 
@@ -260,7 +239,7 @@ export default function StatsChart({
           </div>
           <div className="flex flex-col">
             <span className="text-h2 font-bold text-text-primary">
-              {formatDuration(totalDurationSec)}
+              {formatDuration(totalDurationSec, true)}
             </span>
             <span className="text-body-md font-medium text-gray-500">시간</span>
           </div>
@@ -321,68 +300,6 @@ export default function StatsChart({
           })}
         </div>
       </div>
-    </div>
-  );
-}
-
-function MonthPicker({
-  date,
-  joinYear,
-  onChange,
-}: {
-  date: Date;
-  joinYear: number;
-  onChange: (d: Date) => void;
-}) {
-  const currentYear = new Date().getFullYear();
-  const selectedYear = date.getFullYear();
-  const selectedMonth = date.getMonth() + 1;
-  const years: number[] = [];
-  for (let y = currentYear; y >= joinYear; y--) years.push(y);
-  const months = Array.from({ length: 12 }, (_, i) => i + 1);
-
-  return (
-    <div className="absolute left-0 top-full z-30 mt-1 flex w-[180px] gap-1 rounded-[5px] border border-gray-400 bg-surface-white p-1 shadow-base">
-      <ul className="flex max-h-[200px] flex-1 flex-col overflow-y-auto">
-        {years.map((y) => {
-          const isActive = y === selectedYear;
-          return (
-            <li key={y}>
-              <button
-                type="button"
-                onClick={() => onChange(new Date(y, selectedMonth - 1, 1))}
-                className={`block w-full rounded px-3 py-1.5 text-center text-body-sm ${
-                  isActive
-                    ? 'bg-primary font-semibold text-white'
-                    : 'text-text-primary hover:bg-gray-100'
-                }`}
-              >
-                {y}년
-              </button>
-            </li>
-          );
-        })}
-      </ul>
-      <ul className="flex max-h-[200px] flex-1 flex-col overflow-y-auto">
-        {months.map((m) => {
-          const isActive = m === selectedMonth;
-          return (
-            <li key={m}>
-              <button
-                type="button"
-                onClick={() => onChange(new Date(selectedYear, m - 1, 1))}
-                className={`block w-full rounded px-3 py-1.5 text-center text-body-sm ${
-                  isActive
-                    ? 'bg-primary font-semibold text-white'
-                    : 'text-text-primary hover:bg-gray-100'
-                }`}
-              >
-                {m}월
-              </button>
-            </li>
-          );
-        })}
-      </ul>
     </div>
   );
 }

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { BackIcon } from '@/components/common/Icon/BackIcon';
 import { Button } from '@/components/common/Button';
-import CameraIcon from '@/assets/icons/frame_250.svg?react';
+import CameraIcon from '@/assets/icons/camera.svg?react';
 
 type Props = {
   isOpen: boolean;
@@ -34,6 +34,22 @@ export default function ProfileEditModal({
   const handleSubmit = () => {
     onSubmit?.({ nickname, avatarUrl });
     onClose();
+  };
+
+  const handleImagePick = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === 'string') setAvatarUrl(reader.result);
+      };
+      reader.readAsDataURL(file);
+    };
+    input.click();
   };
 
   return (
@@ -76,25 +92,24 @@ export default function ProfileEditModal({
 
             <div className="flex w-[320px] flex-col gap-6">
               <div className="flex flex-col items-center gap-6">
-                <div className="relative size-[120px] overflow-hidden rounded-full border-[0.5px] border-gray-500 bg-gray-300">
-                  {avatarUrl && (
+                <button
+                  type="button"
+                  aria-label="사진 변경"
+                  onClick={handleImagePick}
+                  className="relative size-[120px] overflow-hidden rounded-full border-[0.5px] border-gray-500 bg-gray-300"
+                >
+                  {avatarUrl ? (
                     <img
                       src={avatarUrl}
                       alt=""
                       className="h-full w-full object-cover"
                     />
+                  ) : (
+                    <span className="absolute left-1/2 top-1/2 grid size-[68px] -translate-x-1/2 -translate-y-1/2 place-items-center">
+                      <CameraIcon className="size-full" />
+                    </span>
                   )}
-                  <button
-                    type="button"
-                    aria-label="사진 변경"
-                    onClick={() => {
-                      /* TODO: image picker */
-                    }}
-                    className="absolute left-1/2 top-1/2 grid size-[68px] -translate-x-1/2 -translate-y-1/2 place-items-center"
-                  >
-                    <CameraIcon className="size-full" />
-                  </button>
-                </div>
+                </button>
 
                 <div className="flex w-full flex-col gap-1.5">
                   <label

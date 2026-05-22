@@ -4,11 +4,11 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { BackIcon } from '@/components/common/Icon/BackIcon';
 import { MenuIcon } from '@/components/common/Icon/MenuIcon';
 import MagnifyingGlassIcon from '@/assets/icons/magnifying-glass.svg?react';
-import ProfileIcon from '@/assets/icons/frame_255.svg?react';
+import ProfileIcon from '@/assets/icons/profile_avatar.svg?react';
 import SearchBar from '@/components/SearchBar';
 import { textStyles } from '@/styles/tokens';
 
-export type HeaderVariant = 'title' | 'back' | 'search' | 'profile';
+export type HeaderVariant = 'title' | 'back' | 'search' | 'profile' | 'add';
 
 interface HeaderProps {
   variant?: HeaderVariant;
@@ -17,6 +17,7 @@ interface HeaderProps {
   onMenuClick?: () => void;
   onSearchClick?: () => void;
   onProfileClick?: () => void;
+  onAddClick?: () => void;
   searchValue?: string;
   onSearchValueChange?: (v: string) => void;
 }
@@ -28,6 +29,7 @@ export default function Header({
   onMenuClick,
   onSearchClick,
   onProfileClick,
+  onAddClick,
   searchValue: searchValueProp,
   onSearchValueChange,
 }: HeaderProps) {
@@ -53,6 +55,24 @@ export default function Header({
         {title && (
           <h1 className={`${textStyles['heading-h2']} text-black`}>{title}</h1>
         )}
+      </header>
+    );
+  }
+
+  if (variant === 'add') {
+    return (
+      <header className="flex h-[60px] w-full items-center justify-between px-[25px]">
+        {title && (
+          <h1 className={`${textStyles['heading-h1']} text-black`}>{title}</h1>
+        )}
+        <button
+          type="button"
+          aria-label="메뉴"
+          onClick={onAddClick}
+          className="grid h-6 w-6 place-items-center text-primary"
+        >
+          <MenuIcon />
+        </button>
       </header>
     );
   }

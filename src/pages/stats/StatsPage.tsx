@@ -1,15 +1,9 @@
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import TabSelector, { type TabItem } from '@/components/common/TabSelector';
-import PeriodSelector, {
-  type Period,
-} from '@/components/common/PeriodSelector';
-import StatsChart, { type ChartDataPoint } from '@/components/StatsChart';
-import RecordCard, { type RecordCardData } from '@/components/RecordCard';
-import TabBar, {
-  type TabBarKey,
-  TABBAR_ROUTES,
-} from '@/components/common/TabBar';
+import PeriodSelector, { type Period } from '@/pages/stats/PeriodSelector';
+import StatsChart, { type ChartDataPoint } from '@/pages/stats/StatsChart';
+import RecordCard, { type RecordCardData } from '@/pages/stats/RecordCard';
+import TabBarLayout from '@/components/layout/TabBarLayout';
 
 type StatsCategory = 'walk' | 'workout' | 'general' | 'all';
 
@@ -345,7 +339,6 @@ const RECENT_RECORDS: Record<StatsCategory, RecordCardData[]> = {
 };
 
 export default function StatsPage() {
-  const navigate = useNavigate();
   const [category, setCategory] = useState<StatsCategory>('walk');
   const [period, setPeriod] = useState<Period>('month');
   const [datesByPeriod, setDatesByPeriod] = useState<Record<Period, Date>>(
@@ -364,10 +357,6 @@ export default function StatsPage() {
 
   const stats = useMemo(() => SAMPLE[category][period], [category, period]);
   const recentRecords = RECENT_RECORDS[category];
-
-  const handleTabBarChange = (key: TabBarKey) => {
-    navigate(TABBAR_ROUTES[key]);
-  };
 
   return (
     <div className="flex flex-col gap-4 pt-6">
@@ -402,12 +391,7 @@ export default function StatsPage() {
         </ul>
       </section>
 
-      <div className="fixed inset-x-0 bottom-0 z-10">
-        <div className="mx-auto w-full max-w-[390px]">
-          <div className="pointer-events-none h-4 bg-gradient-to-t from-surface-white to-transparent" />
-          <TabBar activeTab="stats" onTabChange={handleTabBarChange} />
-        </div>
-      </div>
+      <TabBarLayout activeTab="stats" />
     </div>
   );
 }

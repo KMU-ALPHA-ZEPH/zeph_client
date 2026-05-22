@@ -1,4 +1,5 @@
-import type { FC, SVGProps } from 'react';
+import { useCallback, type FC, type SVGProps } from 'react';
+import { useNavigate } from 'react-router-dom';
 import RouteIcon from '@/assets/icons/material-symbols-light_route.svg?react';
 import BookmarkIcon from '@/assets/icons/circum_bookmark.svg?react';
 import BookmarkFilledIcon from '@/assets/icons/circum_bookmark_filled.svg?react';
@@ -13,6 +14,14 @@ export const TABBAR_ROUTES: Record<TabBarKey, string> = {
   popular: '/popular-page',
   stats: '/stats',
 };
+
+export function useTabBarNavigation() {
+  const navigate = useNavigate();
+  return useCallback(
+    (key: TabBarKey) => navigate(TABBAR_ROUTES[key]),
+    [navigate],
+  );
+}
 
 type IconComponent = FC<SVGProps<SVGSVGElement>>;
 

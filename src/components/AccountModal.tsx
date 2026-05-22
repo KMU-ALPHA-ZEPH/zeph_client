@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import ProfileIcon from '@/assets/icons/frame_255.svg?react';
+import ProfileIcon from '@/assets/icons/profile_avatar.svg?react';
 import { BackIcon } from '@/components/common/Icon/BackIcon';
 import ProfileEditModal from '@/components/ProfileEditModal';
 
@@ -27,6 +27,10 @@ export default function AccountModal({
 }: Props) {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [displayName, setDisplayName] = useState(name);
+
+  useEffect(() => {
+    setDisplayName(name);
+  }, [name]);
 
   const handleEditClick = () => {
     if (onEditClick) onEditClick();
