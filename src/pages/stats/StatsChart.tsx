@@ -176,8 +176,8 @@ export default function StatsChart({
   };
 
   return (
-    <div className="flex w-full max-w-[350px] flex-col gap-3">
-      <div ref={pickerRef} className="relative">
+    <div className="flex w-full max-w-[350px] flex-col gap-1">
+      <div ref={pickerRef} className="mt-2 relative">
         <button
           type="button"
           onClick={() => pickerCanOpen && setPickerOpen((v) => !v)}
@@ -214,34 +214,34 @@ export default function StatsChart({
         )}
       </div>
 
-      <div className="relative h-[320px] w-full overflow-hidden rounded-t-[10px] bg-surface-white px-4 pb-8 pt-2">
+      <div className="relative h-[320px] w-full overflow-hidden rounded-t-[10px] bg-surface-white px-3 pb-8">
         <div className="leading-[60px]">
           <span className="text-[50px] font-normal text-text-primary">
             {totalDistanceKm.toFixed(1)}{' '}
           </span>
-          <span className="text-[50px] font-normal text-gray-500">km</span>
+          <span className="text-[40px] font-light text-gray-500">km</span>
         </div>
 
-        <div className="mt-2 flex items-start gap-3">
+        <div className="flex items-start gap-3">
           <div className="flex flex-col">
-            <span className="text-h2 font-bold text-text-primary">
+            <span className="text-h2 font-medium text-text-primary">
               {runCount}
             </span>
-            <span className="text-body-md font-medium text-gray-500">러닝</span>
+            <span className="text-body-md font-light text-gray-500">러닝</span>
           </div>
           <div className="flex flex-col">
-            <span className="text-h2 font-bold text-text-primary">
+            <span className="text-h2 font-medium text-text-primary">
               {formatPace(avgPace)}
             </span>
-            <span className="text-body-md font-medium text-gray-500">
+            <span className="text-body-md font-light text-gray-500">
               평균 페이스
             </span>
           </div>
           <div className="flex flex-col">
-            <span className="text-h2 font-bold text-text-primary">
+            <span className="text-h2 font-medium text-text-primary">
               {formatDuration(totalDurationSec, true)}
             </span>
-            <span className="text-body-md font-medium text-gray-500">시간</span>
+            <span className="text-body-md font-light text-gray-500">시간</span>
           </div>
         </div>
 
