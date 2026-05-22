@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
+import svgr from 'vite-plugin-svgr';
 import { VitePWA, type VitePWAOptions } from 'vite-plugin-pwa';
 import path from 'path';
 import { fileURLToPath } from 'node:url';
@@ -59,7 +60,35 @@ const pwaOptions: Partial<VitePWAOptions> = {
 };
 
 export default defineConfig({
-  plugins: [react(), tailwindcss(), VitePWA(pwaOptions)],
+  plugins: [
+    react(),
+    tailwindcss(),
+    svgr({
+      svgrOptions: {
+        replaceAttrValues: {
+          '#000': 'currentColor',
+          '#000000': 'currentColor',
+          black: 'currentColor',
+        },
+        svgoConfig: {
+          plugins: [
+            {
+              name: 'preset-default',
+              params: {
+                overrides: {
+                  removeViewBox: false,
+                  convertColors: { currentColor: /^#000(000)?$/i },
+                },
+              },
+            },
+            'removeDimensions',
+          ],
+        },
+      },
+      include: '**/*.svg?react',
+    }),
+    VitePWA(pwaOptions),
+  ],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
