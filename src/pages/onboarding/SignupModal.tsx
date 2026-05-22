@@ -15,7 +15,7 @@ export default function SignupModal({ onClose }: SignupModalProps) {
   const [agreed, setAgreed] = useState(false);
 
   return (
-    <div className="relative mx-auto flex w-full max-w-md flex-col overflow-hidden rounded-t-2xl bg-white pt-[11px]">
+    <div className="relative mx-auto flex h-full w-full max-w-md flex-col overflow-hidden rounded-t-2xl bg-white pt-[11px]">
       <Header variant="back" title="회원가입" onBack={onClose} />
 
       <div className="px-9 pt-[10px]">
@@ -60,7 +60,7 @@ export default function SignupModal({ onClose }: SignupModalProps) {
         </label>
       </div>
 
-      <div className="mt-60 px-9 pb-22">
+      <div className="mt-auto px-9 pb-[calc(env(safe-area-inset-bottom)+5.5rem)]">
         <Button inactive={!agreed} className="w-full">
           회원가입
         </Button>
