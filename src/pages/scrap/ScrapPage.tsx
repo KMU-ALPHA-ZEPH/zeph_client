@@ -144,7 +144,7 @@ export default function ScrapPage() {
         type="button"
         aria-label="새 스크랩 폴더"
         onClick={() => setIsAddOpen(true)}
-        className="fixed bottom-[90px] right-[calc(50%-175px+10px)] z-20 grid size-[52px] place-items-center rounded-full bg-primary text-white shadow-base"
+        className="fixed bottom-[90px] right-[calc(50%-175px+10px)] z-20 grid size-[52px] place-items-center rounded-full bg-primary text-white shadow-base transition-transform active:scale-95"
       >
         <svg
           width="20"

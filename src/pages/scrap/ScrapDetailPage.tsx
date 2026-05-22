@@ -92,7 +92,7 @@ export default function ScrapDetailPage() {
   };
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col px-5">
       <header className="-mx-5 flex h-[60px] items-center px-3">
         <button
           type="button"
@@ -115,13 +115,15 @@ export default function ScrapDetailPage() {
           )}
         </div>
         <div className="flex h-[120px] w-[216px] flex-shrink-0 flex-col">
-          <h1 className="truncate text-h2 font-semibold text-text-primary">
-            {title}
-          </h1>
-          <p className="mt-1.5 line-clamp-2 h-10 overflow-hidden whitespace-pre-line text-ellipsis break-words text-body-md text-text-secondary">
-            {description}
-          </p>
-          <div className="mt-auto flex items-center gap-1.5">
+          <div className="flex flex-1 flex-col justify-center">
+            <h1 className="truncate text-h2 font-semibold text-text-primary">
+              {title}
+            </h1>
+            <p className="line-clamp-2 h-10 overflow-hidden whitespace-pre-line text-ellipsis break-words text-body-md text-text-secondary">
+              {description}
+            </p>
+          </div>
+          <div className="flex items-center gap-1.5">
             <button
               type="button"
               onClick={() => setIsEditOpen(true)}
@@ -162,7 +164,7 @@ export default function ScrapDetailPage() {
 
       <div className="mt-2 h-px bg-gray-400" />
 
-      <ul className="grid grid-cols-3 gap-x-[13px] gap-y-3 pb-[110px] pt-4">
+      <ul className="grid grid-cols-3 gap-x-[13px] gap-y-1 pb-[110px] pt-4">
         {visible.map((course) => (
           <li key={course.id}>
             <ScrapCourseThumb
