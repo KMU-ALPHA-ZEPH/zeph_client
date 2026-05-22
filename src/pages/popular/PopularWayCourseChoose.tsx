@@ -1,8 +1,9 @@
 import { textStyles } from '@/styles/tokens';
+import TabSelector, { type TabItem } from '@/components/common/TabSelector';
 
 export type PopularWayTab = 'walk' | 'safety' | 'general';
 
-const TABS: { key: PopularWayTab; label: string }[] = [
+const DEFAULT_TABS: TabItem<PopularWayTab>[] = [
   { key: 'walk', label: '산책 코스' },
   { key: 'safety', label: '안전 코스' },
   { key: 'general', label: '일반 코스' },
@@ -32,34 +33,11 @@ export default function PopularWayCourseChoose({
       <div className="relative">
         <div className="relative z-10 bg-surface-white">
           <div className="px-5 pt-3">
-            <div role="tablist" className="flex items-start gap-2">
-              {TABS.map((tab) => {
-                const isActive = tab.key === activeTab;
-                return (
-                  <button
-                    key={tab.key}
-                    type="button"
-                    role="tab"
-                    aria-selected={isActive}
-                    onClick={() => onTabChange(tab.key)}
-                    className="flex min-h-9 w-[112px] flex-col items-center justify-start gap-1"
-                  >
-                    <span
-                      className={`${textStyles['body-medium']} ${
-                        isActive ? 'text-text-primary' : 'text-gray-500'
-                      }`}
-                    >
-                      {tab.label}
-                    </span>
-                    <span
-                      className={`h-[3px] w-[100px] rounded-full ${
-                        isActive ? 'bg-primary' : 'bg-transparent'
-                      }`}
-                    />
-                  </button>
-                );
-              })}
-            </div>
+            <TabSelector
+              tabs={DEFAULT_TABS}
+              activeKey={activeTab}
+              onChange={onTabChange}
+            />
           </div>
         </div>
 
@@ -91,7 +69,7 @@ export default function PopularWayCourseChoose({
 
             <div className="flex items-center justify-between">
               <p>
-                <span className="text-body-md font-semibold text-text-primary">
+                <span className="text-body-sm font-semibold text-text-primary">
                   코스{' '}
                 </span>
                 <span className="text-body-sm font-semibold text-text-secondary">

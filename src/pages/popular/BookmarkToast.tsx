@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import HeartIcon from '@/assets/icons/mdi_heart.svg?react';
+import HeartIcon from '@/assets/icons/mynaui_heart-solid.svg?react';
 
 type Props = {
   isOpen: boolean;
@@ -15,9 +15,9 @@ export default function BookmarkToast({
   isOpen,
   onClose,
   message = '좋아요 표시한 코스에 추가되었습니다',
-  actionLabel = '변경',
+  actionLabel,
   onAction,
-  durationMs = 2500,
+  durationMs = 1500,
 }: Props) {
   useEffect(() => {
     if (!isOpen) return;
@@ -41,13 +41,15 @@ export default function BookmarkToast({
             <span className="text-[13px] font-normal text-white">
               {message}
             </span>
-            <button
-              type="button"
-              onClick={onAction}
-              className="text-[13px] font-normal text-primary"
-            >
-              {actionLabel}
-            </button>
+            {actionLabel && onAction && (
+              <button
+                type="button"
+                onClick={onAction}
+                className="text-[13px] font-normal text-primary"
+              >
+                {actionLabel}
+              </button>
+            )}
           </div>
         </motion.div>
       )}

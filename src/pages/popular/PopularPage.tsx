@@ -3,17 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import CourseCard, { type Course } from '@/pages/popular/CourseCard';
 import PopularWayCourseChoose, {
   type PopularWayTab,
-} from '@/components/common/Header/PopularWayCourseChoose';
-import TabBar, { type TabBarKey } from '@/components/common/TabBar';
+} from '@/pages/popular/PopularWayCourseChoose';
+import TabBarLayout from '@/components/layout/TabBarLayout';
 import AlignModal, {
   ALIGN_OPTIONS,
   type AlignKey,
 } from '@/pages/popular/AlignModal';
-import BookmarkToast from '@/components/BookmarkToast';
-import {
-  readFilter,
-  readUserLocation,
-} from '@/components/common/Header/FilterPage';
+import BookmarkToast from '@/pages/popular/BookmarkToast';
+import { readFilter, readUserLocation } from '@/pages/popular/FilterPage';
 
 type SampleCourse = Course & { id: string; tab: PopularWayTab };
 
@@ -27,7 +24,6 @@ const initialCourses: SampleCourse[] = [
     district: '광진구 광장동',
     distance: 8,
     description: '벚꽃 길 특화 산책 코스~!',
-    imageUrl: 'https://placehold.co/48x48',
     isBookmarked: false,
     lat: 37.5469,
     lng: 127.1086,
@@ -41,7 +37,6 @@ const initialCourses: SampleCourse[] = [
     district: '성동구 성수동',
     distance: 5,
     description: '한강뷰 산책 코스',
-    imageUrl: 'https://placehold.co/48x48/eeeeee/333333',
     isBookmarked: false,
     lat: 37.5446,
     lng: 127.0563,
@@ -55,7 +50,6 @@ const initialCourses: SampleCourse[] = [
     district: '용산구 이태원동',
     distance: 3,
     description: '도심 야경 산책',
-    imageUrl: 'https://placehold.co/48x48/cccccc/333333',
     isBookmarked: false,
     lat: 37.5345,
     lng: 126.9947,
@@ -68,7 +62,6 @@ const initialCourses: SampleCourse[] = [
     district: '종로구 부암동',
     distance: 6,
     description: '북악산 자락길 산책',
-    imageUrl: 'https://placehold.co/48x48/dddddd/444444',
     isBookmarked: false,
     lat: 37.5921,
     lng: 126.9633,
@@ -81,7 +74,6 @@ const initialCourses: SampleCourse[] = [
     district: '강서구 마곡동',
     distance: 4,
     description: '서울식물원 둘레 산책',
-    imageUrl: 'https://placehold.co/48x48/c0e0c0',
     isBookmarked: false,
     lat: 37.5594,
     lng: 126.8252,
@@ -96,7 +88,6 @@ const initialCourses: SampleCourse[] = [
     district: '서대문구 신촌동',
     distance: 4,
     description: 'CCTV·가로등 많은 안심 코스',
-    imageUrl: 'https://placehold.co/48x48/ddddee',
     isBookmarked: false,
     lat: 37.5556,
     lng: 126.9377,
@@ -109,7 +100,6 @@ const initialCourses: SampleCourse[] = [
     district: '마포구 합정동',
     distance: 6,
     description: '경찰서 인근 안심 코스',
-    imageUrl: 'https://placehold.co/48x48/ccccdd',
     isBookmarked: false,
     lat: 37.5495,
     lng: 126.9134,
@@ -123,7 +113,6 @@ const initialCourses: SampleCourse[] = [
     district: '동작구 흑석동',
     distance: 3,
     description: '인적 많은 한강대교 야간 코스',
-    imageUrl: 'https://placehold.co/48x48/bbbbcc',
     isBookmarked: false,
     lat: 37.5071,
     lng: 126.9603,
@@ -137,7 +126,6 @@ const initialCourses: SampleCourse[] = [
     district: '강남구 신사동',
     distance: 7,
     description: '가로수길 도심 코스',
-    imageUrl: 'https://placehold.co/48x48/f0d0a0',
     isBookmarked: false,
     lat: 37.521,
     lng: 127.0214,
@@ -150,7 +138,6 @@ const initialCourses: SampleCourse[] = [
     district: '송파구 잠실동',
     distance: 10,
     description: '석촌호수 둘레 코스',
-    imageUrl: 'https://placehold.co/48x48/a0d0f0',
     isBookmarked: false,
     lat: 37.5133,
     lng: 127.1027,
@@ -164,7 +151,6 @@ const initialCourses: SampleCourse[] = [
     district: '영등포구 여의도동',
     distance: 9,
     description: '여의도 한강공원 일주',
-    imageUrl: 'https://placehold.co/48x48/d0e0f0',
     isBookmarked: false,
     lat: 37.5235,
     lng: 126.9277,
@@ -177,7 +163,6 @@ const initialCourses: SampleCourse[] = [
     district: '중구 명동',
     distance: 4,
     description: '명동 도심 산책 코스',
-    imageUrl: 'https://placehold.co/48x48/f0c0c0',
     isBookmarked: false,
     lat: 37.5634,
     lng: 126.9858,
@@ -203,12 +188,14 @@ function haversineKm(
 export default function PopularPage() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<PopularWayTab>('walk');
-  const [activeBottomTab, setActiveBottomTab] = useState<TabBarKey>('popular');
   const [compact, setCompact] = useState(false);
   const [alignValue, setAlignValue] = useState<AlignKey>('popular');
   const [isAlignOpen, setIsAlignOpen] = useState(false);
   const [courses, setCourses] = useState(initialCourses);
-  const [toastId, setToastId] = useState<string | null>(null);
+  const [toast, setToast] = useState<{
+    id: string;
+    action: 'added' | 'removed';
+  } | null>(null);
   const [filter, setFilter] = useState(() => readFilter());
   const lastScrollY = useRef(0);
 
@@ -257,12 +244,13 @@ export default function PopularPage() {
 
   const toggleBookmark = (id: string) => {
     const target = courses.find((c) => c.id === id);
+    if (!target) return;
     setCourses((prev) =>
       prev.map((c) =>
         c.id === id ? { ...c, isBookmarked: !c.isBookmarked } : c,
       ),
     );
-    if (target && !target.isBookmarked) setToastId(id);
+    setToast({ id, action: target.isBookmarked ? 'removed' : 'added' });
   };
   const compactRef = useRef(false);
   const lastToggleAt = useRef(0);
@@ -338,15 +326,7 @@ export default function PopularPage() {
         ))}
       </ul>
 
-      <div className="fixed inset-x-0 bottom-0 z-10">
-        <div className="mx-auto w-full max-w-[390px]">
-          <div className="pointer-events-none h-4 bg-gradient-to-t from-surface-white to-transparent" />
-          <TabBar
-            activeTab={activeBottomTab}
-            onTabChange={setActiveBottomTab}
-          />
-        </div>
-      </div>
+      <TabBarLayout activeTab="popular" />
 
       <AlignModal
         isOpen={isAlignOpen}
@@ -356,12 +336,22 @@ export default function PopularPage() {
       />
 
       <BookmarkToast
-        isOpen={toastId !== null}
-        onClose={() => setToastId(null)}
-        onAction={() => {
-          if (toastId !== null) toggleBookmark(toastId);
-          setToastId(null);
-        }}
+        isOpen={toast !== null}
+        onClose={() => setToast(null)}
+        message={
+          toast?.action === 'removed'
+            ? '좋아요 표시한 코스에서 삭제되었습니다'
+            : '좋아요 표시한 코스에 추가되었습니다'
+        }
+        actionLabel={toast?.action === 'added' ? '변경' : undefined}
+        onAction={
+          toast?.action === 'added'
+            ? () => {
+                setToast(null);
+                navigate('/scrap');
+              }
+            : undefined
+        }
       />
     </>
   );

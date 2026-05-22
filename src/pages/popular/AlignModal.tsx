@@ -73,9 +73,9 @@ export default function AlignModal({
                       type="button"
                       onClick={() => {
                         onChange(opt.key);
-                        onClose();
+                        setTimeout(onClose, 350);
                       }}
-                      className={`flex h-[47px] w-full items-center justify-between p-[10px] ${
+                      className={`flex h-[47px] w-full items-center justify-between p-[10px] transition-colors active:bg-gray-100 ${
                         isLast ? '' : 'border-b border-gray-400'
                       }`}
                     >

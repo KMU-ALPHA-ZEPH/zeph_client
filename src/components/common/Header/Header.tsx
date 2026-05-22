@@ -4,10 +4,11 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { BackIcon } from '@/components/common/Icon/BackIcon';
 import { MenuIcon } from '@/components/common/Icon/MenuIcon';
 import MagnifyingGlassIcon from '@/assets/icons/magnifying-glass.svg?react';
+import ProfileIcon from '@/assets/icons/profile_avatar.svg?react';
 import SearchBar from '@/components/SearchBar';
 import { textStyles } from '@/styles/tokens';
 
-export type HeaderVariant = 'title' | 'back' | 'search';
+export type HeaderVariant = 'title' | 'back' | 'search' | 'profile' | 'add';
 
 interface HeaderProps {
   variant?: HeaderVariant;
@@ -15,6 +16,8 @@ interface HeaderProps {
   onBack?: () => void;
   onMenuClick?: () => void;
   onSearchClick?: () => void;
+  onProfileClick?: () => void;
+  onAddClick?: () => void;
   searchValue?: string;
   onSearchValueChange?: (v: string) => void;
 }
@@ -25,6 +28,8 @@ export default function Header({
   onBack,
   onMenuClick,
   onSearchClick,
+  onProfileClick,
+  onAddClick,
   searchValue: searchValueProp,
   onSearchValueChange,
 }: HeaderProps) {
@@ -50,6 +55,42 @@ export default function Header({
         {title && (
           <h1 className={`${textStyles['heading-h2']} text-black`}>{title}</h1>
         )}
+      </header>
+    );
+  }
+
+  if (variant === 'add') {
+    return (
+      <header className="flex h-[60px] w-full items-center justify-between px-[25px]">
+        {title && (
+          <h1 className={`${textStyles['heading-h1']} text-black`}>{title}</h1>
+        )}
+        <button
+          type="button"
+          aria-label="메뉴"
+          onClick={onAddClick}
+          className="grid h-6 w-6 place-items-center text-primary"
+        >
+          <MenuIcon />
+        </button>
+      </header>
+    );
+  }
+
+  if (variant === 'profile') {
+    return (
+      <header className="flex h-[60px] w-full items-center justify-between px-[25px]">
+        {title && (
+          <h1 className={`${textStyles['heading-h1']} text-black`}>{title}</h1>
+        )}
+        <button
+          type="button"
+          aria-label="프로필"
+          onClick={onProfileClick}
+          className="grid h-8 w-8 place-items-center"
+        >
+          <ProfileIcon className="size-full" />
+        </button>
       </header>
     );
   }
