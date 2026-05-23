@@ -4,50 +4,14 @@ import { BackIcon } from '@/components/common/Icon/BackIcon';
 import ZephIcon from '@/assets/icons/zeph.svg?react';
 import HeartIcon from '@/assets/icons/mynaui_heart-solid.svg?react';
 import TabBarLayout from '@/components/layout/TabBarLayout';
-import ScrapCourseThumb, {
-  type ScrapCourseItem,
-} from '@/pages/scrap/ScrapCourseThumb';
+import ScrapCourseThumb from '@/pages/scrap/ScrapCourseThumb';
 import EditCategoryModal from '@/pages/scrap/EditCategoryModal';
 import ConfirmModal from '@/components/common/ConfirmModal';
 import { isPinned as readIsPinned, togglePinned } from '@/pages/scrap/pinned';
 import { setOverride } from '@/pages/scrap/overrides';
+import { getCategory, SCRAP_CATEGORIES } from '@/pages/scrap/data';
 
-type ScrapCategoryDetail = {
-  id: string;
-  title: string;
-  description: string;
-  imageUrl?: string;
-  iconType?: 'heart';
-  courses: ScrapCourseItem[];
-};
-
-const SAMPLE: Record<string, ScrapCategoryDetail> = {
-  default: {
-    id: 'default',
-    title: '산책',
-    description: '완만한 경사도, 공원 위주로\n우하하하핳하하하하 최대 두줄임',
-    courses: Array.from({ length: 9 }, (_, i) => ({
-      id: `c-${i}`,
-      name: '뚝섬 한강 공원',
-      date: '2025.06.31',
-      region: '서울시\n광진구 광장동',
-      isBookmarked: true,
-    })),
-  },
-  liked: {
-    id: 'liked',
-    title: '좋아요 표시한 코스',
-    description: '',
-    iconType: 'heart',
-    courses: Array.from({ length: 6 }, (_, i) => ({
-      id: `liked-${i}`,
-      name: '뚝섬 한강 공원',
-      date: '2025.06.31',
-      region: '서울시\n광진구 광장동',
-      isBookmarked: true,
-    })),
-  },
-};
+const FALLBACK = SCRAP_CATEGORIES[1];
 
 type NavState = {
   title?: string;
@@ -61,12 +25,12 @@ export default function ScrapDetailPage() {
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
   const navState = (location.state ?? {}) as NavState;
-  const categoryId = id ?? 'default';
-  const sample = SAMPLE[categoryId] ?? SAMPLE.default;
+  const categoryId = id ?? FALLBACK.id;
+  const sample = getCategory(categoryId) ?? FALLBACK;
 
   const [title, setTitle] = useState(navState.title ?? sample.title);
   const [description, setDescription] = useState(
-    navState.description ?? sample.description,
+    navState.description ?? sample.description ?? '',
   );
   const [imageUrl, setImageUrl] = useState<string | undefined>(
     navState.imageUrl ?? sample.imageUrl,

@@ -297,28 +297,28 @@ export default function FilterPage() {
   const radiusPercent = ((radius - 1) / 9) * 100;
 
   return (
-    <div className="flex flex-col gap-[51px] py-[14.5px] pb-12">
-      <section className="flex flex-col gap-[17px]">
-        <div className="flex flex-col gap-[11px]">
-          <h2 className="text-[15px] font-semibold text-text-primary">
+    <div className="flex flex-col gap-8 py-4 pb-12">
+      <section className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3">
+          <h2 className="text-body-md font-semibold text-text-primary">
             지역 검색
           </h2>
           <div className="flex items-center justify-between gap-3">
             <button
               type="button"
               onClick={handleMyLocation}
-              className="flex h-[35px] flex-1 items-center justify-center gap-[5px] rounded-[5px] bg-black text-white"
+              className="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-[5px] bg-black text-white"
             >
               <MyLocationIcon className="size-[15px]" />
-              <span className="text-[13px] font-semibold">내 위치</span>
+              <span className="text-body-sm font-semibold">내 위치</span>
             </button>
             <button
               type="button"
               onClick={() => setSearchOpen((v) => !v)}
-              className="flex h-[35px] flex-1 items-center justify-center gap-[5px] rounded-[5px] bg-black text-white"
+              className="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-[5px] bg-black text-white"
             >
               <GroupIcon className="size-[15px]" />
-              <span className="text-[13px] font-semibold">지역검색</span>
+              <span className="text-body-sm font-semibold">지역검색</span>
             </button>
           </div>
 
@@ -330,16 +330,16 @@ export default function FilterPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="시/구/동 검색 (예: 성동구)"
-                className="h-9 w-full rounded-[5px] border border-gray-400 px-3 text-[13px] text-text-primary outline-none focus:border-primary"
+                className="h-9 w-full rounded-[5px] border border-gray-400 px-3 text-body-sm text-text-primary outline-none focus:border-primary"
               />
               {searchQuery.trim() && (
                 <ul className="flex max-h-[200px] flex-col gap-1 overflow-y-auto rounded-[5px] border border-gray-400 p-2">
                   {searching ? (
-                    <li className="px-2 py-1.5 text-[13px] text-gray-500">
+                    <li className="px-2 py-1.5 text-body-sm text-gray-500">
                       검색 중...
                     </li>
                   ) : searchResults.length === 0 ? (
-                    <li className="px-2 py-1.5 text-[13px] text-gray-500">
+                    <li className="px-2 py-1.5 text-body-sm text-gray-500">
                       검색 결과가 없습니다
                     </li>
                   ) : (
@@ -352,7 +352,7 @@ export default function FilterPage() {
                             setSearchOpen(false);
                             setSearchQuery('');
                           }}
-                          className="block w-full rounded px-2 py-1.5 text-left text-[13px] font-medium text-text-primary hover:bg-gray-100"
+                          className="block w-full rounded px-2 py-1.5 text-left text-body-sm font-medium text-text-primary hover:bg-gray-100"
                         >
                           {r.name}
                         </button>
@@ -366,11 +366,11 @@ export default function FilterPage() {
         </div>
       </section>
 
-      <section className="flex flex-col gap-[7px]">
-        <h2 className="text-[15px] font-semibold text-text-primary">
+      <section className="flex flex-col gap-2">
+        <h2 className="text-body-md font-semibold text-text-primary">
           선택된 지역
         </h2>
-        <p className="text-[11px] font-semibold text-gray-500">
+        <p className="text-caption font-semibold text-gray-500">
           1개의 지역만 선택 가능합니다
         </p>
         {region ? (
@@ -383,12 +383,12 @@ export default function FilterPage() {
             >
               <MinusIcon className="size-4" />
             </button>
-            <p className="text-[13px] font-medium text-text-primary">
+            <p className="text-body-sm font-medium text-text-primary">
               {region.name}
             </p>
           </div>
         ) : (
-          <p className="text-[13px] text-gray-500">
+          <p className="text-body-sm text-gray-500">
             지역이 선택되지 않았습니다
           </p>
         )}
@@ -399,14 +399,14 @@ export default function FilterPage() {
             onChange={(e) => setRoundTrip(e.target.checked)}
             className="size-[14px] accent-primary"
           />
-          <span className="text-[11px] font-medium text-text-secondary">
+          <span className="text-caption font-medium text-text-secondary">
             왕복 코스만 보기
           </span>
         </label>
       </section>
 
-      <section className="flex flex-col gap-[14px]">
-        <h2 className="text-[15px] font-semibold text-text-primary">
+      <section className="flex flex-col gap-3">
+        <h2 className="text-body-md font-semibold text-text-primary">
           반경 설정 ({radius}km)
         </h2>
         <div className="relative h-[18px]">
@@ -426,7 +426,7 @@ export default function FilterPage() {
             className="absolute inset-0 w-full cursor-pointer appearance-none bg-transparent [&::-moz-range-thumb]:size-[18px] [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border [&::-moz-range-thumb]:border-primary [&::-moz-range-thumb]:bg-surface-white [&::-webkit-slider-thumb]:size-[18px] [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border [&::-webkit-slider-thumb]:border-primary [&::-webkit-slider-thumb]:bg-surface-white"
           />
         </div>
-        <div className="flex items-center justify-between text-[10px] font-semibold text-gray-500">
+        <div className="flex items-center justify-between text-footnote font-semibold text-gray-500">
           <span>1 km</span>
           <span>4 km</span>
           <span>7 km</span>
@@ -434,13 +434,13 @@ export default function FilterPage() {
         </div>
       </section>
 
-      <section className="flex flex-col gap-[14px]">
-        <h2 className="text-[15px] font-semibold text-text-primary">
+      <section className="flex flex-col gap-3">
+        <h2 className="text-body-md font-semibold text-text-primary">
           이용한 지역
         </h2>
-        <ul className="flex flex-col gap-[14px]">
+        <ul className="flex flex-col gap-3">
           {displayedRecent.length === 0 ? (
-            <li className="text-[13px] text-gray-500">
+            <li className="text-body-sm text-gray-500">
               최근 이용한 지역이 없습니다
             </li>
           ) : (
@@ -454,7 +454,7 @@ export default function FilterPage() {
                 >
                   <PlusIcon className="size-5" />
                 </button>
-                <p className="text-[13px] font-medium text-text-primary">
+                <p className="text-body-sm font-medium text-text-primary">
                   {r.name}
                 </p>
               </li>
@@ -463,11 +463,11 @@ export default function FilterPage() {
         </ul>
       </section>
 
-      <section className="flex flex-col gap-[14px]">
-        <h2 className="text-[15px] font-semibold text-text-primary">거리</h2>
-        <div className="flex flex-col gap-[14px]">
+      <section className="flex flex-col gap-3">
+        <h2 className="text-body-md font-semibold text-text-primary">거리</h2>
+        <div className="flex flex-col gap-3">
           <div className="flex flex-col gap-1.5">
-            <label className="text-body-medium text-text-primary">최소</label>
+            <label className="text-body-md text-text-primary">최소</label>
             <div className="relative">
               <InputBox
                 type="text"
@@ -485,7 +485,7 @@ export default function FilterPage() {
             </div>
           </div>
           <div className="flex flex-col gap-1.5">
-            <label className="text-body-medium text-text-primary">최대</label>
+            <label className="text-body-md text-text-primary">최대</label>
             <div className="relative">
               <InputBox
                 type="text"
