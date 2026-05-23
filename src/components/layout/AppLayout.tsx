@@ -21,7 +21,7 @@ export default function AppLayout({
   onAddClick,
 }: AppLayoutProps) {
   return (
-    <div className="mx-auto flex min-h-[100dvh] w-full max-w-[390px] flex-col break-keep bg-surface-white">
+    <div className="mx-auto flex min-h-[100dvh] w-full max-w-[390px] flex-col break-keep bg-surface-white pt-[env(safe-area-inset-top)]">
       <Header
         variant={headerVariant}
         title={title}
