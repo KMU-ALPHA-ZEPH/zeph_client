@@ -1,10 +1,8 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import ZephIcon from '@/assets/icons/zeph.svg?react';
-import { Icon } from '@/components/common/Icon';
 
-const NEXT_PATH = '/start';
-const SPLASH_DURATION_MS = 1000;
+const NEXT_PATH = '/course/main';
+const SPLASH_DURATION_MS = 1200;
 
 export default function SplashPage() {
   const navigate = useNavigate();
@@ -17,8 +15,6 @@ export default function SplashPage() {
   }, [navigate]);
 
   return (
-    <div className="flex h-screen w-screen items-center justify-center bg-primary">
-      <Icon as={ZephIcon} size="lg" />
-    </div>
+    <div className="relative mx-auto h-screen w-full max-w-md overflow-hidden bg-primary" />
   );
 }
