@@ -20,6 +20,9 @@ import CoursePrefPage from '@/pages/course/CoursePrefPage';
 import CourseAIPage from '@/pages/course/CourseAIPage';
 import CourseLoadingPage from '@/pages/course/CourseLoadingPage';
 import CourseDetailPage from '@/pages/course/CourseDetailPage';
+import TrackingStart from '@/pages/tracking/TrackingStart';
+import TrackingActive from '@/pages/tracking/TrackingActive';
+import TrackingDone from '@/pages/tracking/TrackingDone';
 
 const queryClient = new QueryClient();
 
@@ -30,14 +33,16 @@ export default function App() {
         <Route element={<EmptyLayout />}>
           <Route path="/" element={<Navigate to="/start" replace />} />
           <Route path="/splash" element={<SplashPage />} />
-          <Route path="/start" element={<StartPage />} />
+          <Route path="/start" element={<StartPage />} />s
           <Route path="/login" element={<LoginPage />} />
           <Route path="/course/main" element={<CourseMainPage />} />
           <Route path="/course/main/step04" element={<CourseLoadingPage />} />
           <Route path="/filter" element={<FilterPage />} />
           <Route path="course/loading" element={<CourseLoadingPage />} />
           <Route path="/course/detail" element={<CourseDetailPage />} />
-          {/*<Route path="/tracking/start" element={<CourseDetailPage />} />*/}
+          <Route path="/tracking/start" element={<TrackingStart />} />
+          <Route path="/tracking/active" element={<TrackingActive />} />
+          <Route path="/tracking/done" element={<TrackingDone />} />
         </Route>
 
         <Route

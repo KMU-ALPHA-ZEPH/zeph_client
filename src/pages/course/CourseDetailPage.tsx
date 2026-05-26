@@ -6,6 +6,7 @@ import { Button } from '@/components/common/Button';
 import { textStyles } from '@/styles/tokens';
 import BookmarkIcon from '@/assets/icons/circum_bookmark.svg?react';
 import BookmarkFilledIcon from '@/assets/icons/circum_bookmark_filled.svg?react';
+import { useSaveToScrap, todayString } from '@/hooks/useSaveToScrap';
 
 type CourseInfo = {
   id: string;
@@ -128,6 +129,9 @@ export default function CourseDetailPage() {
   const [bookmarked, setBookmarked] = useState<boolean[]>(() =>
     COURSES.map(() => false),
   );
+  const { requestSave, saveToScrapElement } = useSaveToScrap(() =>
+    setBookmarked((prev) => prev.map((v, i) => (i === pageIndex ? true : v))),
+  );
 
   const course = COURSES[pageIndex];
   const isBookmarked = bookmarked[pageIndex];
@@ -141,7 +145,17 @@ export default function CourseDetailPage() {
   };
 
   const toggleBookmark = () => {
-    setBookmarked((prev) => prev.map((v, i) => (i === pageIndex ? !v : v)));
+    if (isBookmarked) {
+      setBookmarked((prev) =>
+        prev.map((v, i) => (i === pageIndex ? false : v)),
+      );
+      return;
+    }
+    requestSave({
+      id: course.id,
+      name: course.title,
+      date: todayString(),
+    });
   };
 
   return (
@@ -276,6 +290,8 @@ export default function CourseDetailPage() {
           </motion.button>
         )}
       </AnimatePresence>
+
+      {saveToScrapElement}
     </motion.div>
   );
 }
@@ -350,7 +366,7 @@ function InfoRow({
       <div className="flex items-center gap-1">
         <PinIcon className="size-4 text-primary" />
         <span className={`${textStyles['body-small-med']} text-text-primary`}>
-          현재 위치
+          시작 위치
         </span>
         <span className={`${textStyles['body-small']} text-[#667080]`}>
           {location}

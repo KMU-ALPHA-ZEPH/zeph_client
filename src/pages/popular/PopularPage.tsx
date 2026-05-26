@@ -9,7 +9,7 @@ import AlignModal, {
   ALIGN_OPTIONS,
   type AlignKey,
 } from '@/pages/popular/AlignModal';
-import BookmarkToast from '@/pages/popular/BookmarkToast';
+import { useSaveToScrap, todayString } from '@/hooks/useSaveToScrap';
 import { readFilter, readUserLocation } from '@/pages/popular/FilterPage';
 
 type SampleCourse = Course & { id: string; tab: PopularWayTab };
@@ -192,10 +192,14 @@ export default function PopularPage() {
   const [alignValue, setAlignValue] = useState<AlignKey>('popular');
   const [isAlignOpen, setIsAlignOpen] = useState(false);
   const [courses, setCourses] = useState(initialCourses);
-  const [toast, setToast] = useState<{
-    id: string;
-    action: 'added' | 'removed';
-  } | null>(null);
+  const { requestSave, saveToScrapElement } = useSaveToScrap(
+    (_cat, _title, course) =>
+      setCourses((prev) =>
+        prev.map((c) =>
+          c.id === course.id ? { ...c, isBookmarked: true } : c,
+        ),
+      ),
+  );
   const [filter, setFilter] = useState(() => readFilter());
   const lastScrollY = useRef(0);
 
@@ -245,12 +249,19 @@ export default function PopularPage() {
   const toggleBookmark = (id: string) => {
     const target = courses.find((c) => c.id === id);
     if (!target) return;
-    setCourses((prev) =>
-      prev.map((c) =>
-        c.id === id ? { ...c, isBookmarked: !c.isBookmarked } : c,
-      ),
-    );
-    setToast({ id, action: target.isBookmarked ? 'removed' : 'added' });
+    if (target.isBookmarked) {
+      setCourses((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, isBookmarked: false } : c)),
+      );
+      return;
+    }
+    requestSave({
+      id: target.id,
+      name: target.description,
+      date: todayString(),
+      region: `${target.city}\n${target.district}`,
+      imageUrl: target.imageUrl,
+    });
   };
   const compactRef = useRef(false);
   const lastToggleAt = useRef(0);
@@ -335,24 +346,7 @@ export default function PopularPage() {
         onChange={setAlignValue}
       />
 
-      <BookmarkToast
-        isOpen={toast !== null}
-        onClose={() => setToast(null)}
-        message={
-          toast?.action === 'removed'
-            ? '좋아요 표시한 코스에서 삭제되었습니다'
-            : '좋아요 표시한 코스에 추가되었습니다'
-        }
-        actionLabel={toast?.action === 'added' ? '변경' : undefined}
-        onAction={
-          toast?.action === 'added'
-            ? () => {
-                setToast(null);
-                navigate('/scrap');
-              }
-            : undefined
-        }
-      />
+      {saveToScrapElement}
     </>
   );
 }
