@@ -16,6 +16,7 @@ import CoursePrefPage from '@/pages/course/CoursePrefPage';
 import CourseAIPage from '@/pages/course/CourseAIPage';
 import CourseLoadingPage from '@/pages/course/CourseLoadingPage';
 import CourseDetailPage from '@/pages/course/CourseDetailPage';
+import TrackingStart from '@/pages/tracking/TrackingStart';
 
 const queryClient = new QueryClient();
 
@@ -34,7 +35,9 @@ export default function App() {
           <Route path="/filter" element={<FilterPage />} />
           <Route path="course/loading" element={<CourseLoadingPage />} />
           <Route path="/course/detail" element={<CourseDetailPage />} />
-          {/*<Route path="/tracking/start" element={<CourseDetailPage />} />*/}
+          <Route path="/tracking/start" element={<TrackingStart />} />
+          {/*<Route path="/tracking/active" element={<TrackingActive />} />*/}
+          {/*<Route path="/tracking/done" element={<TrackingDone />} />*/}
         </Route>
 
         {/* 헤더 있는 레이아웃 */}
