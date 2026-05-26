@@ -1,1 +1,10 @@
-if(!self.define){let e,s={};const n=(n,i)=>(n=new URL(n+".js",i).href,s[n]||new Promise(s=>{if("document"in self){const e=document.createElement("script");e.src=n,e.onload=s,document.head.appendChild(e)}else e=n,importScripts(n),s()}).then(()=>{let e=s[n];if(!e)throw new Error(`Module ${n} didn’t register its module`);return e}));self.define=(i,r)=>{const t=e||("document"in self?document.currentScript.src:"")||location.href;if(s[t])return;let o={};const l=e=>n(e,t),u={module:{uri:t},exports:o,require:l};s[t]=Promise.all(i.map(e=>u[e]||l(e))).then(e=>(r(...e),o))}}define(["./workbox-020e1147"],function(e){"use strict";self.skipWaiting(),e.clientsClaim(),e.precacheAndRoute([{url:"assets/backgroundImage-CRvZF3eK.png",revision:null},{url:"assets/index-CbJ7UvCR.css",revision:null},{url:"assets/index-CF_lY87f.js",revision:null},{url:"index.html",revision:"7ddfd9e3b3f559b033f844437b58523e"},{url:"registerSW.js",revision:"1872c500de691dce40960bb85481de07"},{url:"manifest.webmanifest",revision:"b8380cc3b4cff7e91525750ef92504f7"}],{}),e.cleanupOutdatedCaches(),e.registerRoute(new e.NavigationRoute(e.createHandlerBoundToURL("index.html"))),e.registerRoute(/.*\.(?:png|jpg|jpeg|svg|gif|webp)$/,new e.StaleWhileRevalidate({cacheName:"images",plugins:[new e.ExpirationPlugin({maxEntries:100})]}),"GET")});
+// 완전히 서비스워커 제거 (가장 강력한 죽이기 코드)
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', async () => {
+  // 자기 자신을 unregister
+  await self.registration.unregister();
+
+  // 모든 클라이언트에게 페이지 새로고침 강제
+  const clients = await self.clients.matchAll();
+  clients.forEach((client) => client.navigate(client.url));
+});
