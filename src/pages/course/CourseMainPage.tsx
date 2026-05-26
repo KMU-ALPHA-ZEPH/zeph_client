@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import TabBar, { type TabBarKey } from '@/components/common/TabBar';
+import TabBarLayout from '@/components/layout/TabBarLayout';
 import {
   useKakaoMaps,
   type KakaoMap,
@@ -17,7 +17,6 @@ const DEFAULT_LEVEL = 4;
 
 export default function CourseMainPage() {
   const navigate = useNavigate();
-  const [activeBottomTab, setActiveBottomTab] = useState<TabBarKey>('create');
   const [searchValue, setSearchValue] = useState('');
   const [selectedPlace, setSelectedPlace] = useState<KakaoPlace | null>(null);
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
@@ -137,14 +136,7 @@ export default function CourseMainPage() {
         나만의 코스 생성하기
       </Button>
 
-      <div className="absolute inset-x-0 bottom-0 z-20">
-        <div className="mx-auto w-full max-w-[390px]">
-          <TabBar
-            activeTab={activeBottomTab}
-            onTabChange={setActiveBottomTab}
-          />
-        </div>
-      </div>
+      <TabBarLayout activeTab="course" showGradient={false} />
     </div>
   );
 }

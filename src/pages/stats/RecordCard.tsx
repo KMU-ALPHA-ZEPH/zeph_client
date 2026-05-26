@@ -36,7 +36,7 @@ export default function RecordCard({ data, onClick }: Props) {
             <ZephIcon className="h-full w-full" />
           )}
         </div>
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col">
           <p className="text-body-md text-text-primary">{courseName}</p>
           <p className="text-body-sm text-text-secondary">
             {formatRecordDate(dateObj)}

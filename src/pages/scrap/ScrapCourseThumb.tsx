@@ -25,7 +25,7 @@ export default function ScrapCourseThumb({
     <div
       role={onClick ? 'button' : undefined}
       onClick={onClick}
-      className="flex h-[186px] w-[108px] flex-col gap-1 text-left"
+      className="flex h-[184px] w-[108px] flex-col gap-1 text-left"
     >
       <div className="relative h-[130px] w-[108px] overflow-hidden rounded-[5px] bg-gray-300">
         {imageUrl ? (
@@ -79,7 +79,7 @@ export default function ScrapCourseThumb({
         )}
       </div>
       <p className="text-body-md text-text-primary">{name}</p>
-      <p className="text-[10px] text-gray-500">{date}</p>
+      <p className="-mt-1 text-[10px] text-gray-500">{date}</p>
     </div>
   );
 }

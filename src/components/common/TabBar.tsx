@@ -6,10 +6,10 @@ import BookmarkFilledIcon from '@/assets/icons/circum_bookmark_filled.svg?react'
 import FireIcon from '@/assets/icons/fluent_fire-20-filled.svg?react';
 import BarChartIcon from '@/assets/icons/bar-chart.svg?react';
 
-export type TabBarKey = 'create' | 'scrap' | 'popular' | 'stats';
+export type TabBarKey = 'course' | 'scrap' | 'popular' | 'stats';
 
 export const TABBAR_ROUTES: Record<TabBarKey, string> = {
-  create: '/create',
+  course: '/course/main',
   scrap: '/scrap',
   popular: '/popular-page',
   stats: '/stats',
@@ -31,7 +31,7 @@ const TABS: {
   Icon: IconComponent;
   ActiveIcon?: IconComponent;
 }[] = [
-  { key: 'create', label: '코스 생성', Icon: RouteIcon },
+  { key: 'course', label: '코스 생성', Icon: RouteIcon },
   {
     key: 'scrap',
     label: '스크랩',

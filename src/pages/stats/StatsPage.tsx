@@ -359,7 +359,7 @@ export default function StatsPage() {
   const recentRecords = RECENT_RECORDS[category];
 
   return (
-    <div className="flex flex-col gap-4 pt-6">
+    <div className="flex flex-col gap-2 pt-3">
       <TabSelector
         tabs={STATS_TABS}
         activeKey={category}
