@@ -9,18 +9,8 @@ import AlignModal, {
   ALIGN_OPTIONS,
   type AlignKey,
 } from '@/pages/popular/AlignModal';
-import SaveToScrapModal from '@/pages/popular/SaveToScrapModal';
-import BookmarkToast from '@/pages/popular/BookmarkToast';
-import BookmarkFilledIcon from '@/assets/icons/circum_bookmark_filled.svg?react';
-import { addSavedCourse } from '@/pages/scrap/savedCourses';
+import { useSaveToScrap, todayString } from '@/hooks/useSaveToScrap';
 import { readFilter, readUserLocation } from '@/pages/popular/FilterPage';
-
-const formatToday = () => {
-  const d = new Date();
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
-  return `${d.getFullYear()}.${mm}.${dd}`;
-};
 
 type SampleCourse = Course & { id: string; tab: PopularWayTab };
 
@@ -202,10 +192,14 @@ export default function PopularPage() {
   const [alignValue, setAlignValue] = useState<AlignKey>('popular');
   const [isAlignOpen, setIsAlignOpen] = useState(false);
   const [courses, setCourses] = useState(initialCourses);
-  const [saveTargetId, setSaveTargetId] = useState<string | null>(null);
-  const [savedToast, setSavedToast] = useState<{
-    categoryTitle: string;
-  } | null>(null);
+  const { requestSave, saveToScrapElement } = useSaveToScrap(
+    (_cat, _title, course) =>
+      setCourses((prev) =>
+        prev.map((c) =>
+          c.id === course.id ? { ...c, isBookmarked: true } : c,
+        ),
+      ),
+  );
   const [filter, setFilter] = useState(() => readFilter());
   const lastScrollY = useRef(0);
 
@@ -261,30 +255,13 @@ export default function PopularPage() {
       );
       return;
     }
-    setSaveTargetId(id);
-  };
-
-  const handleSaveSelect = (categoryId: string, categoryTitle: string) => {
-    const target = saveTargetId
-      ? courses.find((c) => c.id === saveTargetId)
-      : undefined;
-    if (target) {
-      addSavedCourse(categoryId, {
-        id: `${target.id}-${categoryId}`,
-        name: target.description,
-        date: formatToday(),
-        region: `${target.city}\n${target.district}`,
-        imageUrl: target.imageUrl,
-        isBookmarked: true,
-      });
-      setCourses((prev) =>
-        prev.map((c) =>
-          c.id === target.id ? { ...c, isBookmarked: true } : c,
-        ),
-      );
-      setSavedToast({ categoryTitle });
-    }
-    setSaveTargetId(null);
+    requestSave({
+      id: target.id,
+      name: target.description,
+      date: todayString(),
+      region: `${target.city}\n${target.district}`,
+      imageUrl: target.imageUrl,
+    });
   };
   const compactRef = useRef(false);
   const lastToggleAt = useRef(0);
@@ -369,18 +346,7 @@ export default function PopularPage() {
         onChange={setAlignValue}
       />
 
-      <SaveToScrapModal
-        isOpen={saveTargetId !== null}
-        onClose={() => setSaveTargetId(null)}
-        onSelect={handleSaveSelect}
-      />
-
-      <BookmarkToast
-        isOpen={savedToast !== null}
-        onClose={() => setSavedToast(null)}
-        message={`${savedToast?.categoryTitle ?? ''}에 저장되었습니다`}
-        icon={<BookmarkFilledIcon className="text-primary" />}
-      />
+      {saveToScrapElement}
     </>
   );
 }

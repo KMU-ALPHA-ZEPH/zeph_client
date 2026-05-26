@@ -1,12 +1,14 @@
 import { useState } from 'react';
-import { HeartIcon } from '@/components/common/Icon/HeartIcon';
-import { BookmarkIcon } from '@/components/common/Icon/BookmarkIcon';
+import HeartSolidIcon from '@/assets/icons/mynaui_heart-solid.svg?react';
+import BookmarkIcon from '@/assets/icons/circum_bookmark.svg?react';
+import BookmarkFilledIcon from '@/assets/icons/circum_bookmark_filled.svg?react';
 import { ShareIcon } from '@/components/common/Icon/ShareIcon';
 import { ArrowRightIcon } from '@/components/common/Icon/ArrowRightIcon';
 import { textStyles } from '@/styles/tokens';
 import { MemoInput } from './components/MemoInput';
 import { useNavigate } from 'react-router-dom';
 import BookmarkToast from '@/pages/popular/BookmarkToast';
+import { useSaveToScrap, todayString } from '@/hooks/useSaveToScrap';
 
 function Stat({
   value,
@@ -43,6 +45,21 @@ export default function TrackingDone() {
   const [memo, setMemo] = useState('');
   const [showLikeToast, setShowLikeToast] = useState(false);
   const navigate = useNavigate();
+  const { requestSave, saveToScrapElement } = useSaveToScrap(() =>
+    setSaved(true),
+  );
+
+  const toggleSave = () => {
+    if (saved) {
+      setSaved(false);
+      return;
+    }
+    requestSave({
+      id: 'tracking-ttukseom',
+      name: '뚝섬 한강 공원',
+      date: todayString(),
+    });
+  };
 
   return (
     <div className="relative h-dvh w-full overflow-hidden bg-surface-white">
@@ -69,18 +86,24 @@ export default function TrackingDone() {
                   setLiked(next);
                   if (next) setShowLikeToast(true);
                 }}
-                className={`block size-[22px] transition-colors ${liked ? 'text-status-error' : 'text-gray-300'}`}
+                className="block size-[22px]"
               >
-                <HeartIcon />
+                <HeartSolidIcon
+                  className={`size-full transition ${liked ? '' : 'opacity-50 grayscale'}`}
+                />
               </button>
               <button
                 type="button"
                 aria-label="저장"
                 aria-pressed={saved}
-                onClick={() => setSaved((prev) => !prev)}
+                onClick={toggleSave}
                 className={`block size-[22px] transition-colors ${saved ? 'text-primary' : 'text-gray-300'}`}
               >
-                <BookmarkIcon />
+                {saved ? (
+                  <BookmarkFilledIcon className="size-full" />
+                ) : (
+                  <BookmarkIcon className="size-full" />
+                )}
               </button>
             </div>
           </div>
@@ -138,6 +161,8 @@ export default function TrackingDone() {
         isOpen={showLikeToast}
         onClose={() => setShowLikeToast(false)}
       />
+
+      {saveToScrapElement}
     </div>
   );
 }
