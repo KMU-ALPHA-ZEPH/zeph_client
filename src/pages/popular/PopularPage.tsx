@@ -10,7 +10,6 @@ import AlignModal, {
   type AlignKey,
 } from '@/pages/popular/AlignModal';
 import BookmarkToast from '@/pages/popular/BookmarkToast';
-import SaveToScrapModal from '@/pages/popular/SaveToScrapModal';
 import { readFilter, readUserLocation } from '@/pages/popular/FilterPage';
 
 type SampleCourse = Course & { id: string; tab: PopularWayTab };
@@ -196,9 +195,7 @@ export default function PopularPage() {
   const [toast, setToast] = useState<{
     id: string;
     action: 'added' | 'removed';
-    categoryTitle?: string;
   } | null>(null);
-  const [pendingSaveId, setPendingSaveId] = useState<string | null>(null);
   const [filter, setFilter] = useState(() => readFilter());
   const lastScrollY = useRef(0);
 
@@ -245,28 +242,15 @@ export default function PopularPage() {
     return (a.rank ?? 0) - (b.rank ?? 0);
   });
 
-  const handleBookmarkClick = (id: string) => {
+  const toggleBookmark = (id: string) => {
     const target = courses.find((c) => c.id === id);
     if (!target) return;
-    if (target.isBookmarked) {
-      setCourses((prev) =>
-        prev.map((c) => (c.id === id ? { ...c, isBookmarked: false } : c)),
-      );
-      setToast({ id, action: 'removed' });
-      return;
-    }
-    setPendingSaveId(id);
-  };
-
-  const handleSelectScrapTarget = (categoryTitle: string) => {
-    if (!pendingSaveId) return;
     setCourses((prev) =>
       prev.map((c) =>
-        c.id === pendingSaveId ? { ...c, isBookmarked: true } : c,
+        c.id === id ? { ...c, isBookmarked: !c.isBookmarked } : c,
       ),
     );
-    setToast({ id: pendingSaveId, action: 'added', categoryTitle });
-    setPendingSaveId(null);
+    setToast({ id, action: target.isBookmarked ? 'removed' : 'added' });
   };
   const compactRef = useRef(false);
   const lastToggleAt = useRef(0);
@@ -336,7 +320,7 @@ export default function PopularPage() {
           <li key={course.id}>
             <CourseCard
               course={course}
-              onBookmarkToggle={() => handleBookmarkClick(course.id)}
+              onBookmarkToggle={() => toggleBookmark(course.id)}
             />
           </li>
         ))}
@@ -351,19 +335,13 @@ export default function PopularPage() {
         onChange={setAlignValue}
       />
 
-      <SaveToScrapModal
-        isOpen={pendingSaveId !== null}
-        onClose={() => setPendingSaveId(null)}
-        onSelect={(_, categoryTitle) => handleSelectScrapTarget(categoryTitle)}
-      />
-
       <BookmarkToast
         isOpen={toast !== null}
         onClose={() => setToast(null)}
         message={
           toast?.action === 'removed'
-            ? '스크랩이 해제되었습니다'
-            : `${toast?.categoryTitle ?? '스크랩'}에 추가되었습니다`
+            ? '좋아요 표시한 코스에서 삭제되었습니다'
+            : '좋아요 표시한 코스에 추가되었습니다'
         }
         actionLabel={toast?.action === 'added' ? '변경' : undefined}
         onAction={
