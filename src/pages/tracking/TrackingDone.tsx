@@ -94,7 +94,7 @@ export default function TrackingDone() {
               <button
                 type="button"
                 onClick={() => setShowMemo(true)}
-                className={`flex h-[76px] w-full items-center justify-center gap-1 rounded-[12px] border border-dashed border-gray-300 text-gray-500 ${textStyles['body-small-med']}`}
+                className={`flex h-[76px] w-full items-center justify-center gap-1 bg-gray-200 rounded-[12px] border border-dashed border-gray-300 text-gray-500 ${textStyles['body-small-med']}`}
               >
                 메모 추가하기
               </button>
