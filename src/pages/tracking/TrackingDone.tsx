@@ -6,6 +6,7 @@ import { ArrowRightIcon } from '@/components/common/Icon/ArrowRightIcon';
 import { textStyles } from '@/styles/tokens';
 import { MemoInput } from './components/MemoInput';
 import { useNavigate } from 'react-router-dom';
+import BookmarkToast from '@/pages/popular/BookmarkToast';
 
 function Stat({
   value,
@@ -40,6 +41,7 @@ export default function TrackingDone() {
   const [saved, setSaved] = useState(false);
   const [showMemo, setShowMemo] = useState(false);
   const [memo, setMemo] = useState('');
+  const [showLikeToast, setShowLikeToast] = useState(false);
   const navigate = useNavigate();
 
   return (
@@ -62,7 +64,11 @@ export default function TrackingDone() {
                 type="button"
                 aria-label="좋아요"
                 aria-pressed={liked}
-                onClick={() => setLiked((prev) => !prev)}
+                onClick={() => {
+                  const next = !liked;
+                  setLiked(next);
+                  if (next) setShowLikeToast(true);
+                }}
                 className={`block size-[22px] transition-colors ${liked ? 'text-status-error' : 'text-gray-300'}`}
               >
                 <HeartIcon />
@@ -127,6 +133,11 @@ export default function TrackingDone() {
           </button>
         </div>
       </div>
+
+      <BookmarkToast
+        isOpen={showLikeToast}
+        onClose={() => setShowLikeToast(false)}
+      />
     </div>
   );
 }

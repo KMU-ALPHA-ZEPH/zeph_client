@@ -4,6 +4,7 @@ import { PauseIcon } from '@/components/common/Icon/PauseIcon';
 import { PlayIcon } from '@/components/common/Icon/PlayIcon';
 import { GoEndIcon } from '@/components/common/Icon/GoEndIcon';
 import { textStyles } from '@/styles/tokens';
+import ConfirmModal from '@/components/common/ConfirmModal';
 
 function formatElapsed(totalSec: number) {
   const pad = (n: number) => String(n).padStart(2, '0');
@@ -43,6 +44,7 @@ export default function TrackingActive() {
   const navigate = useNavigate();
   const [elapsedSec, setElapsedSec] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [showEndModal, setShowEndModal] = useState(false);
 
   useEffect(() => {
     if (isPaused) return;
@@ -86,7 +88,7 @@ export default function TrackingActive() {
             <button
               type="button"
               aria-label="러닝 종료"
-              onClick={() => navigate('/tracking/done')}
+              onClick={() => setShowEndModal(true)}
               className="grid size-12 place-items-center rounded-[10px] bg-primary/70 text-white transition-transform active:scale-95"
             >
               <span className="block size-7">
@@ -96,6 +98,15 @@ export default function TrackingActive() {
           </div>
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={showEndModal}
+        onClose={() => setShowEndModal(false)}
+        title="러닝을 종료하시겠습니까?"
+        confirmLabel="확인"
+        cancelLabel="취소"
+        onConfirm={() => navigate('/tracking/done')}
+      />
     </div>
   );
 }
