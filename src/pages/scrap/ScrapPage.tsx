@@ -5,6 +5,7 @@ import ScrapCard, { type ScrapCardData } from '@/pages/scrap/ScrapCard';
 import EditCategoryModal from '@/pages/scrap/EditCategoryModal';
 import { readPinned } from '@/pages/scrap/pinned';
 import { readOverrides, type ScrapOverride } from '@/pages/scrap/overrides';
+import { readSavedCourses } from '@/pages/scrap/savedCourses';
 
 const INITIAL_CATEGORIES: ScrapCardData[] = [
   {
@@ -67,20 +68,24 @@ export default function ScrapPage() {
   const [overrides, setOverrides] = useState<Record<string, ScrapOverride>>(
     () => readOverrides(),
   );
+  const [saved, setSaved] = useState(() => readSavedCourses());
 
   useEffect(() => {
     setPinnedIds(readPinned());
     setOverrides(readOverrides());
+    setSaved(readSavedCourses());
   }, [location.key]);
 
   const sorted = useMemo(() => {
     const withPin = categories.map((c) => {
       const o = overrides[c.id];
+      const extra = saved[c.id]?.length ?? 0;
       return {
         ...c,
         title: o?.title ?? c.title,
         description: o?.description ?? c.description,
         imageUrl: o?.imageUrl ?? c.imageUrl,
+        count: c.count != null ? c.count + extra : c.count,
         isPinned: pinnedIds.includes(c.id),
       };
     });
@@ -89,7 +94,7 @@ export default function ScrapPage() {
       const bTop = b.iconType === 'heart' ? 2 : b.isPinned ? 1 : 0;
       return bTop - aTop;
     });
-  }, [categories, pinnedIds, overrides]);
+  }, [categories, pinnedIds, overrides, saved]);
 
   const filtered = useMemo(() => {
     if (!search.trim()) return sorted;

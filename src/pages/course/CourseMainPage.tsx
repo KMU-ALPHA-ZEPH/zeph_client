@@ -133,7 +133,7 @@ export default function CourseMainPage() {
           navigate('/course/main/step01', { state: { place: selectedPlace } })
         }
       >
-        나만의 코스 생성하기
+        {selectedPlace ? '나만의 코스 생성하기' : '시작 위치를 설정해주세요'}
       </Button>
 
       <TabBarLayout activeTab="course" showGradient={false} />

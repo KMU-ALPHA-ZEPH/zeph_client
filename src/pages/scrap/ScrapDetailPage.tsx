@@ -11,6 +11,7 @@ import EditCategoryModal from '@/pages/scrap/EditCategoryModal';
 import ConfirmModal from '@/components/common/ConfirmModal';
 import { isPinned as readIsPinned, togglePinned } from '@/pages/scrap/pinned';
 import { setOverride } from '@/pages/scrap/overrides';
+import { getSavedCourses } from '@/pages/scrap/savedCourses';
 
 type ScrapCategoryDetail = {
   id: string;
@@ -71,7 +72,10 @@ export default function ScrapDetailPage() {
   const [imageUrl, setImageUrl] = useState<string | undefined>(
     navState.imageUrl ?? sample.imageUrl,
   );
-  const [courses, setCourses] = useState(sample.courses);
+  const [courses, setCourses] = useState(() => [
+    ...getSavedCourses(categoryId),
+    ...sample.courses,
+  ]);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [pinned, setPinned] = useState(() => readIsPinned(categoryId));
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
