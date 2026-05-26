@@ -350,7 +350,7 @@ function InfoRow({
       <div className="flex items-center gap-1">
         <PinIcon className="size-4 text-primary" />
         <span className={`${textStyles['body-small-med']} text-text-primary`}>
-          현재 위치
+          시작 위치
         </span>
         <span className={`${textStyles['body-small']} text-[#667080]`}>
           {location}
