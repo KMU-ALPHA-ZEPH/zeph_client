@@ -9,8 +9,9 @@ import AlignModal, {
   ALIGN_OPTIONS,
   type AlignKey,
 } from '@/pages/popular/AlignModal';
+import { useSaveToScrap, todayString } from '@/hooks/useSaveToScrap';
 import BookmarkToast from '@/pages/popular/BookmarkToast';
-import SaveToScrapModal from '@/pages/popular/SaveToScrapModal';
+import BookmarkIcon from '@/assets/icons/circum_bookmark.svg?react';
 import { readFilter, readUserLocation } from '@/pages/popular/FilterPage';
 
 type SampleCourse = Course & { id: string; tab: PopularWayTab };
@@ -193,12 +194,15 @@ export default function PopularPage() {
   const [alignValue, setAlignValue] = useState<AlignKey>('popular');
   const [isAlignOpen, setIsAlignOpen] = useState(false);
   const [courses, setCourses] = useState(initialCourses);
-  const [toast, setToast] = useState<{
-    id: string;
-    action: 'added' | 'removed';
-    categoryTitle?: string;
-  } | null>(null);
-  const [pendingSaveId, setPendingSaveId] = useState<string | null>(null);
+  const { requestSave, saveToScrapElement } = useSaveToScrap(
+    (_cat, _title, course) =>
+      setCourses((prev) =>
+        prev.map((c) =>
+          c.id === course.id ? { ...c, isBookmarked: true } : c,
+        ),
+      ),
+  );
+  const [showRemoveToast, setShowRemoveToast] = useState(false);
   const [filter, setFilter] = useState(() => readFilter());
   const lastScrollY = useRef(0);
 
@@ -252,21 +256,16 @@ export default function PopularPage() {
       setCourses((prev) =>
         prev.map((c) => (c.id === id ? { ...c, isBookmarked: false } : c)),
       );
-      setToast({ id, action: 'removed' });
+      setShowRemoveToast(true);
       return;
     }
-    setPendingSaveId(id);
-  };
-
-  const handleSelectScrapTarget = (categoryTitle: string) => {
-    if (!pendingSaveId) return;
-    setCourses((prev) =>
-      prev.map((c) =>
-        c.id === pendingSaveId ? { ...c, isBookmarked: true } : c,
-      ),
-    );
-    setToast({ id: pendingSaveId, action: 'added', categoryTitle });
-    setPendingSaveId(null);
+    requestSave({
+      id: target.id,
+      name: target.description,
+      date: todayString(),
+      region: `${target.city}\n${target.district}`,
+      imageUrl: target.imageUrl,
+    });
   };
   const compactRef = useRef(false);
   const lastToggleAt = useRef(0);
@@ -351,29 +350,13 @@ export default function PopularPage() {
         onChange={setAlignValue}
       />
 
-      <SaveToScrapModal
-        isOpen={pendingSaveId !== null}
-        onClose={() => setPendingSaveId(null)}
-        onSelect={(_, categoryTitle) => handleSelectScrapTarget(categoryTitle)}
-      />
+      {saveToScrapElement}
 
       <BookmarkToast
-        isOpen={toast !== null}
-        onClose={() => setToast(null)}
-        message={
-          toast?.action === 'removed'
-            ? '스크랩이 해제되었습니다'
-            : `${toast?.categoryTitle ?? '스크랩'}에 추가되었습니다`
-        }
-        actionLabel={toast?.action === 'added' ? '변경' : undefined}
-        onAction={
-          toast?.action === 'added'
-            ? () => {
-                setToast(null);
-                navigate('/scrap');
-              }
-            : undefined
-        }
+        isOpen={showRemoveToast}
+        onClose={() => setShowRemoveToast(false)}
+        message="스크랩이 해제되었습니다"
+        icon={<BookmarkIcon className="text-gray-300" />}
       />
     </>
   );
