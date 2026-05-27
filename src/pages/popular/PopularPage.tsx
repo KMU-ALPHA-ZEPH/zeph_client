@@ -246,7 +246,7 @@ export default function PopularPage() {
     return (a.rank ?? 0) - (b.rank ?? 0);
   });
 
-  const toggleBookmark = (id: string) => {
+  const handleBookmarkClick = (id: string) => {
     const target = courses.find((c) => c.id === id);
     if (!target) return;
     if (target.isBookmarked) {
@@ -331,7 +331,7 @@ export default function PopularPage() {
           <li key={course.id}>
             <CourseCard
               course={course}
-              onBookmarkToggle={() => toggleBookmark(course.id)}
+              onBookmarkToggle={() => handleBookmarkClick(course.id)}
             />
           </li>
         ))}
