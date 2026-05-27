@@ -34,7 +34,6 @@ export default function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/course/main" element={<CourseMainPage />} />
           <Route path="/course/main/step04" element={<CourseLoadingPage />} />
-          <Route path="/filter" element={<FilterPage />} />
           <Route path="course/loading" element={<CourseLoadingPage />} />
           <Route path="/course/detail" element={<CourseDetailPage />} />
           {/*<Route path="/tracking/start" element={<CourseDetailPage />} />*/}
