@@ -65,7 +65,7 @@ export default function AccountModal({
             onDragEnd={(_, info) => {
               if (info.offset.y > 100 || info.velocity.y > 500) onClose();
             }}
-            className="fixed inset-x-0 bottom-0 z-50 mx-auto h-[784px] w-full max-w-[390px] overflow-hidden rounded-t-[20px] bg-surface-white"
+            className="fixed inset-x-0 bottom-0 z-50 mx-auto flex h-[784px] max-h-[calc(100dvh-env(safe-area-inset-top))] w-full max-w-[390px] flex-col overflow-hidden rounded-t-[20px] bg-surface-white pb-[env(safe-area-inset-bottom)]"
           >
             <header className="flex h-[60px] items-center justify-between px-3">
               <button
