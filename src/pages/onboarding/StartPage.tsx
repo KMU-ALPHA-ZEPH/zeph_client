@@ -17,7 +17,7 @@ export default function StartPage() {
   }, [navigate]);
 
   return (
-    <div className="relative mx-auto h-screen w-full max-w-md overflow-hidden bg-black">
+    <div className="relative mx-auto h-dvh w-full max-w-md overflow-hidden bg-black">
       <img
         src={backgroundImage}
         alt=""

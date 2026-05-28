@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { textStyles } from '@/styles/tokens';
 
 type Props = {
-  icon: ReactNode;
+  icon?: ReactNode;
   title: string;
   description?: ReactNode;
   selected: boolean;
@@ -40,9 +40,11 @@ export default function OptionItem({
           : 'border-gray-200 bg-surface-white'
       }`}
     >
-      <span className="grid size-9 shrink-0 place-items-center rounded-full bg-gray-100">
-        {icon}
-      </span>
+      {icon && (
+        <span className="grid size-9 shrink-0 place-items-center rounded-full bg-gray-100">
+          {icon}
+        </span>
+      )}
       <span className="flex flex-1 flex-col gap-1">
         <span className={`text-text-primary ${textStyles['body-medium-bold']}`}>
           {title}

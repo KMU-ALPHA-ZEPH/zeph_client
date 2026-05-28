@@ -19,6 +19,10 @@ import RouteTypeModal, {
 import CourseTypeModal, {
   type CourseTypeValue,
 } from './OptionModal/CourseTypeModal';
+import LightingModal, { type LightingValue } from './OptionModal/LightingModal';
+import SlopeModal, { type SlopeValue } from './OptionModal/SlopeModal';
+import SafetyModal, { type SafetyValue } from './OptionModal/SafetyModal';
+import FacilityModal, { type FacilityValue } from './OptionModal/FacilityModal';
 import { useNavigate } from 'react-router-dom';
 
 const formatDistance = (km: DistanceValue): string => {
@@ -37,7 +41,37 @@ const COURSE_TYPE_LABEL: Record<CourseTypeValue, string> = {
   safety: '안전',
 };
 
-type ModalKey = 'distance' | 'route' | 'course' | null;
+const LIGHTING_LABEL: Record<LightingValue, string> = {
+  bright: '밝은 길',
+  any: '상관없음',
+};
+
+const SLOPE_LABEL: Record<SlopeValue, string> = {
+  low: '낮은 경사',
+  normal: '보통',
+  high: '높은 경사',
+};
+
+const SAFETY_LABEL: Record<SafetyValue, string> = {
+  low: '낮음',
+  normal: '보통',
+  high: '높음',
+};
+
+const FACILITY_LABEL: Record<FacilityValue, string> = {
+  prefer: '있는 거 선호',
+  none: '고려하지 않음',
+};
+
+type ModalKey =
+  | 'distance'
+  | 'route'
+  | 'course'
+  | 'lighting'
+  | 'slope'
+  | 'safety'
+  | 'facility'
+  | null;
 
 export default function CoursePrefPage() {
   const [distance, setDistance] = useState<DistanceValue | null>(null);
@@ -46,10 +80,10 @@ export default function CoursePrefPage() {
   const [openModal, setOpenModal] = useState<ModalKey>(null);
   const navigate = useNavigate();
 
-  const [lightingPref] = useState('고려하지 않음');
-  const [slope] = useState('보통');
-  const [safety] = useState('보통 (2)');
-  const [facility] = useState('있는 거 선호');
+  const [lighting, setLighting] = useState<LightingValue | null>(null);
+  const [slope, setSlope] = useState<SlopeValue | null>(null);
+  const [safety, setSafety] = useState<SafetyValue | null>(null);
+  const [facility, setFacility] = useState<FacilityValue | null>(null);
 
   const allRequiredSelected = !!(distance && routeType && courseType);
   const showExtras = courseType !== null;
@@ -119,28 +153,32 @@ export default function CoursePrefPage() {
               iconColorClassName="text-[#FCDB65]"
               icon={<BulbIcon />}
               title="조명 선호"
-              selectedLabel={lightingPref}
+              selectedLabel={lighting ? LIGHTING_LABEL[lighting] : null}
+              onClick={() => setOpenModal('lighting')}
             />
             <PrefOptionCard
               iconBgClassName="bg-[#FD903D]/20"
               iconColorClassName="text-[#FD903D]"
               icon={<SlopeIcon />}
               title="경사도"
-              selectedLabel={slope}
+              selectedLabel={slope ? SLOPE_LABEL[slope] : null}
+              onClick={() => setOpenModal('slope')}
             />
             <PrefOptionCard
               iconBgClassName="bg-[#2F6AFF]/20"
               iconColorClassName="text-[#2F6AFF]"
               icon={<ShieldIcon />}
               title="안전"
-              selectedLabel={safety}
+              selectedLabel={safety ? SAFETY_LABEL[safety] : null}
+              onClick={() => setOpenModal('safety')}
             />
             <PrefOptionCard
               iconBgClassName="bg-[#B037F6]/20"
               iconColorClassName="text-[#B037F6]"
               icon={<StoreIcon />}
               title="편의시설"
-              selectedLabel={facility}
+              selectedLabel={facility ? FACILITY_LABEL[facility] : null}
+              onClick={() => setOpenModal('facility')}
             />
           </>
         )}
@@ -180,6 +218,42 @@ export default function CoursePrefPage() {
         onClose={() => setOpenModal(null)}
         onConfirm={(v) => {
           setCourseType(v);
+          setOpenModal(null);
+        }}
+      />
+      <LightingModal
+        open={openModal === 'lighting'}
+        value={lighting}
+        onClose={() => setOpenModal(null)}
+        onConfirm={(v) => {
+          setLighting(v);
+          setOpenModal(null);
+        }}
+      />
+      <SlopeModal
+        open={openModal === 'slope'}
+        value={slope}
+        onClose={() => setOpenModal(null)}
+        onConfirm={(v) => {
+          setSlope(v);
+          setOpenModal(null);
+        }}
+      />
+      <SafetyModal
+        open={openModal === 'safety'}
+        value={safety}
+        onClose={() => setOpenModal(null)}
+        onConfirm={(v) => {
+          setSafety(v);
+          setOpenModal(null);
+        }}
+      />
+      <FacilityModal
+        open={openModal === 'facility'}
+        value={facility}
+        onClose={() => setOpenModal(null)}
+        onConfirm={(v) => {
+          setFacility(v);
           setOpenModal(null);
         }}
       />

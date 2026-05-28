@@ -14,8 +14,8 @@ export default function AIPromptCard({ hasPrompt, onClick }: Props) {
       className="flex h-[60px] w-full items-center justify-between rounded-[10px] border-[0.5px] border-gray-200 bg-surface-white px-4 transition-colors duration-500 ease-out active:border-primary"
     >
       <div className="flex items-start gap-3">
-        <span className="grid size-[30px] shrink-0 place-items-center rounded-[5px] bg-[#FF6CFF]/10 text-[#FF6CFF]">
-          <span className="block size-5">
+        <span className="grid size-[40px] shrink-0 place-items-center rounded-[5px] bg-[#FF6CFF]/10 text-[#FF6CFF]">
+          <span className="block size-7">
             <AIIcon />
           </span>
         </span>

@@ -15,6 +15,6 @@ export default function SplashPage() {
   }, [navigate]);
 
   return (
-    <div className="relative mx-auto h-screen w-full max-w-md overflow-hidden bg-primary" />
+    <div className="relative mx-auto h-dvh w-full max-w-md overflow-hidden bg-primary" />
   );
 }

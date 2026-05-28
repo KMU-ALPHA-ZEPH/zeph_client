@@ -5,64 +5,27 @@ import ScrapCard, { type ScrapCardData } from '@/pages/scrap/ScrapCard';
 import EditCategoryModal from '@/pages/scrap/EditCategoryModal';
 import { readPinned } from '@/pages/scrap/pinned';
 import { readOverrides, type ScrapOverride } from '@/pages/scrap/overrides';
+import { SCRAP_CATEGORIES, type ScrapCategory } from '@/pages/scrap/data';
 import { readSavedCourses } from '@/pages/scrap/savedCourses';
 
-const INITIAL_CATEGORIES: ScrapCardData[] = [
-  {
-    id: 'liked',
-    title: '좋아요 표시한 코스',
-    iconType: 'heart',
-  },
-  {
-    id: 'walk-1',
-    title: '산책',
-    count: 5,
-    description: '완만한 경사도, 공원 위주',
-  },
-  {
-    id: 'workout-1',
-    title: '운동',
-    count: 5,
-    description: '가파른 경사도, 러닝시간 1시간 +',
-  },
-  {
-    id: 'safety-1',
-    title: '안전',
-    count: 5,
-    description: '완만한 경사도, 공원 위주',
-  },
-  {
-    id: 'walk-2',
-    title: '산책',
-    count: 5,
-    description: '완만한 경사도, 공원 위주',
-  },
-  {
-    id: 'walk-3',
-    title: '산책',
-    count: 5,
-    description: '완만한 경사도, 공원 위주',
-  },
-  {
-    id: 'workout-2',
-    title: '운동',
-    count: 5,
-    description: '가파른 경사도, 러닝시간 1시간 +',
-  },
-  {
-    id: 'workout-3',
-    title: '운동',
-    count: 5,
-    description: '가파른 경사도, 러닝시간 1시간 +',
-  },
-];
+type ScrapListItem = ScrapCardData & { courses: ScrapCategory['courses'] };
+
+const INITIAL_CATEGORIES: ScrapListItem[] = SCRAP_CATEGORIES.map((c) => ({
+  id: c.id,
+  title: c.title,
+  description: c.description,
+  imageUrl: c.imageUrl,
+  iconType: c.iconType,
+  count: c.iconType === 'heart' ? undefined : c.courses.length,
+  courses: c.courses,
+}));
 
 export default function ScrapPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [search, setSearch] = useState('');
   const [categories, setCategories] =
-    useState<ScrapCardData[]>(INITIAL_CATEGORIES);
+    useState<ScrapListItem[]>(INITIAL_CATEGORIES);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [pinnedIds, setPinnedIds] = useState<string[]>(() => readPinned());
   const [overrides, setOverrides] = useState<Record<string, ScrapOverride>>(
@@ -99,10 +62,8 @@ export default function ScrapPage() {
   const filtered = useMemo(() => {
     if (!search.trim()) return sorted;
     const q = search.toLowerCase();
-    return sorted.filter(
-      (c) =>
-        c.title.toLowerCase().includes(q) ||
-        c.description?.toLowerCase().includes(q),
+    return sorted.filter((c) =>
+      c.courses.some((course) => course.name.toLowerCase().includes(q)),
     );
   }, [search, sorted]);
 
@@ -182,6 +143,7 @@ export default function ScrapPage() {
               count: 0,
               description: description || undefined,
               imageUrl,
+              courses: [],
             },
           ]);
         }}

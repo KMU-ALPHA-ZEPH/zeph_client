@@ -10,6 +10,8 @@ import AlignModal, {
   type AlignKey,
 } from '@/pages/popular/AlignModal';
 import { useSaveToScrap, todayString } from '@/hooks/useSaveToScrap';
+import BookmarkToast from '@/pages/popular/BookmarkToast';
+import BookmarkIcon from '@/assets/icons/circum_bookmark.svg?react';
 import { readFilter, readUserLocation } from '@/pages/popular/FilterPage';
 
 type SampleCourse = Course & { id: string; tab: PopularWayTab };
@@ -200,6 +202,7 @@ export default function PopularPage() {
         ),
       ),
   );
+  const [showRemoveToast, setShowRemoveToast] = useState(false);
   const [filter, setFilter] = useState(() => readFilter());
   const lastScrollY = useRef(0);
 
@@ -246,13 +249,14 @@ export default function PopularPage() {
     return (a.rank ?? 0) - (b.rank ?? 0);
   });
 
-  const toggleBookmark = (id: string) => {
+  const handleBookmarkClick = (id: string) => {
     const target = courses.find((c) => c.id === id);
     if (!target) return;
     if (target.isBookmarked) {
       setCourses((prev) =>
         prev.map((c) => (c.id === id ? { ...c, isBookmarked: false } : c)),
       );
+      setShowRemoveToast(true);
       return;
     }
     requestSave({
@@ -331,7 +335,7 @@ export default function PopularPage() {
           <li key={course.id}>
             <CourseCard
               course={course}
-              onBookmarkToggle={() => toggleBookmark(course.id)}
+              onBookmarkToggle={() => handleBookmarkClick(course.id)}
             />
           </li>
         ))}
@@ -347,6 +351,13 @@ export default function PopularPage() {
       />
 
       {saveToScrapElement}
+
+      <BookmarkToast
+        isOpen={showRemoveToast}
+        onClose={() => setShowRemoveToast(false)}
+        message="스크랩이 해제되었습니다"
+        icon={<BookmarkIcon className="text-gray-300" />}
+      />
     </>
   );
 }
