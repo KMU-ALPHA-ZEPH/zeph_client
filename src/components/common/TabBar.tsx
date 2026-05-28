@@ -55,7 +55,7 @@ export default function TabBar({
 }: Props) {
   return (
     <nav
-      className={`flex min-h-[70px] w-full items-center justify-between bg-surface-white px-5 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] ${className}`}
+      className={`flex min-h-[70px] w-full items-center justify-between bg-surface-white px-5 pt-3 pb-[calc(0.25rem+env(safe-area-inset-bottom))] ${className}`}
     >
       {TABS.map(({ key, label, Icon, ActiveIcon }) => {
         const isActive = key === activeTab;
