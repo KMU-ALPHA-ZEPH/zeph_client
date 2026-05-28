@@ -118,7 +118,7 @@ export default function CourseMainPage() {
         type="button"
         aria-label="현재 위치로 이동"
         onClick={moveToCurrentLocation}
-        className="absolute bottom-[173px] right-[35px] z-20 grid size-14 place-items-center rounded-full bg-surface-white text-black shadow-[2px_6px_6px_rgba(0,0,0,0.25)] transition-transform active:scale-95"
+        className="absolute bottom-[185px] right-[35px] z-20 grid size-14 place-items-center rounded-full bg-surface-white text-black shadow-[2px_6px_6px_rgba(0,0,0,0.25)] transition-transform active:scale-95"
       >
         <span className="block size-7">
           <LocationIcon />
@@ -126,7 +126,7 @@ export default function CourseMainPage() {
       </button>
 
       <Button
-        className="absolute bottom-[112px] left-1/2 z-20 w-[320px] -translate-x-1/2"
+        className="absolute bottom-[124px] left-1/2 z-20 w-[320px] -translate-x-1/2"
         inactive={!selectedPlace}
         onClick={() =>
           selectedPlace &&
