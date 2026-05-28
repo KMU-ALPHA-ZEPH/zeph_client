@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { InputBox } from '@/components/common/InputBox';
 import { Button } from '@/components/common/Button';
 import backgroundImage from '@/assets/backgroundImage.png';
+import kakaoIcon from '@/assets/icons/kakao-talk.png';
 import { textStyles } from '@/styles/tokens';
 import SignupModal from './SignupModal';
 
@@ -60,7 +61,10 @@ export default function LoginPage() {
             <div className="h-px flex-1 bg-white" />
           </div>
 
-          <Button className="!bg-[#ffea00] !text-black">카카오 로그인</Button>
+          <Button className="gap-2 !bg-[#ffea00] !text-black">
+            <img src={kakaoIcon} alt="" className="size-5" />
+            카카오 로그인
+          </Button>
         </motion.div>
       </div>
 
