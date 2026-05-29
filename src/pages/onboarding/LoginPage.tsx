@@ -33,7 +33,7 @@ export default function LoginPage() {
     try {
       const auth = await login({ email: email.trim(), password });
       saveAuth(auth);
-      navigate('/popular-page', { replace: true });
+      navigate('/splash', { replace: true });
     } catch (err) {
       const message =
         axios.isAxiosError(err) && err.response?.status === 401

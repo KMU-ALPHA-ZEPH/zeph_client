@@ -1,13 +1,12 @@
 import { useState, type FormEvent } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Header from '@/components/common/Header';
 import { Input } from '@/components/common/Input';
 import { Button } from '@/components/common/Button';
+import ConfirmModal from '@/components/common/ConfirmModal';
 import { textStyles } from '@/styles/tokens';
 import { signup } from '@/apis/auth';
-import { saveAuth } from '@/lib/auth';
 import TermsModal from './TermsModal';
 
 interface SignupModalProps {
@@ -22,7 +21,7 @@ export default function SignupModal({ onClose }: SignupModalProps) {
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const navigate = useNavigate();
+  const [successOpen, setSuccessOpen] = useState(false);
 
   const canSubmit =
     agreed &&
@@ -37,13 +36,12 @@ export default function SignupModal({ onClose }: SignupModalProps) {
     setError(null);
     setSubmitting(true);
     try {
-      const auth = await signup({
+      await signup({
         name: name.trim(),
         email: email.trim(),
         password,
       });
-      saveAuth(auth);
-      navigate('/popular-page', { replace: true });
+      setSuccessOpen(true);
     } catch (err) {
       const message =
         axios.isAxiosError(err) && err.response?.status === 409
@@ -155,6 +153,19 @@ export default function SignupModal({ onClose }: SignupModalProps) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <ConfirmModal
+        isOpen={successOpen}
+        title="회원가입 완료"
+        message={'회원가입이 완료되었습니다.\n다시 로그인해주세요.'}
+        confirmLabel="로그인하기"
+        cancelLabel="닫기"
+        onConfirm={() => {}}
+        onClose={() => {
+          setSuccessOpen(false);
+          onClose?.();
+        }}
+      />
     </form>
   );
 }

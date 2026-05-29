@@ -32,7 +32,7 @@ export default function KakaoCallbackPage() {
       });
     }
 
-    navigate('/popular-page', { replace: true });
+    navigate('/splash', { replace: true });
   }, [params, navigate]);
 
   return (
