@@ -1,7 +1,11 @@
-import axios, { AxiosRequestConfig } from 'axios';
+import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios';
+
+export const API_BASE_URL =
+  (import.meta.env.VITE_API_URL as string | undefined) ??
+  'https://api.kmuzeph.site';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -9,14 +13,25 @@ const api = axios.create({
 });
 
 api.interceptors.request.use(
-  (config: AxiosRequestConfig) => {
+  (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem('accessToken');
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => Promise.reject(error),
+  (error: AxiosError) => Promise.reject(error),
+);
+
+api.interceptors.response.use(
+  (response) => response,
+  (error: AxiosError) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('user');
+    }
+    return Promise.reject(error);
+  },
 );
 
 export default api;
