@@ -9,7 +9,10 @@ type Props = {
   onClose: () => void;
   initialNickname?: string;
   initialAvatarUrl?: string;
-  onSubmit?: (data: { nickname: string; avatarUrl?: string }) => void;
+  onSubmit?: (data: {
+    nickname: string;
+    avatarUrl?: string;
+  }) => void | Promise<void>;
 };
 
 export default function ProfileEditModal({
@@ -31,9 +34,17 @@ export default function ProfileEditModal({
     }
   }, [isOpen, initialNickname, initialAvatarUrl]);
 
-  const handleSubmit = () => {
-    onSubmit?.({ nickname, avatarUrl });
-    onClose();
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async () => {
+    if (submitting) return;
+    setSubmitting(true);
+    try {
+      await onSubmit?.({ nickname, avatarUrl });
+      onClose();
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleImagePick = () => {
@@ -129,8 +140,12 @@ export default function ProfileEditModal({
                 </div>
               </div>
 
-              <Button onClick={handleSubmit} className="w-full">
-                완료
+              <Button
+                onClick={handleSubmit}
+                inactive={submitting}
+                className="w-full"
+              >
+                {submitting ? '저장 중...' : '완료'}
               </Button>
             </div>
           </motion.div>

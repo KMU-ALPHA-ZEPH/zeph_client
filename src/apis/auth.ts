@@ -36,6 +36,10 @@ export async function loginWithKakaoCode(code: string): Promise<AuthResponse> {
   return data;
 }
 
+export async function logoutApi(): Promise<void> {
+  await api.post('/users/logout');
+}
+
 export type UserProfile = {
   id: number;
   kakaoId?: number;
