@@ -1,16 +1,53 @@
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import { InputBox } from '@/components/common/InputBox';
 import { Button } from '@/components/common/Button';
 import backgroundImage from '@/assets/backgroundImage.png';
 import kakaoIcon from '@/assets/icons/kakao-talk.png';
 import { textStyles } from '@/styles/tokens';
+import { login } from '@/apis/auth';
+import { saveAuth } from '@/lib/auth';
+import { API_BASE_URL } from '@/lib/axios';
 import SignupModal from './SignupModal';
+
+const KAKAO_AUTH_URL = `${API_BASE_URL}/oauth2/authorization/kakao`;
 
 export default function LoginPage() {
   const [isSignupOpen, setIsSignupOpen] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  const handleLogin = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!email.trim() || !password.trim()) {
+      setError('이메일과 비밀번호를 입력하세요.');
+      return;
+    }
+    setError(null);
+    setSubmitting(true);
+    try {
+      const auth = await login({ email: email.trim(), password });
+      saveAuth(auth);
+      navigate('/splash', { replace: true });
+    } catch (err) {
+      const message =
+        axios.isAxiosError(err) && err.response?.status === 401
+          ? '이메일 또는 비밀번호가 올바르지 않습니다.'
+          : '로그인에 실패했습니다. 잠시 후 다시 시도해주세요.';
+      setError(message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleKakaoLogin = () => {
+    window.location.href = KAKAO_AUTH_URL;
+  };
 
   return (
     <div className="relative mx-auto h-dvh w-full max-w-md overflow-hidden bg-black">
@@ -26,19 +63,37 @@ export default function LoginPage() {
           <div className="h-[100px] w-[100px]" />
         </div>
 
-        <motion.div
+        <motion.form
+          onSubmit={handleLogin}
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 1.0, ease: [0.4, 0, 0.2, 1] }}
-          className="items-center flex flex-col gap-3"
+          className="flex flex-col items-center gap-3"
         >
-          <InputBox strokeNone type="email" placeholder="이메일을 입력하세요" />
+          <InputBox
+            strokeNone
+            type="email"
+            placeholder="이메일을 입력하세요"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            autoComplete="email"
+          />
           <InputBox
             strokeNone
             type="password"
             placeholder="비밀번호를 입력하세요"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoComplete="current-password"
           />
-          <Button onClick={() => navigate('/splash')}>로그인</Button>
+          {error && (
+            <p className={`${textStyles['caption-medium']} text-status-error`}>
+              {error}
+            </p>
+          )}
+          <Button type="submit" inactive={submitting}>
+            {submitting ? '로그인 중...' : '로그인'}
+          </Button>
 
           <p
             className={`${textStyles['caption-medium']} text-center text-white`}
@@ -47,7 +102,7 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => setIsSignupOpen(true)}
-              className="text-white cursor-pointer"
+              className="cursor-pointer text-white"
             >
               회원가입
             </button>
@@ -61,11 +116,15 @@ export default function LoginPage() {
             <div className="h-px flex-1 bg-white" />
           </div>
 
-          <Button className="gap-2 !bg-[#ffea00] !text-black">
+          <Button
+            type="button"
+            onClick={handleKakaoLogin}
+            className="gap-2 !bg-[#ffea00] !text-black"
+          >
             <img src={kakaoIcon} alt="" className="size-5" />
             카카오 로그인
           </Button>
-        </motion.div>
+        </motion.form>
       </div>
 
       <AnimatePresence>

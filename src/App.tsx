@@ -9,6 +9,7 @@ import PopularPage from './pages/popular/PopularPage';
 import SplashPage from './pages/onboarding/SplashPage';
 import StartPage from './pages/onboarding/StartPage';
 import LoginPage from '@/pages/onboarding/LoginPage';
+import KakaoCallbackPage from '@/pages/onboarding/KakaoCallbackPage';
 import FilterPage from '@/pages/popular/FilterPage';
 import StatsPage from '@/pages/stats/StatsPage';
 import ScrapPage from '@/pages/scrap/ScrapPage';
@@ -33,8 +34,9 @@ export default function App() {
         <Route element={<EmptyLayout />}>
           <Route path="/" element={<Navigate to="/start" replace />} />
           <Route path="/splash" element={<SplashPage />} />
-          <Route path="/start" element={<StartPage />} />s
+          <Route path="/start" element={<StartPage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/oauth/callback" element={<KakaoCallbackPage />} />
           <Route path="/course/main" element={<CourseMainPage />} />
           <Route path="/course/main/step04" element={<CourseLoadingPage />} />
           <Route path="course/loading" element={<CourseLoadingPage />} />
