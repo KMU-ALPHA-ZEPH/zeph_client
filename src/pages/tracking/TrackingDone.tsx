@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import HeartSolidIcon from '@/assets/icons/mynaui_heart-solid.svg?react';
 import BookmarkIcon from '@/assets/icons/circum_bookmark.svg?react';
 import BookmarkFilledIcon from '@/assets/icons/circum_bookmark_filled.svg?react';
@@ -9,6 +9,11 @@ import { MemoInput } from './components/MemoInput';
 import { useNavigate } from 'react-router-dom';
 import BookmarkToast from '@/pages/popular/BookmarkToast';
 import { useSaveToScrap, todayString } from '@/hooks/useSaveToScrap';
+import { useTrackingStore } from '@/stores/trackingStore';
+import { useCourseStore } from '@/stores/courseStore';
+import { extractLatLng } from '@/apis/courses';
+import CourseMap, { type LatLng } from '@/components/CourseMap';
+import { formatDuration } from '@/utils/format';
 
 function Stat({
   value,
@@ -45,9 +50,26 @@ export default function TrackingDone() {
   const [memo, setMemo] = useState('');
   const [showLikeToast, setShowLikeToast] = useState(false);
   const navigate = useNavigate();
+  const summary = useTrackingStore((s) => s.summary);
+  const result = useCourseStore((s) => s.result);
   const { requestSave, saveToScrapElement } = useSaveToScrap(() =>
     setSaved(true),
   );
+
+  // 추천 경로 + 내가 실제로 뛴 경로를 지도에 함께 표시
+  const recommendedPath: LatLng[] = useMemo(
+    () =>
+      (result?.pathData?.points ?? [])
+        .map(extractLatLng)
+        .filter((p): p is LatLng => p !== null),
+    [result],
+  );
+  const trackedPath = summary?.trackedPath ?? [];
+
+  const courseName = summary?.courseName ?? '추천 코스';
+  const speedText = (summary?.speedKmh ?? 0).toFixed(1);
+  const distanceText = (summary?.distanceKm ?? 0).toFixed(2);
+  const timeText = formatDuration(summary?.elapsedSec ?? 0);
 
   const toggleSave = () => {
     if (saved) {
@@ -55,26 +77,30 @@ export default function TrackingDone() {
       return;
     }
     requestSave({
-      id: 'tracking-ttukseom',
-      name: '뚝섬 한강 공원',
+      id: 'tracking-result',
+      name: courseName,
       date: todayString(),
     });
   };
 
   return (
     <div className="relative h-dvh w-full overflow-hidden bg-surface-white">
-      {/* 배경 이미지 영역 (추후 코스/지도 이미지로 교체) */}
-      <div className="absolute inset-0 z-0 bg-gray-400" />
+      {/* 배경 지도: 추천 경로 + 내가 실제로 뛴 경로 */}
+      <CourseMap
+        recommendedPath={recommendedPath}
+        trackedPath={trackedPath}
+        className="absolute inset-0 z-0"
+      />
 
       {/* 하단 그라디언트 */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-[60%] bg-gradient-to-t from-black/60 via-black/20 to-transparent blur-[2px]" />
 
-      <div className="absolute bottom-[80px] left-1/2 z-20 flex w-[319px] -translate-x-1/2 flex-col gap-3">
+      <div className="absolute bottom-[44px] left-1/2 z-20 flex w-[319px] -translate-x-1/2 flex-col gap-3">
         {/* 요약 카드 */}
         <div className="rounded-[10px] bg-surface-white px-5 pb-5 pt-[18px] shadow-[0px_4px_10px_rgba(0,0,0,0.25)]">
           <div className="flex items-center justify-between">
             <span className="text-h2 font-semibold tracking-[-0.4px] text-black">
-              뚝섬 한강 공원
+              {courseName}
             </span>
             <div className="flex items-center gap-1.5">
               <button
@@ -111,9 +137,9 @@ export default function TrackingDone() {
           <div className="my-[14px] h-px bg-gray-200" />
 
           <div className="flex justify-between">
-            <Stat value="6" unit="km/h" label="페이스" />
-            <Stat value="3.54" unit="km" label="거리" />
-            <Stat value="00:48" label="시간" />
+            <Stat value={speedText} unit="km/h" label="페이스" />
+            <Stat value={distanceText} unit="km" label="거리" />
+            <Stat value={timeText} label="시간" />
           </div>
 
           <div className="mt-4">

@@ -9,10 +9,14 @@ type Props = {
   onClose: () => void;
   name?: string;
   email?: string;
-  onEditClick?: () => void;
+  avatarUrl?: string;
   onPasswordClick?: () => void;
   onLogoutClick?: () => void;
   onDeleteClick?: () => void;
+  onProfileSubmit?: (data: {
+    nickname: string;
+    avatarUrl?: string;
+  }) => Promise<void> | void;
 };
 
 export default function AccountModal({
@@ -20,21 +24,34 @@ export default function AccountModal({
   onClose,
   name = '이가인',
   email = 'gainlee@kookmin.ac.kr',
-  onEditClick,
+  avatarUrl,
   onPasswordClick,
   onLogoutClick,
   onDeleteClick,
+  onProfileSubmit,
 }: Props) {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [displayName, setDisplayName] = useState(name);
+  const [displayAvatar, setDisplayAvatar] = useState<string | undefined>(
+    avatarUrl,
+  );
 
   useEffect(() => {
     setDisplayName(name);
-  }, [name]);
+    setDisplayAvatar(avatarUrl);
+  }, [name, avatarUrl]);
 
   const handleEditClick = () => {
-    if (onEditClick) onEditClick();
-    else setIsEditOpen(true);
+    setIsEditOpen(true);
+  };
+
+  const handleProfileSubmit = async (data: {
+    nickname: string;
+    avatarUrl?: string;
+  }) => {
+    setDisplayName(data.nickname);
+    setDisplayAvatar(data.avatarUrl);
+    await onProfileSubmit?.(data);
   };
 
   return (
@@ -81,7 +98,15 @@ export default function AccountModal({
             </header>
 
             <div className="mx-5 mt-4 flex items-center gap-[11px] rounded-[10px] bg-surface-white px-[13px] py-[11px] shadow-[0px_2px_6px_rgba(0,0,0,0.10)]">
-              <ProfileIcon className="size-12" />
+              {displayAvatar ? (
+                <img
+                  src={displayAvatar}
+                  alt=""
+                  className="size-12 rounded-full object-cover"
+                />
+              ) : (
+                <ProfileIcon className="size-12" />
+              )}
               <div className="flex flex-1 items-center justify-between">
                 <div className="flex flex-col gap-[3px]">
                   <span className="text-body-md text-text-primary">
@@ -134,7 +159,8 @@ export default function AccountModal({
             isOpen={isEditOpen}
             onClose={() => setIsEditOpen(false)}
             initialNickname={displayName}
-            onSubmit={({ nickname }) => setDisplayName(nickname)}
+            initialAvatarUrl={displayAvatar}
+            onSubmit={handleProfileSubmit}
           />
         </>
       )}

@@ -1,9 +1,12 @@
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import axios from 'axios';
 import Header from '@/components/common/Header';
 import { Input } from '@/components/common/Input';
 import { Button } from '@/components/common/Button';
+import ConfirmModal from '@/components/common/ConfirmModal';
 import { textStyles } from '@/styles/tokens';
+import { signup } from '@/apis/auth';
 import TermsModal from './TermsModal';
 
 interface SignupModalProps {
@@ -13,9 +16,48 @@ interface SignupModalProps {
 export default function SignupModal({ onClose }: SignupModalProps) {
   const [isTermsOpen, setIsTermsOpen] = useState(false);
   const [agreed, setAgreed] = useState(false);
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [successOpen, setSuccessOpen] = useState(false);
+
+  const canSubmit =
+    agreed &&
+    name.trim().length > 0 &&
+    email.trim().length > 0 &&
+    password.trim().length > 0 &&
+    !submitting;
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!canSubmit) return;
+    setError(null);
+    setSubmitting(true);
+    try {
+      await signup({
+        name: name.trim(),
+        email: email.trim(),
+        password,
+      });
+      setSuccessOpen(true);
+    } catch (err) {
+      const message =
+        axios.isAxiosError(err) && err.response?.status === 409
+          ? '이미 가입된 이메일입니다.'
+          : '회원가입에 실패했습니다. 잠시 후 다시 시도해주세요.';
+      setError(message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
-    <div className="relative mx-auto flex h-full w-full max-w-md flex-col overflow-hidden rounded-t-2xl bg-white pt-[11px]">
+    <form
+      onSubmit={handleSubmit}
+      className="relative mx-auto flex h-full w-full max-w-md flex-col overflow-hidden rounded-t-2xl bg-white pt-[11px]"
+    >
       <Header variant="back" title="회원가입" onBack={onClose} />
 
       <div className="px-9 pt-[10px]">
@@ -31,19 +73,32 @@ export default function SignupModal({ onClose }: SignupModalProps) {
           label="닉네임"
           placeholder="ex) 러닝하는오랑이"
           className="w-full"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
         />
         <Input
           label="이메일"
           type="email"
+          autoComplete="email"
           placeholder="이메일을 입력하세요"
           className="w-full"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
         />
         <Input
           label="비밀번호"
           type="password"
+          autoComplete="new-password"
           placeholder="비밀번호를 입력하세요"
           className="w-full"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
         />
+        {error && (
+          <p className={`${textStyles['caption-medium']} text-status-error`}>
+            {error}
+          </p>
+        )}
       </div>
 
       <div className="mt-[15px] flex justify-end px-10">
@@ -61,15 +116,15 @@ export default function SignupModal({ onClose }: SignupModalProps) {
       </div>
 
       <div className="mt-auto px-9 pb-[calc(env(safe-area-inset-bottom)+5.5rem)]">
-        <Button inactive={!agreed} className="w-full">
-          회원가입
+        <Button type="submit" inactive={!canSubmit} className="w-full">
+          {submitting ? '가입 중...' : '회원가입'}
         </Button>
         <p className={`${textStyles['body-small']} mt-6 text-center`}>
           <span className="text-text-secondary">이미 계정이 있으신가요? </span>
           <button
             type="button"
             onClick={onClose}
-            className={`${textStyles['body-small']} text-black cursor-pointer`}
+            className={`${textStyles['body-small']} cursor-pointer text-black`}
           >
             로그인하기
           </button>
@@ -98,6 +153,19 @@ export default function SignupModal({ onClose }: SignupModalProps) {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+
+      <ConfirmModal
+        isOpen={successOpen}
+        title="회원가입 완료"
+        message={'회원가입이 완료되었습니다.\n다시 로그인해주세요.'}
+        confirmLabel="로그인하기"
+        cancelLabel="닫기"
+        onConfirm={() => {}}
+        onClose={() => {
+          setSuccessOpen(false);
+          onClose?.();
+        }}
+      />
+    </form>
   );
 }
