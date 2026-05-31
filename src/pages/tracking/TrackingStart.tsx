@@ -9,6 +9,7 @@ import { GpsBadge } from './components/GpsBadge';
 import { LocationIcon } from '@/components/common/Icon/LocationIcon';
 import { reverseGeocode } from '@/apis/kakaoLocal';
 import CourseMap, { type LatLng } from '@/components/CourseMap';
+import { extractLatLng } from '@/apis/courses';
 import { useCourseStore } from '@/stores/courseStore';
 
 /**
@@ -32,10 +33,9 @@ export default function TrackingStart() {
   // 추천 경로 좌표
   const recommendedPath: LatLng[] = useMemo(
     () =>
-      (result?.pathData?.points ?? []).map((p) => ({
-        lat: p.lat,
-        lng: p.lng,
-      })),
+      (result?.pathData?.points ?? [])
+        .map(extractLatLng)
+        .filter((p): p is LatLng => p !== null),
     [result],
   );
 

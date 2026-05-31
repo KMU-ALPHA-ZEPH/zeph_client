@@ -42,6 +42,21 @@ export type CoursePoint = {
   segmentToNext?: SegmentInfo;
 };
 
+/**
+ * 응답 좌표 한 점에서 lat/lng 를 견고하게 추출한다.
+ * 백엔드/AI 가 키 이름을 다르게 줄 수 있어(lat/latitude/y, lng/lon/longitude/x)
+ * 여러 후보를 시도하고, 숫자로 변환 가능한 유효 좌표만 반환한다.
+ */
+export function extractLatLng(p: unknown): { lat: number; lng: number } | null {
+  if (!p || typeof p !== 'object') return null;
+  const o = p as Record<string, unknown>;
+  const lat = Number(o.lat ?? o.latitude ?? o.y);
+  const lng = Number(o.lng ?? o.lon ?? o.longitude ?? o.x);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  if (lat === 0 && lng === 0) return null; // (0,0) 은 미설정으로 간주
+  return { lat, lng };
+}
+
 /** 경로 좌표 묶음 (PathData) */
 export type PathData = {
   points: CoursePoint[];

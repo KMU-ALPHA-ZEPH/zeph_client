@@ -20,7 +20,8 @@ type CourseMapProps = {
   className?: string;
 };
 
-const PRIMARY = '#17d89b';
+const NEON = '#1affb0'; // 추천 경로 — 형광 민트그린
+const TRACKED = '#ffffff'; // 실제 이동 경로 — 어두운 지도 위 대비용 흰색
 const DEFAULT_CENTER: LatLng = { lat: 37.5665, lng: 126.978 }; // 서울시청
 
 /**
@@ -55,21 +56,21 @@ export default function CourseMap({
       level: 4,
     });
 
-    // 추천 경로: primary, 얇고(4) 반투명(0.55)
+    // 추천 경로: 형광 민트그린, 두껍게(8), 선명하게
     recommendedLineRef.current = new kakao.maps.Polyline({
       path: [],
-      strokeWeight: 4,
-      strokeColor: PRIMARY,
+      strokeWeight: 3,
+      strokeColor: NEON,
       strokeOpacity: 0.55,
       strokeStyle: 'solid',
       map: mapRef.current,
     });
 
-    // 실제 이동 경로: 진하고(검정 계열) 두껍게(7)
+    // 실제 이동 경로: 어두운 지도 위 대비를 위해 흰색, 더 두껍게(9)
     trackedLineRef.current = new kakao.maps.Polyline({
       path: [],
-      strokeWeight: 7,
-      strokeColor: '#0F8F69',
+      strokeWeight: 3,
+      strokeColor: TRACKED,
       strokeOpacity: 0.95,
       strokeStyle: 'solid',
       map: mapRef.current,
@@ -123,7 +124,7 @@ export default function CourseMap({
 
   return (
     <div className={className ?? 'absolute inset-0'}>
-      <div ref={containerRef} className="size-full" />
+      <div ref={containerRef} className="map-dark size-full" />
       {error && (
         <div className="absolute inset-0 grid place-items-center bg-gray-100 px-6 text-center text-[13px] text-gray-500">
           지도를 불러올 수 없습니다.

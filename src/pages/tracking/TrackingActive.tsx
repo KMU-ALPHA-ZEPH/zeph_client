@@ -6,6 +6,7 @@ import { GoEndIcon } from '@/components/common/Icon/GoEndIcon';
 import { textStyles } from '@/styles/tokens';
 import ConfirmModal from '@/components/common/ConfirmModal';
 import CourseMap, { type LatLng } from '@/components/CourseMap';
+import { extractLatLng } from '@/apis/courses';
 import { useRunTracking } from '@/hooks/useRunTracking';
 import { useCourseStore } from '@/stores/courseStore';
 import { useTrackingStore } from '@/stores/trackingStore';
@@ -54,13 +55,12 @@ export default function TrackingActive() {
   const [isPaused, setIsPaused] = useState(false);
   const [showEndModal, setShowEndModal] = useState(false);
 
-  // 추천 경로(배경) — pathData.points 에서 lat/lng 만 추출
+  // 추천 경로(배경) — pathData.points 에서 좌표 추출
   const recommendedPath: LatLng[] = useMemo(
     () =>
-      (result?.pathData?.points ?? []).map((p) => ({
-        lat: p.lat,
-        lng: p.lng,
-      })),
+      (result?.pathData?.points ?? [])
+        .map(extractLatLng)
+        .filter((p): p is LatLng => p !== null),
     [result],
   );
 

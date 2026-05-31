@@ -8,6 +8,7 @@ import BookmarkIcon from '@/assets/icons/circum_bookmark.svg?react';
 import BookmarkFilledIcon from '@/assets/icons/circum_bookmark_filled.svg?react';
 import { useSaveToScrap, todayString } from '@/hooks/useSaveToScrap';
 import CourseMap, { type LatLng } from '@/components/CourseMap';
+import { extractLatLng } from '@/apis/courses';
 import { useCourseStore, type CourseForm } from '@/stores/courseStore';
 
 /** form 선택값을 사람이 읽을 수 있는 상세 항목/안내 문구로 변환 */
@@ -83,15 +84,25 @@ export default function CourseDetailPage() {
     if (!result) navigate('/course/main', { replace: true });
   }, [result, navigate]);
 
-  // pathData.points 에서 lat/lng 만 뽑아 추천 경로 좌표 배열로 만든다.
+  // pathData.points 에서 좌표를 견고하게 추출해 추천 경로 배열로 만든다.
   const recommendedPath: LatLng[] = useMemo(
     () =>
-      (result?.pathData?.points ?? []).map((p) => ({
-        lat: p.lat,
-        lng: p.lng,
-      })),
+      (result?.pathData?.points ?? [])
+        .map(extractLatLng)
+        .filter((p): p is LatLng => p !== null),
     [result],
   );
+
+  // 진단용: 실제 응답 좌표 형태 확인
+  useEffect(() => {
+    if (result)
+      console.log(
+        '[detail] points[0]=',
+        result.pathData?.points?.[0],
+        '추출된 좌표 수=',
+        recommendedPath.length,
+      );
+  }, [result, recommendedPath.length]);
 
   if (!result) return null;
 
@@ -205,9 +216,10 @@ export default function CourseDetailPage() {
             </div>
           </motion.div>
         ) : (
-          <motion.button
+          <motion.div
             key="collapsed"
-            type="button"
+            role="button"
+            tabIndex={0}
             onClick={() => setExpanded(true)}
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
@@ -223,7 +235,7 @@ export default function CourseDetailPage() {
             onDragEnd={(_, info) => {
               if (info.offset.y < -40) setExpanded(true);
             }}
-            className="absolute bottom-5 left-1/2 z-20 flex h-[90px] w-[350px] max-w-[calc(100%-32px)] -translate-x-1/2 flex-col items-stretch rounded-[20px] bg-surface-white px-[18px] pb-4 pt-2 shadow-[0px_4px_10px_0px_rgba(0,0,0,0.25)]"
+            className="absolute bottom-5 left-1/2 z-20 flex h-[90px] w-[350px] max-w-[calc(100%-32px)] -translate-x-1/2 cursor-pointer flex-col items-stretch rounded-[20px] bg-surface-white px-[18px] pb-4 pt-2 shadow-[0px_4px_10px_0px_rgba(0,0,0,0.25)]"
           >
             <DragHandle />
             <div className="mt-3">
@@ -233,7 +245,7 @@ export default function CourseDetailPage() {
                 onBookmark={toggleBookmark}
               />
             </div>
-          </motion.button>
+          </motion.div>
         )}
       </AnimatePresence>
 

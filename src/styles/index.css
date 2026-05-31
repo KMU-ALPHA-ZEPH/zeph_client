@@ -80,3 +80,14 @@
     background-color: var(--color-surface-white);
   }
 }
+
+/*
+ * 다크 지도: 카카오 타일 이미지(img)에만 다크 필터를 건다.
+ * 경로선(Polyline)은 SVG 라 필터 영향을 받지 않아 형광빛이 그대로 살아난다.
+ */
+.map-dark {
+  background-color: #1b1f24;
+}
+.map-dark img {
+  filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(0.92);
+}
