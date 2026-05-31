@@ -17,6 +17,8 @@ type CourseMapProps = {
   currentPosition?: LatLng | null;
   /** recommendedPath 전체가 보이도록 한 번 화면을 맞춘다. */
   fitToRecommended?: boolean;
+  /** currentPosition 이 바뀔 때 지도를 그 위치로 따라가게 할지 (러닝 중에만 true) */
+  followCurrent?: boolean;
   className?: string;
 };
 
@@ -35,6 +37,7 @@ export default function CourseMap({
   trackedPath,
   currentPosition,
   fitToRecommended = true,
+  followCurrent = true,
   className,
 }: CourseMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -119,8 +122,8 @@ export default function CourseMap({
     } else {
       markerRef.current = new kakao.maps.Marker({ position: latLng, map });
     }
-    map.panTo(latLng);
-  }, [ready, currentPosition]);
+    if (followCurrent) map.panTo(latLng);
+  }, [ready, currentPosition, followCurrent]);
 
   return (
     <div className={className ?? 'absolute inset-0'}>

@@ -1,19 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { LatLng } from '@/components/CourseMap';
-
-/** 두 좌표 사이 거리(m) — Haversine 공식 */
-function haversineMeters(a: LatLng, b: LatLng): number {
-  const R = 6371000;
-  const toRad = (d: number) => (d * Math.PI) / 180;
-  const dLat = toRad(b.lat - a.lat);
-  const dLng = toRad(b.lng - a.lng);
-  const lat1 = toRad(a.lat);
-  const lat2 = toRad(b.lat);
-  const h =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
-  return 2 * R * Math.asin(Math.sqrt(h));
-}
+import { haversineMeters } from '@/utils/geo';
 
 /** GPS 떨림으로 인한 미세 이동은 거리에 더하지 않는다(m) */
 const MIN_STEP_M = 3;

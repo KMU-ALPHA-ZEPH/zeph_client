@@ -11,6 +11,10 @@ import { reverseGeocode } from '@/apis/kakaoLocal';
 import CourseMap, { type LatLng } from '@/components/CourseMap';
 import { extractLatLng } from '@/apis/courses';
 import { useCourseStore } from '@/stores/courseStore';
+import { haversineMeters } from '@/utils/geo';
+
+// 현재 위치가 시작 위치에서 이 거리(m) 안에 들어와야 러닝을 시작할 수 있다.
+const START_RADIUS_M = 60;
 
 /**
  * 러닝 준비 화면.
@@ -30,6 +34,18 @@ export default function TrackingStart() {
     if (!result) navigate('/course/main', { replace: true });
   }, [result, navigate]);
 
+  // 현재 위치를 계속 추적 — 시작 위치에 도착하면 버튼이 자동 활성화되도록
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    const id = navigator.geolocation.watchPosition(
+      (pos) =>
+        setMyPosition({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      (err) => console.warn('watchPosition failed', err),
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 2000 },
+    );
+    return () => navigator.geolocation.clearWatch(id);
+  }, []);
+
   // 추천 경로 좌표
   const recommendedPath: LatLng[] = useMemo(
     () =>
@@ -38,6 +54,18 @@ export default function TrackingStart() {
         .filter((p): p is LatLng => p !== null),
     [result],
   );
+
+  // 코스의 시작 지점(추천 응답 우선, 없으면 입력한 시작 위치)
+  const startPoint = useMemo<LatLng | null>(() => {
+    const lat = result?.startLat ?? form.startLat;
+    const lng = result?.startLng ?? form.startLng;
+    return lat != null && lng != null ? { lat, lng } : null;
+  }, [result, form.startLat, form.startLng]);
+
+  // 현재 위치 ~ 시작 지점 거리(m). 60m 이내면 출발 가능.
+  const distanceToStart =
+    myPosition && startPoint ? haversineMeters(myPosition, startPoint) : null;
+  const atStart = distanceToStart != null && distanceToStart <= START_RADIUS_M;
 
   const courseName = `${form.startName || '추천'} 코스`;
 
@@ -76,10 +104,11 @@ export default function TrackingStart() {
 
   return (
     <div className="relative h-dvh w-full overflow-hidden bg-surface-white">
-      {/* 배경 지도 + 추천 경로 + (이동 시) 현재 위치 마커 */}
+      {/* 배경 지도 + 추천 경로 + 현재 위치 마커 (준비 화면은 코스 전체 보기, 따라가기 X) */}
       <CourseMap
         recommendedPath={recommendedPath}
         currentPosition={myPosition}
+        followCurrent={false}
         className="absolute inset-0 z-0"
       />
 
@@ -137,10 +166,23 @@ export default function TrackingStart() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: 'easeOut' }}
-        className="absolute bottom-[50px] left-1/2 z-20 w-[320px] -translate-x-1/2"
+        className="absolute bottom-[50px] left-1/2 z-20 flex w-[320px] -translate-x-1/2 flex-col items-center gap-2"
       >
-        <Button className="w-full" onClick={() => navigate('/tracking/active')}>
-          러닝 시작하기
+        {!atStart && (
+          <span
+            className={`rounded-full bg-black/55 px-3 py-1 text-white ${textStyles['body-small-med']}`}
+          >
+            {distanceToStart == null
+              ? '현재 위치를 확인하고 있어요…'
+              : `시작 위치에서 약 ${Math.round(distanceToStart)}m 떨어져 있어요`}
+          </span>
+        )}
+        <Button
+          className="w-full"
+          inactive={!atStart}
+          onClick={() => atStart && navigate('/tracking/active')}
+        >
+          {atStart ? '러닝 시작하기' : '시작 위치로 이동해 주세요'}
         </Button>
       </motion.div>
     </div>

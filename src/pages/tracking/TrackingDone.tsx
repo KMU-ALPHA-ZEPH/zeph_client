@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import HeartSolidIcon from '@/assets/icons/mynaui_heart-solid.svg?react';
 import BookmarkIcon from '@/assets/icons/circum_bookmark.svg?react';
 import BookmarkFilledIcon from '@/assets/icons/circum_bookmark_filled.svg?react';
@@ -10,6 +10,9 @@ import { useNavigate } from 'react-router-dom';
 import BookmarkToast from '@/pages/popular/BookmarkToast';
 import { useSaveToScrap, todayString } from '@/hooks/useSaveToScrap';
 import { useTrackingStore } from '@/stores/trackingStore';
+import { useCourseStore } from '@/stores/courseStore';
+import { extractLatLng } from '@/apis/courses';
+import CourseMap, { type LatLng } from '@/components/CourseMap';
 import { formatDuration } from '@/utils/format';
 
 function Stat({
@@ -48,9 +51,20 @@ export default function TrackingDone() {
   const [showLikeToast, setShowLikeToast] = useState(false);
   const navigate = useNavigate();
   const summary = useTrackingStore((s) => s.summary);
+  const result = useCourseStore((s) => s.result);
   const { requestSave, saveToScrapElement } = useSaveToScrap(() =>
     setSaved(true),
   );
+
+  // 추천 경로 + 내가 실제로 뛴 경로를 지도에 함께 표시
+  const recommendedPath: LatLng[] = useMemo(
+    () =>
+      (result?.pathData?.points ?? [])
+        .map(extractLatLng)
+        .filter((p): p is LatLng => p !== null),
+    [result],
+  );
+  const trackedPath = summary?.trackedPath ?? [];
 
   const courseName = summary?.courseName ?? '추천 코스';
   const speedText = (summary?.speedKmh ?? 0).toFixed(1);
@@ -71,8 +85,12 @@ export default function TrackingDone() {
 
   return (
     <div className="relative h-dvh w-full overflow-hidden bg-surface-white">
-      {/* 배경 이미지 영역 (추후 코스/지도 이미지로 교체) */}
-      <div className="absolute inset-0 z-0 bg-gray-400" />
+      {/* 배경 지도: 추천 경로 + 내가 실제로 뛴 경로 */}
+      <CourseMap
+        recommendedPath={recommendedPath}
+        trackedPath={trackedPath}
+        className="absolute inset-0 z-0"
+      />
 
       {/* 하단 그라디언트 */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-[60%] bg-gradient-to-t from-black/60 via-black/20 to-transparent blur-[2px]" />
