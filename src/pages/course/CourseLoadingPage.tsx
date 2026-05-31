@@ -45,8 +45,6 @@ export default function CourseLoadingPage() {
 
     (async () => {
       const requestBody = buildRecommendRequest(form);
-      // 진단용: 실제로 보내는 요청 바디 확인(문자열로 찍어 복사 쉽게)
-      console.log('[recommend] request body', JSON.stringify(requestBody));
 
       // 시작 위치가 없으면(0,0) AI 서버가 경로를 못 만든다 → 호출 자체를 막고 안내
       if (!requestBody.startLat || !requestBody.startLng) {

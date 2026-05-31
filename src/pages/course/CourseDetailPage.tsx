@@ -93,17 +93,6 @@ export default function CourseDetailPage() {
     [result],
   );
 
-  // 진단용: 실제 응답 좌표 형태 확인
-  useEffect(() => {
-    if (result)
-      console.log(
-        '[detail] points[0]=',
-        result.pathData?.points?.[0],
-        '추출된 좌표 수=',
-        recommendedPath.length,
-      );
-  }, [result, recommendedPath.length]);
-
   if (!result) return null;
 
   const title = form.startName || '추천 코스';
