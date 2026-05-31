@@ -19,10 +19,12 @@ type CourseMapProps = {
   fitToRecommended?: boolean;
   /** currentPosition 이 바뀔 때 지도를 그 위치로 따라가게 할지 (러닝 중에만 true) */
   followCurrent?: boolean;
+  /** 지도 밝기: light(원본) / dim(살짝 어둡게) / dark(중간 어둡게) */
+  theme?: 'light' | 'dim' | 'dark';
   className?: string;
 };
 
-const NEON = '#1affb0'; // 추천 경로 — 형광 민트그린
+const NEON = '#17e39c'; // 추천 경로 — 형광 민트그린
 const TRACKED = '#ffffff'; // 실제 이동 경로 — 어두운 지도 위 대비용 흰색
 const DEFAULT_CENTER: LatLng = { lat: 37.5665, lng: 126.978 }; // 서울시청
 
@@ -38,6 +40,7 @@ export default function CourseMap({
   currentPosition,
   fitToRecommended = true,
   followCurrent = true,
+  theme = 'dark',
   className,
 }: CourseMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -62,9 +65,9 @@ export default function CourseMap({
     // 추천 경로: 형광 민트그린, 두껍게(8), 선명하게
     recommendedLineRef.current = new kakao.maps.Polyline({
       path: [],
-      strokeWeight: 3,
+      strokeWeight: 5,
       strokeColor: NEON,
-      strokeOpacity: 0.55,
+      strokeOpacity: 0.95,
       strokeStyle: 'solid',
       map: mapRef.current,
     });
@@ -127,7 +130,16 @@ export default function CourseMap({
 
   return (
     <div className={className ?? 'absolute inset-0'}>
-      <div ref={containerRef} className="map-dark size-full" />
+      <div
+        ref={containerRef}
+        className={
+          theme === 'dim'
+            ? 'map-dim size-full'
+            : theme === 'dark'
+              ? 'map-dark size-full'
+              : 'size-full'
+        }
+      />
       {error && (
         <div className="absolute inset-0 grid place-items-center bg-gray-100 px-6 text-center text-[13px] text-gray-500">
           지도를 불러올 수 없습니다.

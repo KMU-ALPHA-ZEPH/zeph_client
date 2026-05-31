@@ -128,9 +128,10 @@ export default function CourseDetailPage() {
       transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
       className="relative h-dvh w-full overflow-hidden bg-surface-white"
     >
-      {/* 배경 지도 + 추천 경로(primary, 얇고 반투명) */}
+      {/* 배경 지도 + 추천 경로 (살짝 어둡게) */}
       <CourseMap
         recommendedPath={recommendedPath}
+        theme="dim"
         className="absolute inset-0 z-0"
       />
 

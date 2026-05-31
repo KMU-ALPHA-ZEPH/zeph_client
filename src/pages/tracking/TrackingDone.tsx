@@ -95,7 +95,7 @@ export default function TrackingDone() {
       {/* 하단 그라디언트 */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-[60%] bg-gradient-to-t from-black/60 via-black/20 to-transparent blur-[2px]" />
 
-      <div className="absolute bottom-[80px] left-1/2 z-20 flex w-[319px] -translate-x-1/2 flex-col gap-3">
+      <div className="absolute bottom-[44px] left-1/2 z-20 flex w-[319px] -translate-x-1/2 flex-col gap-3">
         {/* 요약 카드 */}
         <div className="rounded-[10px] bg-surface-white px-5 pb-5 pt-[18px] shadow-[0px_4px_10px_rgba(0,0,0,0.25)]">
           <div className="flex items-center justify-between">

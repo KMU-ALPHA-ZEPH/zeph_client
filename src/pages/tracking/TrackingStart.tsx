@@ -112,8 +112,13 @@ export default function TrackingStart() {
         className="absolute inset-0 z-0"
       />
 
-      {/* 시작 시 씌워지는 그라디언트 오버레이 (상단 정보 가독성) */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-[220px] bg-gradient-to-b from-black/70 via-black/20 to-transparent" />
+      {/* 진입 시 위에서 덮이는 그라디언트 오버레이 (상단 정보 가독성) */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.6, ease: 'easeOut' }}
+        className="pointer-events-none absolute inset-x-0 top-0 z-10 h-[280px] bg-gradient-to-b from-black/90 via-black/45 to-transparent"
+      />
 
       {/* 뒤로가기 */}
       <button
