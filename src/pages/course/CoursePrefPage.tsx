@@ -9,7 +9,6 @@ import {
   CategoryIcon,
   BulbIcon,
   SlopeIcon,
-  ShieldIcon,
   StoreIcon,
 } from './icons';
 import DistanceModal, { type DistanceValue } from './OptionModal/DistanceModal';
@@ -21,8 +20,8 @@ import CourseTypeModal, {
 } from './OptionModal/CourseTypeModal';
 import LightingModal, { type LightingValue } from './OptionModal/LightingModal';
 import SlopeModal, { type SlopeValue } from './OptionModal/SlopeModal';
-import SafetyModal, { type SafetyValue } from './OptionModal/SafetyModal';
 import FacilityModal, { type FacilityValue } from './OptionModal/FacilityModal';
+import { useCourseStore } from '@/stores/courseStore';
 import { useNavigate } from 'react-router-dom';
 
 const formatDistance = (km: DistanceValue): string => {
@@ -52,12 +51,6 @@ const SLOPE_LABEL: Record<SlopeValue, string> = {
   high: '높은 경사',
 };
 
-const SAFETY_LABEL: Record<SafetyValue, string> = {
-  low: '낮음',
-  normal: '보통',
-  high: '높음',
-};
-
 const FACILITY_LABEL: Record<FacilityValue, string> = {
   prefer: '있는 거 선호',
   none: '고려하지 않음',
@@ -69,21 +62,29 @@ type ModalKey =
   | 'course'
   | 'lighting'
   | 'slope'
-  | 'safety'
   | 'facility'
   | null;
 
 export default function CoursePrefPage() {
-  const [distance, setDistance] = useState<DistanceValue | null>(null);
-  const [routeType, setRouteType] = useState<RouteTypeValue | null>(null);
-  const [courseType, setCourseType] = useState<CourseTypeValue | null>(null);
-  const [openModal, setOpenModal] = useState<ModalKey>(null);
   const navigate = useNavigate();
+  const setForm = useCourseStore((s) => s.setForm);
+  // 뒤로 왔을 때 직전 선택을 복원하기 위해 store 의 form 으로 초기화
+  const form = useCourseStore((s) => s.form);
 
-  const [lighting, setLighting] = useState<LightingValue | null>(null);
-  const [slope, setSlope] = useState<SlopeValue | null>(null);
-  const [safety, setSafety] = useState<SafetyValue | null>(null);
-  const [facility, setFacility] = useState<FacilityValue | null>(null);
+  const [distance, setDistance] = useState<DistanceValue | null>(
+    form.distanceKm,
+  );
+  const [routeType, setRouteType] = useState<RouteTypeValue | null>(
+    form.roundTrip === null ? null : form.roundTrip ? 'round' : 'oneway',
+  );
+  const [courseType, setCourseType] = useState<CourseTypeValue | null>(
+    form.courseType,
+  );
+  const [openModal, setOpenModal] = useState<ModalKey>(null);
+
+  const [lighting, setLighting] = useState<LightingValue | null>(form.lighting);
+  const [slope, setSlope] = useState<SlopeValue | null>(form.slope);
+  const [facility, setFacility] = useState<FacilityValue | null>(form.facility);
 
   const allRequiredSelected = !!(distance && routeType && courseType);
   const showExtras = courseType !== null;
@@ -165,14 +166,6 @@ export default function CoursePrefPage() {
               onClick={() => setOpenModal('slope')}
             />
             <PrefOptionCard
-              iconBgClassName="bg-[#2F6AFF]/20"
-              iconColorClassName="text-[#2F6AFF]"
-              icon={<ShieldIcon />}
-              title="안전"
-              selectedLabel={safety ? SAFETY_LABEL[safety] : null}
-              onClick={() => setOpenModal('safety')}
-            />
-            <PrefOptionCard
               iconBgClassName="bg-[#B037F6]/20"
               iconColorClassName="text-[#B037F6]"
               icon={<StoreIcon />}
@@ -188,7 +181,17 @@ export default function CoursePrefPage() {
         <Button
           className="w-full"
           inactive={!allRequiredSelected}
-          onClick={() => navigate('/course/main/step03')}
+          onClick={() => {
+            setForm({
+              distanceKm: typeof distance === 'number' ? distance : null,
+              roundTrip: routeType ? routeType === 'round' : null,
+              courseType,
+              lighting,
+              slope,
+              facility,
+            });
+            navigate('/course/main/step03');
+          }}
         >
           다음
         </Button>
@@ -236,15 +239,6 @@ export default function CoursePrefPage() {
         onClose={() => setOpenModal(null)}
         onConfirm={(v) => {
           setSlope(v);
-          setOpenModal(null);
-        }}
-      />
-      <SafetyModal
-        open={openModal === 'safety'}
-        value={safety}
-        onClose={() => setOpenModal(null)}
-        onConfirm={(v) => {
-          setSafety(v);
           setOpenModal(null);
         }}
       />

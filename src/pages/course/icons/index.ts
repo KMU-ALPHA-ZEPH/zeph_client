@@ -3,7 +3,6 @@ export { InfinityIcon } from './InfinityIcon';
 export { CategoryIcon } from './CategoryIcon';
 export { BulbIcon } from './BulbIcon';
 export { SlopeIcon } from './SlopeIcon';
-export { ShieldIcon } from './ShieldIcon';
 export { StoreIcon } from './StoreIcon';
 export { ChevronRightIcon } from './ChevronRightIcon';
 export { AIIcon } from './AIIcon';

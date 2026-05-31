@@ -9,6 +9,8 @@ import { MemoInput } from './components/MemoInput';
 import { useNavigate } from 'react-router-dom';
 import BookmarkToast from '@/pages/popular/BookmarkToast';
 import { useSaveToScrap, todayString } from '@/hooks/useSaveToScrap';
+import { useTrackingStore } from '@/stores/trackingStore';
+import { formatDuration } from '@/utils/format';
 
 function Stat({
   value,
@@ -45,9 +47,15 @@ export default function TrackingDone() {
   const [memo, setMemo] = useState('');
   const [showLikeToast, setShowLikeToast] = useState(false);
   const navigate = useNavigate();
+  const summary = useTrackingStore((s) => s.summary);
   const { requestSave, saveToScrapElement } = useSaveToScrap(() =>
     setSaved(true),
   );
+
+  const courseName = summary?.courseName ?? '추천 코스';
+  const speedText = (summary?.speedKmh ?? 0).toFixed(1);
+  const distanceText = (summary?.distanceKm ?? 0).toFixed(2);
+  const timeText = formatDuration(summary?.elapsedSec ?? 0);
 
   const toggleSave = () => {
     if (saved) {
@@ -55,8 +63,8 @@ export default function TrackingDone() {
       return;
     }
     requestSave({
-      id: 'tracking-ttukseom',
-      name: '뚝섬 한강 공원',
+      id: 'tracking-result',
+      name: courseName,
       date: todayString(),
     });
   };
@@ -74,7 +82,7 @@ export default function TrackingDone() {
         <div className="rounded-[10px] bg-surface-white px-5 pb-5 pt-[18px] shadow-[0px_4px_10px_rgba(0,0,0,0.25)]">
           <div className="flex items-center justify-between">
             <span className="text-h2 font-semibold tracking-[-0.4px] text-black">
-              뚝섬 한강 공원
+              {courseName}
             </span>
             <div className="flex items-center gap-1.5">
               <button
@@ -111,9 +119,9 @@ export default function TrackingDone() {
           <div className="my-[14px] h-px bg-gray-200" />
 
           <div className="flex justify-between">
-            <Stat value="6" unit="km/h" label="페이스" />
-            <Stat value="3.54" unit="km" label="거리" />
-            <Stat value="00:48" label="시간" />
+            <Stat value={speedText} unit="km/h" label="페이스" />
+            <Stat value={distanceText} unit="km" label="거리" />
+            <Stat value={timeText} label="시간" />
           </div>
 
           <div className="mt-4">

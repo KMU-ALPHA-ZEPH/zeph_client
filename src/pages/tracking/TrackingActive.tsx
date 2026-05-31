@@ -1,10 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PauseIcon } from '@/components/common/Icon/PauseIcon';
 import { PlayIcon } from '@/components/common/Icon/PlayIcon';
 import { GoEndIcon } from '@/components/common/Icon/GoEndIcon';
 import { textStyles } from '@/styles/tokens';
 import ConfirmModal from '@/components/common/ConfirmModal';
+import CourseMap, { type LatLng } from '@/components/CourseMap';
+import { useRunTracking } from '@/hooks/useRunTracking';
+import { useCourseStore } from '@/stores/courseStore';
+import { useTrackingStore } from '@/stores/trackingStore';
 
 function formatElapsed(totalSec: number) {
   const pad = (n: number) => String(n).padStart(2, '0');
@@ -42,26 +46,65 @@ function StatCard({
 
 export default function TrackingActive() {
   const navigate = useNavigate();
+  const result = useCourseStore((s) => s.result);
+  const form = useCourseStore((s) => s.form);
+  const setSummary = useTrackingStore((s) => s.setSummary);
+
   const [elapsedSec, setElapsedSec] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [showEndModal, setShowEndModal] = useState(false);
 
+  // 추천 경로(배경) — pathData.points 에서 lat/lng 만 추출
+  const recommendedPath: LatLng[] = useMemo(
+    () =>
+      (result?.pathData?.points ?? []).map((p) => ({
+        lat: p.lat,
+        lng: p.lng,
+      })),
+    [result],
+  );
+
+  // GPS 추적: 일시정지가 아닐 때만 위치를 받아 trackedPath/거리에 누적
+  const { trackedPath, position, distanceKm } = useRunTracking(!isPaused);
+
+  // 경과 시간 타이머 (일시정지 시 멈춤)
   useEffect(() => {
     if (isPaused) return;
     const id = setInterval(() => setElapsedSec((s) => s + 1), 1000);
     return () => clearInterval(id);
   }, [isPaused]);
 
+  // 페이스(속도 km/h) = 거리 / 시간
+  const speedKmh = elapsedSec > 0 ? distanceKm / (elapsedSec / 3600) : 0;
+
+  const courseName = form.startName || '추천 코스';
+
+  const finishRun = () => {
+    setSummary({
+      courseName,
+      distanceKm,
+      elapsedSec,
+      speedKmh,
+      trackedPath,
+    });
+    navigate('/tracking/done');
+  };
+
   return (
     <div className="relative h-dvh w-full overflow-hidden bg-surface-white">
-      {/* 배경 이미지 영역 (추후 코스/지도 이미지로 교체) */}
-      <div className="absolute inset-0 z-0 bg-gray-400" />
+      {/* 배경 지도: 추천 경로 + 실제 이동 경로 + 현재 위치 마커 */}
+      <CourseMap
+        recommendedPath={recommendedPath}
+        trackedPath={trackedPath}
+        currentPosition={position}
+        className="absolute inset-0 z-0"
+      />
 
       <div className="absolute bottom-[109px] left-1/2 z-20 flex w-[319px] -translate-x-1/2 flex-col gap-[23px]">
         {/* 거리 / 페이스 통계 */}
         <div className="flex gap-[19px]">
-          <StatCard value="6" unit="km/h" label="페이스" />
-          <StatCard value="3.54" unit="km" label="거리" />
+          <StatCard value={speedKmh.toFixed(1)} unit="km/h" label="페이스" />
+          <StatCard value={distanceKm.toFixed(2)} unit="km" label="거리" />
         </div>
 
         {/* 러닝 시간 + 컨트롤 */}
@@ -105,7 +148,7 @@ export default function TrackingActive() {
         title="러닝을 종료하시겠습니까?"
         confirmLabel="확인"
         cancelLabel="취소"
-        onConfirm={() => navigate('/tracking/done')}
+        onConfirm={finishRun}
       />
     </div>
   );

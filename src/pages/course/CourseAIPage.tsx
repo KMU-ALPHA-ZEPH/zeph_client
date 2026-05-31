@@ -4,12 +4,15 @@ import { textStyles } from '@/styles/tokens';
 import AIPromptCard from '@/pages/course/AIPromptCard';
 import AIPromptModal from '@/pages/course/OptionModal/AIPromptModal';
 import { Button } from '@/components/common/Button';
+import { useCourseStore } from '@/stores/courseStore';
 import { useNavigate } from 'react-router-dom';
 
 export default function CourseAIPage() {
-  const [prompt, setPrompt] = useState('');
-  const [open, setOpen] = useState(false);
   const navigate = useNavigate();
+  const setForm = useCourseStore((s) => s.setForm);
+  // 뒤로 왔을 때 직전 입력 복원
+  const [prompt, setPrompt] = useState(useCourseStore.getState().form.prompt);
+  const [open, setOpen] = useState(false);
 
   return (
     <div className="flex h-full w-full flex-col bg-surface-white pb-[110px]">
@@ -46,7 +49,13 @@ export default function CourseAIPage() {
       </div>
 
       <div className="fixed inset-x-0 bottom-9 z-30 mx-auto w-full max-w-[390px] px-5">
-        <Button className="w-full" onClick={() => navigate('/course/loading')}>
+        <Button
+          className="w-full"
+          onClick={() => {
+            setForm({ prompt });
+            navigate('/course/loading');
+          }}
+        >
           다음
         </Button>
       </div>
