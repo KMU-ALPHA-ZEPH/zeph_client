@@ -5,14 +5,24 @@ export type KakaoLatLng = {
   getLng(): number;
 };
 
+export type KakaoLatLngBounds = {
+  extend(latLng: KakaoLatLng): void;
+};
+
 export type KakaoMap = {
   panTo(latLng: KakaoLatLng): void;
   setCenter(latLng: KakaoLatLng): void;
   setLevel(level: number): void;
+  setBounds(bounds: KakaoLatLngBounds): void;
 };
 
 export type KakaoMarker = {
   setPosition(latLng: KakaoLatLng): void;
+  setMap(map: KakaoMap | null): void;
+};
+
+export type KakaoPolyline = {
+  setPath(path: KakaoLatLng[]): void;
   setMap(map: KakaoMap | null): void;
 };
 
@@ -25,7 +35,16 @@ type KakaoMaps = {
     position: KakaoLatLng;
     map?: KakaoMap;
   }) => KakaoMarker;
+  Polyline: new (options: {
+    path: KakaoLatLng[];
+    strokeWeight?: number;
+    strokeColor?: string;
+    strokeOpacity?: number;
+    strokeStyle?: string;
+    map?: KakaoMap;
+  }) => KakaoPolyline;
   LatLng: new (lat: number, lng: number) => KakaoLatLng;
+  LatLngBounds: new () => KakaoLatLngBounds;
   load(cb: () => void): void;
 };
 

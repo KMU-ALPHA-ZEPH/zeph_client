@@ -1,161 +1,113 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AnimatePresence, motion, type PanInfo } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { BackIcon } from '@/components/common/Icon/BackIcon';
 import { Button } from '@/components/common/Button';
 import { textStyles } from '@/styles/tokens';
 import BookmarkIcon from '@/assets/icons/circum_bookmark.svg?react';
 import BookmarkFilledIcon from '@/assets/icons/circum_bookmark_filled.svg?react';
 import { useSaveToScrap, todayString } from '@/hooks/useSaveToScrap';
+import CourseMap, { type LatLng } from '@/components/CourseMap';
+import { extractLatLng } from '@/apis/courses';
+import { useCourseStore, type CourseForm } from '@/stores/courseStore';
 
-type CourseInfo = {
-  id: string;
-  title: string;
-  currentLocation: string;
-  targetDistance: string;
-  aiNotes: string[];
-  details: { label: string; value: string; highlight?: boolean }[];
+/** form 선택값을 사람이 읽을 수 있는 상세 항목/안내 문구로 변환 */
+const COURSE_TYPE_LABEL: Record<string, string> = {
+  workout: '운동',
+  walk: '산책',
+  safety: '안전',
+};
+const SLOPE_LABEL: Record<string, string> = {
+  low: '낮음 (평지 위주)',
+  normal: '보통 (중간 경사)',
+  high: '높음 (오르막 포함)',
 };
 
-const COURSES: CourseInfo[] = [
-  {
-    id: 'ttukseom',
-    title: '뚝섬 한강 공원',
-    currentLocation: '37.5631, 126.9780',
-    targetDistance: '5.0km',
-    aiNotes: [
-      '운동 목적에 맞춰 횡단보도가 적은 코스를 우선 반영했어요.',
-      '가로등이 많은 밝은 길 위주로 추천했어요.',
-      '편의시설이 있는 구간을 포함했어요.',
-      '완만한 경사 중심으로 구성했어요.',
-      '출발 지점으로 다시 돌아오는 왕복 코스예요.',
-    ],
-    details: [
-      { label: '코스 유형', value: '운동', highlight: true },
-      { label: '조명 선호', value: '가로등 많은 밝은 길' },
-      { label: '편의시설', value: '있는 거 선호' },
-      { label: '경사도', value: '보통 (중간 경사)' },
-      { label: '왕복 or 편도', value: '왕복' },
-    ],
-  },
-  {
-    id: 'banpo',
-    title: '반포 한강 공원',
-    currentLocation: '37.5108, 126.9956',
-    targetDistance: '4.2km',
-    aiNotes: [
-      '야경이 좋은 구간을 우선 포함했어요.',
-      '강변 산책로를 중심으로 추천했어요.',
-      '편의시설이 잘 갖춰진 구간을 포함했어요.',
-      '평지 위주로 부담 없는 코스를 구성했어요.',
-      '출발 지점으로 다시 돌아오는 왕복 코스예요.',
-    ],
-    details: [
-      { label: '코스 유형', value: '산책', highlight: true },
-      { label: '조명 선호', value: '야경 좋은 길' },
-      { label: '편의시설', value: '있는 거 선호' },
-      { label: '경사도', value: '낮음 (평지 위주)' },
-      { label: '왕복 or 편도', value: '왕복' },
-    ],
-  },
-  {
-    id: 'mangwon',
-    title: '망원 한강 공원',
-    currentLocation: '37.5556, 126.9024',
-    targetDistance: '6.5km',
-    aiNotes: [
-      '한적한 산책로를 우선 반영했어요.',
-      '강변 풍경을 즐길 수 있는 구간을 포함했어요.',
-      '잔디 광장과 휴식 공간이 있는 코스예요.',
-      '완만한 경사 중심으로 구성했어요.',
-      '편도로 이동하는 코스예요.',
-    ],
-    details: [
-      { label: '코스 유형', value: '운동', highlight: true },
-      { label: '조명 선호', value: '자연광 위주' },
-      { label: '편의시설', value: '상관 없음' },
-      { label: '경사도', value: '보통 (중간 경사)' },
-      { label: '왕복 or 편도', value: '편도' },
-    ],
-  },
-  {
-    id: 'jamsil',
-    title: '잠실 한강 공원',
-    currentLocation: '37.5172, 127.0816',
-    targetDistance: '7.0km',
-    aiNotes: [
-      '운동 시설 주변 코스를 우선 반영했어요.',
-      '가로등이 많은 밝은 길 위주로 추천했어요.',
-      '편의시설이 풍부한 구간을 포함했어요.',
-      '약간의 오르막이 포함된 코스예요.',
-      '출발 지점으로 다시 돌아오는 왕복 코스예요.',
-    ],
-    details: [
-      { label: '코스 유형', value: '운동', highlight: true },
-      { label: '조명 선호', value: '가로등 많은 밝은 길' },
-      { label: '편의시설', value: '있는 거 선호' },
-      { label: '경사도', value: '높음 (오르막 포함)' },
-      { label: '왕복 or 편도', value: '왕복' },
-    ],
-  },
-  {
-    id: 'yeouido',
-    title: '여의도 한강 공원',
-    currentLocation: '37.5283, 126.9326',
-    targetDistance: '5.5km',
-    aiNotes: [
-      '벚꽃길 구간을 우선 포함했어요.',
-      '강변 산책로를 중심으로 추천했어요.',
-      '편의시설이 잘 갖춰진 구간을 포함했어요.',
-      '평지 위주로 구성했어요.',
-      '출발 지점으로 다시 돌아오는 왕복 코스예요.',
-    ],
-    details: [
-      { label: '코스 유형', value: '산책', highlight: true },
-      { label: '조명 선호', value: '가로등 많은 밝은 길' },
-      { label: '편의시설', value: '있는 거 선호' },
-      { label: '경사도', value: '낮음 (평지 위주)' },
-      { label: '왕복 or 편도', value: '왕복' },
-    ],
-  },
-];
+function buildDetails(form: CourseForm) {
+  const details: { label: string; value: string; highlight?: boolean }[] = [];
+  if (form.courseType)
+    details.push({
+      label: '코스 유형',
+      value: COURSE_TYPE_LABEL[form.courseType],
+      highlight: true,
+    });
+  details.push({
+    label: '조명 선호',
+    value: form.lighting === 'bright' ? '가로등 많은 밝은 길' : '상관 없음',
+  });
+  details.push({
+    label: '편의시설',
+    value: form.facility === 'prefer' ? '있는 거 선호' : '상관 없음',
+  });
+  if (form.slope)
+    details.push({ label: '경사도', value: SLOPE_LABEL[form.slope] });
+  if (form.roundTrip !== null)
+    details.push({
+      label: '왕복 or 편도',
+      value: form.roundTrip ? '왕복' : '편도',
+    });
+  return details;
+}
 
-const SWIPE_THRESHOLD = 60;
+function buildNotes(form: CourseForm): string[] {
+  const notes: string[] = [];
+  if (form.courseType === 'workout')
+    notes.push('운동 목적에 맞춘 코스를 우선 반영했어요.');
+  if (form.courseType === 'walk')
+    notes.push('편하게 걷기 좋은 산책 코스를 우선 반영했어요.');
+  if (form.lighting === 'bright')
+    notes.push('가로등이 많은 밝은 길 위주로 추천했어요.');
+  if (form.facility === 'prefer')
+    notes.push('편의시설이 있는 구간을 포함했어요.');
+  if (form.slope === 'low') notes.push('완만한 평지 중심으로 구성했어요.');
+  if (form.slope === 'high') notes.push('오르막이 포함된 코스로 구성했어요.');
+  notes.push(
+    form.roundTrip === false
+      ? '편도로 이동하는 코스예요.'
+      : '출발 지점으로 다시 돌아오는 왕복 코스예요.',
+  );
+  return notes;
+}
 
 export default function CourseDetailPage() {
   const navigate = useNavigate();
-  const [pageIndex, setPageIndex] = useState(0);
+  const result = useCourseStore((s) => s.result);
+  const form = useCourseStore((s) => s.form);
   const [expanded, setExpanded] = useState(false);
-  const [bookmarked, setBookmarked] = useState<boolean[]>(() =>
-    COURSES.map(() => false),
-  );
+  const [bookmarked, setBookmarked] = useState(false);
   const { requestSave, saveToScrapElement } = useSaveToScrap(() =>
-    setBookmarked((prev) => prev.map((v, i) => (i === pageIndex ? true : v))),
+    setBookmarked(true),
   );
 
-  const course = COURSES[pageIndex];
-  const isBookmarked = bookmarked[pageIndex];
+  // 결과가 없으면(새로고침 등) 코스 생성 시작 화면으로 보낸다.
+  useEffect(() => {
+    if (!result) navigate('/course/main', { replace: true });
+  }, [result, navigate]);
 
-  const goPrev = () => setPageIndex((p) => Math.max(0, p - 1));
-  const goNext = () => setPageIndex((p) => Math.min(COURSES.length - 1, p + 1));
+  // pathData.points 에서 좌표를 견고하게 추출해 추천 경로 배열로 만든다.
+  const recommendedPath: LatLng[] = useMemo(
+    () =>
+      (result?.pathData?.points ?? [])
+        .map(extractLatLng)
+        .filter((p): p is LatLng => p !== null),
+    [result],
+  );
 
-  const handlePageDragEnd = (_: unknown, info: PanInfo) => {
-    if (info.offset.x < -SWIPE_THRESHOLD) goNext();
-    else if (info.offset.x > SWIPE_THRESHOLD) goPrev();
-  };
+  if (!result) return null;
+
+  const title = form.startName || '추천 코스';
+  const startLat = result.startLat ?? form.startLat ?? 0;
+  const startLng = result.startLng ?? form.startLng ?? 0;
+  const distanceKm = result.totalDistanceKm ?? form.distanceKm ?? 0;
+  const details = buildDetails(form);
+  const notes = buildNotes(form);
 
   const toggleBookmark = () => {
-    if (isBookmarked) {
-      setBookmarked((prev) =>
-        prev.map((v, i) => (i === pageIndex ? false : v)),
-      );
+    if (bookmarked) {
+      setBookmarked(false);
       return;
     }
-    requestSave({
-      id: course.id,
-      name: course.title,
-      date: todayString(),
-    });
+    requestSave({ id: 'recommended', name: title, date: todayString() });
   };
 
   return (
@@ -165,31 +117,26 @@ export default function CourseDetailPage() {
       transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
       className="relative h-dvh w-full overflow-hidden bg-surface-white"
     >
-      {/* Map placeholder (gray) — swipeable to change pages */}
-      <motion.div
-        className="absolute inset-0 z-0 cursor-grab bg-gray-200 active:cursor-grabbing"
-        drag="x"
-        dragConstraints={{ left: 0, right: 0 }}
-        dragElastic={0.2}
-        onDragEnd={handlePageDragEnd}
+      {/* 배경 지도 + 추천 경로 (살짝 어둡게) */}
+      <CourseMap
+        recommendedPath={recommendedPath}
+        theme="dim"
+        className="absolute inset-0 z-0"
       />
 
-      {/* Top header: back + page dots — pointer-events-none so swipe passes through to map */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-30 flex h-[60px] items-center px-3">
+      {/* 상단 뒤로가기 */}
+      <div className="absolute inset-x-0 top-0 z-30 flex h-[60px] items-center px-3">
         <button
           type="button"
           aria-label="뒤로 가기"
           onClick={() => navigate(-1)}
-          className="pointer-events-auto flex size-7 shrink-0 items-center justify-center text-black"
+          className="flex size-7 shrink-0 items-center justify-center text-black"
         >
           <BackIcon className="size-7 text-black" />
         </button>
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-          <PageDots count={COURSES.length} active={pageIndex} />
-        </div>
       </div>
 
-      {/* Backdrop — tap to close when expanded */}
+      {/* 펼쳤을 때 배경 딤 */}
       <AnimatePresence>
         {expanded && (
           <motion.div
@@ -204,7 +151,7 @@ export default function CourseDetailPage() {
         )}
       </AnimatePresence>
 
-      {/* Bottom sheet (collapsed / expanded) */}
+      {/* 하단 시트 (접힘 / 펼침) */}
       <AnimatePresence initial={false} mode="wait">
         {expanded ? (
           <motion.div
@@ -235,19 +182,19 @@ export default function CourseDetailPage() {
             </button>
             <div className="px-[18px] pt-4">
               <CardHeader
-                title={course.title}
-                isBookmarked={isBookmarked}
+                title={title}
+                isBookmarked={bookmarked}
                 onBookmark={toggleBookmark}
               />
               <div className="h-4" />
               <InfoRow
-                location={course.currentLocation}
-                distance={course.targetDistance}
+                location={`${startLat.toFixed(4)}, ${startLng.toFixed(4)}`}
+                distance={`${distanceKm.toFixed(1)}km`}
               />
               <div className="my-5 h-px w-full bg-gray-200" />
-              <AIBox notes={course.aiNotes} />
+              <AIBox notes={notes} />
               <div className="h-3" />
-              <DetailList items={course.details} />
+              <DetailList items={details} />
             </div>
             <div className="mt-6 flex justify-center px-6">
               <Button
@@ -259,9 +206,10 @@ export default function CourseDetailPage() {
             </div>
           </motion.div>
         ) : (
-          <motion.button
+          <motion.div
             key="collapsed"
-            type="button"
+            role="button"
+            tabIndex={0}
             onClick={() => setExpanded(true)}
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
@@ -277,17 +225,17 @@ export default function CourseDetailPage() {
             onDragEnd={(_, info) => {
               if (info.offset.y < -40) setExpanded(true);
             }}
-            className="absolute bottom-5 left-1/2 z-20 flex h-[90px] w-[350px] max-w-[calc(100%-32px)] -translate-x-1/2 flex-col items-stretch rounded-[20px] bg-surface-white px-[18px] pb-4 pt-2 shadow-[0px_4px_10px_0px_rgba(0,0,0,0.25)]"
+            className="absolute bottom-5 left-1/2 z-20 flex h-[90px] w-[350px] max-w-[calc(100%-32px)] -translate-x-1/2 cursor-pointer flex-col items-stretch rounded-[20px] bg-surface-white px-[18px] pb-4 pt-2 shadow-[0px_4px_10px_0px_rgba(0,0,0,0.25)]"
           >
             <DragHandle />
             <div className="mt-3">
               <CardHeader
-                title={course.title}
-                isBookmarked={isBookmarked}
+                title={title}
+                isBookmarked={bookmarked}
                 onBookmark={toggleBookmark}
               />
             </div>
-          </motion.button>
+          </motion.div>
         )}
       </AnimatePresence>
 
@@ -300,21 +248,6 @@ function DragHandle() {
   return (
     <div className="flex w-full justify-center pt-2">
       <span className="block h-[5px] w-[70px] rounded-full bg-[rgba(141,141,141,0.3)]" />
-    </div>
-  );
-}
-
-function PageDots({ count, active }: { count: number; active: number }) {
-  return (
-    <div className="flex items-center gap-2">
-      {Array.from({ length: count }).map((_, i) => (
-        <span
-          key={i}
-          className={`block size-2 rounded-full transition-colors ${
-            i === active ? 'bg-primary' : 'bg-gray-300'
-          }`}
-        />
-      ))}
     </div>
   );
 }

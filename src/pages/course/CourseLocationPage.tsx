@@ -9,6 +9,7 @@ import {
   type KakaoMarker,
 } from '@/hooks/useKakaoMaps';
 import { searchKakaoPlaces, type KakaoPlace } from '@/apis/kakaoLocal';
+import { useCourseStore } from '@/stores/courseStore';
 import { textStyles } from '@/styles/tokens';
 import CourseStepBar from './CourseStepBar';
 
@@ -29,6 +30,7 @@ export default function CourseLocationPage() {
   const mapRef = useRef<KakaoMap | null>(null);
   const markerRef = useRef<KakaoMarker | null>(null);
   const { ready: mapsReady, error: mapsError } = useKakaoMaps();
+  const setStart = useCourseStore((s) => s.setStart);
 
   const [selected, setSelected] = useState<KakaoPlace>(initialPlace);
   const [editing, setEditing] = useState(false);
@@ -204,7 +206,15 @@ export default function CourseLocationPage() {
       <div className="fixed inset-x-0 bottom-9 z-30 mx-auto w-full max-w-[390px] px-5">
         <Button
           className="w-full"
-          onClick={() => navigate('/course/main/step02')}
+          onClick={() => {
+            setStart({
+              name: selected.name,
+              address: selected.address,
+              lat: selected.lat,
+              lng: selected.lng,
+            });
+            navigate('/course/main/step02');
+          }}
         >
           다음
         </Button>

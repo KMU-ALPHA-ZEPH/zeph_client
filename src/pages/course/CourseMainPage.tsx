@@ -11,6 +11,7 @@ import { LocationIcon } from '@/components/common/Icon/LocationIcon';
 import { textStyles } from '@/styles/tokens';
 import CourseSearchBar from './CourseSearchBar';
 import { reverseGeocode, type KakaoPlace } from '@/apis/kakaoLocal';
+import { useCourseStore } from '@/stores/courseStore';
 
 const DEFAULT_CENTER = { lat: 37.6098, lng: 127.0084 };
 const DEFAULT_LEVEL = 4;
@@ -23,6 +24,25 @@ export default function CourseMainPage() {
   const mapRef = useRef<KakaoMap | null>(null);
   const markerRef = useRef<KakaoMarker | null>(null);
   const { ready: mapsReady, error: mapsError } = useKakaoMaps();
+  const setStart = useCourseStore((s) => s.setStart);
+  const reset = useCourseStore((s) => s.reset);
+
+  // 코스 생성 진입점 — 새로 들어올 때마다 이전 선택을 초기화한다.
+  // (스텝 사이 뒤로가기는 reload 가 아니라 in-memory state 가 유지돼 복원됨)
+  useEffect(() => {
+    reset();
+  }, [reset]);
+
+  // 시작 위치를 선택하는 즉시 store 에 반영(위치 단계를 건너뛰어도 좌표 유지)
+  const selectPlace = (place: KakaoPlace) => {
+    setSelectedPlace(place);
+    setStart({
+      name: place.name,
+      address: place.address,
+      lat: place.lat,
+      lng: place.lng,
+    });
+  };
 
   useEffect(() => {
     if (!mapsReady || !mapContainerRef.current || mapRef.current) return;
@@ -34,7 +54,7 @@ export default function CourseMainPage() {
   }, [mapsReady]);
 
   const moveToPlace = (place: KakaoPlace) => {
-    setSelectedPlace(place);
+    selectPlace(place);
     if (!mapRef.current) return;
     const { kakao } = window;
     const latLng = new kakao.maps.LatLng(place.lat, place.lng);
@@ -77,7 +97,7 @@ export default function CourseMainPage() {
           });
         }
         const place = await reverseGeocode(lat, lng);
-        setSelectedPlace(place ?? { name: '내 위치', address: '', lat, lng });
+        selectPlace(place ?? { name: '내 위치', address: '', lat, lng });
       },
       (err) => {
         console.warn('geolocation failed', err);
