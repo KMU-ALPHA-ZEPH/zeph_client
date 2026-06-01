@@ -11,11 +11,13 @@ import { login } from '@/apis/auth';
 import { saveAuth } from '@/lib/auth';
 import { API_BASE_URL } from '@/lib/axios';
 import SignupModal from './SignupModal';
+import ForgotPasswordModal from './ForgotPasswordModal';
 
 const KAKAO_AUTH_URL = `${API_BASE_URL}/oauth2/authorization/kakao`;
 
 export default function LoginPage() {
   const [isSignupOpen, setIsSignupOpen] = useState(false);
+  const [isForgotOpen, setIsForgotOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -98,13 +100,21 @@ export default function LoginPage() {
           <p
             className={`${textStyles['caption-medium']} text-center text-white`}
           >
-            아이디 찾기 | 비밀번호 찾기 |{' '}
+            {/*아이디 찾기 |{' '}*/}
+            <button
+              type="button"
+              onClick={() => setIsForgotOpen(true)}
+              className="cursor-pointer text-white"
+            >
+              비밀번호 찾기
+            </button>{' '}
+            |{' '}
             <button
               type="button"
               onClick={() => setIsSignupOpen(true)}
               className="cursor-pointer text-white"
             >
-              회원가입
+              회원가입 하기
             </button>
           </p>
 
@@ -137,6 +147,20 @@ export default function LoginPage() {
             className="absolute inset-x-0 bottom-0 top-[52px] z-50"
           >
             <SignupModal onClose={() => setIsSignupOpen(false)} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isForgotOpen && (
+          <motion.div
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', damping: 50, stiffness: 280 }}
+            className="absolute inset-x-0 bottom-0 top-[52px] z-50"
+          >
+            <ForgotPasswordModal onClose={() => setIsForgotOpen(false)} />
           </motion.div>
         )}
       </AnimatePresence>
