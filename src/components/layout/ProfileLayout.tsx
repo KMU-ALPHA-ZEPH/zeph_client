@@ -4,7 +4,7 @@ import AppLayout from '@/components/layout/AppLayout';
 import AccountModal from '@/components/AccountModal';
 import ConfirmModal from '@/components/common/ConfirmModal';
 import { getUser, logout, saveUser } from '@/lib/auth';
-import { deleteAccount, updateProfile } from '@/apis/auth';
+import { deleteAccount, getProfile, updateProfile } from '@/apis/auth';
 
 type Props = {
   title?: string;
@@ -41,9 +41,11 @@ export default function ProfileLayout({ title = '통계' }: Props) {
   const handleProfileSubmit = async ({
     nickname,
     avatarUrl,
+    imageFile,
   }: {
     nickname: string;
     avatarUrl?: string;
+    imageFile?: File;
   }) => {
     if (!user?.id) {
       alert('사용자 정보를 찾을 수 없습니다. 다시 로그인 후 시도해주세요.');
@@ -52,12 +54,19 @@ export default function ProfileLayout({ title = '통계' }: Props) {
     try {
       await updateProfile(user.id, {
         name: nickname,
-        profile_image_url: avatarUrl,
+        image: imageFile,
       });
+      let nextImageUrl = avatarUrl;
+      try {
+        const fresh = await getProfile(user.id);
+        nextImageUrl = fresh.profile_image_url ?? avatarUrl;
+      } catch {
+        // ignore: fall back to preview URL
+      }
       const next = {
         ...user,
         name: nickname,
-        profile_image_url: avatarUrl,
+        profile_image_url: nextImageUrl,
       };
       saveUser(next);
       setUser(next);

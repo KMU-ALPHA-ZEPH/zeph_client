@@ -57,9 +57,12 @@ export async function getProfile(id: number): Promise<UserProfile> {
 
 export async function updateProfile(
   id: number,
-  body: { name?: string; profile_image_url?: string },
+  body: { name?: string; image?: File | null },
 ): Promise<void> {
-  await api.put(`/users/${id}`, body);
+  const formData = new FormData();
+  if (body.name !== undefined) formData.append('name', body.name);
+  if (body.image) formData.append('image', body.image);
+  await api.put(`/users/${id}`, formData);
 }
 
 export async function deleteAccount(id: number): Promise<void> {

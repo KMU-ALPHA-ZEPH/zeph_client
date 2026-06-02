@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { BackIcon } from '@/components/common/Icon/BackIcon';
 import { Button } from '@/components/common/Button';
@@ -8,7 +8,15 @@ import BookmarkIcon from '@/assets/icons/circum_bookmark.svg?react';
 import BookmarkFilledIcon from '@/assets/icons/circum_bookmark_filled.svg?react';
 import { useSaveToScrap, todayString } from '@/hooks/useSaveToScrap';
 import CourseMap, { type LatLng } from '@/components/CourseMap';
-import { extractLatLng } from '@/apis/courses';
+import {
+  extractLatLng,
+  toCourseType,
+  toSlopePreference,
+  updateCourse,
+} from '@/apis/courses';
+import { createScrap, unsetScrapGroup } from '@/apis/scraps';
+import ConfirmModal from '@/components/common/ConfirmModal';
+import CourseEditModal from '@/pages/course/CourseEditModal';
 import { useCourseStore, type CourseForm } from '@/stores/courseStore';
 
 /** form 선택값을 사람이 읽을 수 있는 상세 항목/안내 문구로 변환 */
@@ -71,13 +79,90 @@ function buildNotes(form: CourseForm): string[] {
 
 export default function CourseDetailPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const navState = (location.state ?? {}) as {
+    scrapId?: number;
+    courseId?: number;
+    initialName?: string;
+    initialDescription?: string;
+    editable?: boolean;
+  };
   const result = useCourseStore((s) => s.result);
   const form = useCourseStore((s) => s.form);
+  const scrapId = useCourseStore((s) => s.currentScrapId);
+  const courseId = useCourseStore((s) => s.currentCourseId);
+  const storedName = useCourseStore((s) => s.currentCourseName);
+  const storedDescription = useCourseStore((s) => s.currentCourseDescription);
+  const setCurrent = useCourseStore((s) => s.setCurrent);
   const [expanded, setExpanded] = useState(false);
-  const [bookmarked, setBookmarked] = useState(false);
-  const { requestSave, saveToScrapElement } = useSaveToScrap(() =>
-    setBookmarked(true),
+  const [isUnscrapOpen, setIsUnscrapOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+
+  // 진입 시 navState 로 받은 식별자/이름/설명을 store 에 반영해 다음 화면까지 공유한다.
+  useEffect(() => {
+    setCurrent({
+      courseId: navState.courseId ?? null,
+      scrapId: navState.scrapId ?? null,
+      courseName: navState.initialName ?? form.startName ?? null,
+      courseDescription: navState.initialDescription ?? null,
+    });
+    // form.startName 은 진입 시점의 기본값으로만 쓰고 변경은 추적하지 않는다.
+  }, [
+    navState.courseId,
+    navState.scrapId,
+    navState.initialName,
+    navState.initialDescription,
+    setCurrent,
+  ]);
+
+  const displayName = storedName || form.startName || '추천 코스';
+  const displayDescription = storedDescription ?? '';
+  const bookmarked = scrapId !== null;
+  const { requestSave, saveToScrapElement } = useSaveToScrap(
+    async (groupId) => {
+      if (!result) return;
+      try {
+        await createScrap({
+          groupId,
+          courseId: 0,
+          courseData: {
+            name: storedName || form.startName || '추천 코스',
+            description: storedDescription?.trim() || undefined,
+            type: toCourseType(form.courseType),
+            distanceKm: result.totalDistanceKm ?? form.distanceKm ?? 0,
+            pathData: result.pathData ?? { points: [] },
+            roundTrip: result.roundTrip ?? form.roundTrip ?? true,
+            preferLighting: form.lighting === 'bright',
+            preferConvenience: form.facility === 'prefer',
+            slopePreference: toSlopePreference(form.slope),
+          },
+        });
+        // 새로 스크랩되었으므로 scrapId 는 별도 조회 없이 임시로 -1로 표시(활성 상태 유지)
+        setCurrent({ scrapId: -1 });
+      } catch (e) {
+        console.error('[CourseDetailPage] createScrap failed:', e);
+        alert('스크랩 저장에 실패했습니다.');
+      }
+    },
   );
+
+  const handleUnscrap = async () => {
+    if (scrapId == null || scrapId < 0) {
+      // 백엔드 scrapId 없는 임시 활성 상태 → 그냥 비활성화만
+      setCurrent({ scrapId: null });
+      setIsUnscrapOpen(false);
+      return;
+    }
+    try {
+      await unsetScrapGroup(scrapId);
+      setCurrent({ scrapId: null });
+    } catch (e) {
+      console.error('[CourseDetailPage] unsetScrapGroup failed:', e);
+      alert('스크랩 해제에 실패했습니다.');
+    } finally {
+      setIsUnscrapOpen(false);
+    }
+  };
 
   // 결과가 없으면(새로고침 등) 코스 생성 시작 화면으로 보낸다.
   useEffect(() => {
@@ -95,16 +180,40 @@ export default function CourseDetailPage() {
 
   if (!result) return null;
 
-  const title = form.startName || '추천 코스';
+  const title = displayName;
+  const handleEditSubmit = async ({
+    name,
+    description,
+  }: {
+    name: string;
+    description: string;
+  }) => {
+    // 아직 저장 안 된 추천 코스도 편집은 허용한다. 값은 store 에 보관했다가
+    // 스크랩 저장 시점에 createScrap 의 courseData 로 함께 전송된다.
+    if (!courseId) {
+      setCurrent({ courseName: name, courseDescription: description });
+      return;
+    }
+    try {
+      await updateCourse(courseId, { name, description });
+      setCurrent({ courseName: name, courseDescription: description });
+    } catch (e) {
+      console.error('[CourseDetailPage] updateCourse failed:', e);
+      alert('코스 수정에 실패했습니다.');
+    }
+  };
   const startLat = result.startLat ?? form.startLat ?? 0;
   const startLng = result.startLng ?? form.startLng ?? 0;
+  const startLocation =
+    form.startAddress?.trim() ||
+    `${startLat.toFixed(4)}, ${startLng.toFixed(4)}`;
   const distanceKm = result.totalDistanceKm ?? form.distanceKm ?? 0;
   const details = buildDetails(form);
   const notes = buildNotes(form);
 
   const toggleBookmark = () => {
     if (bookmarked) {
-      setBookmarked(false);
+      setIsUnscrapOpen(true);
       return;
     }
     requestSave({ id: 'recommended', name: title, date: todayString() });
@@ -183,12 +292,15 @@ export default function CourseDetailPage() {
             <div className="px-[18px] pt-4">
               <CardHeader
                 title={title}
+                description={displayDescription}
                 isBookmarked={bookmarked}
                 onBookmark={toggleBookmark}
+                canEdit={navState.editable !== false}
+                onEdit={() => setIsEditOpen(true)}
               />
               <div className="h-4" />
               <InfoRow
-                location={`${startLat.toFixed(4)}, ${startLng.toFixed(4)}`}
+                location={startLocation}
                 distance={`${distanceKm.toFixed(1)}km`}
               />
               <div className="my-5 h-px w-full bg-gray-200" />
@@ -231,8 +343,11 @@ export default function CourseDetailPage() {
             <div className="mt-3">
               <CardHeader
                 title={title}
+                description={displayDescription}
                 isBookmarked={bookmarked}
                 onBookmark={toggleBookmark}
+                canEdit={navState.editable !== false}
+                onEdit={() => setIsEditOpen(true)}
               />
             </div>
           </motion.div>
@@ -240,6 +355,23 @@ export default function CourseDetailPage() {
       </AnimatePresence>
 
       {saveToScrapElement}
+
+      <ConfirmModal
+        isOpen={isUnscrapOpen}
+        onClose={() => setIsUnscrapOpen(false)}
+        title="스크랩을 해제하시겠습니까?"
+        confirmLabel="해제"
+        cancelLabel="취소"
+        onConfirm={handleUnscrap}
+      />
+
+      <CourseEditModal
+        isOpen={isEditOpen}
+        onClose={() => setIsEditOpen(false)}
+        initialName={displayName}
+        initialDescription={displayDescription}
+        onSubmit={handleEditSubmit}
+      />
     </motion.div>
   );
 }
@@ -254,36 +386,82 @@ function DragHandle() {
 
 function CardHeader({
   title,
+  description,
   isBookmarked,
   onBookmark,
+  canEdit,
+  onEdit,
 }: {
   title: string;
+  description?: string;
   isBookmarked: boolean;
   onBookmark: () => void;
+  canEdit?: boolean;
+  onEdit?: () => void;
 }) {
   return (
-    <div className="flex w-full items-center justify-between">
-      <h2 className={`${textStyles['heading-h2']} text-text-primary`}>
-        {title}
-      </h2>
-      <button
-        type="button"
-        aria-label={isBookmarked ? '북마크 해제' : '북마크'}
-        onClick={(e) => {
-          e.stopPropagation();
-          onBookmark();
-        }}
-        className={`flex size-6 items-center justify-center transition-colors ${
-          isBookmarked ? 'text-primary' : 'text-gray-500'
-        }`}
-      >
-        {isBookmarked ? (
-          <BookmarkFilledIcon className="size-[23px]" />
-        ) : (
-          <BookmarkIcon className="size-[23px]" />
-        )}
-      </button>
+    <div className="flex w-full flex-col gap-1">
+      <div className="flex w-full items-center justify-between gap-2">
+        <h2
+          className={`${textStyles['heading-h2']} truncate text-text-primary`}
+        >
+          {title}
+        </h2>
+        <div className="flex items-center gap-2">
+          {canEdit && onEdit && (
+            <button
+              type="button"
+              aria-label="코스 편집"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit();
+              }}
+              className="flex size-6 items-center justify-center text-gray-500"
+            >
+              <EditPencilIcon className="size-[18px]" />
+            </button>
+          )}
+          <button
+            type="button"
+            aria-label={isBookmarked ? '북마크 해제' : '북마크'}
+            onClick={(e) => {
+              e.stopPropagation();
+              onBookmark();
+            }}
+            className={`flex size-6 items-center justify-center transition-colors ${
+              isBookmarked ? 'text-primary' : 'text-gray-500'
+            }`}
+          >
+            {isBookmarked ? (
+              <BookmarkFilledIcon className="size-[23px]" />
+            ) : (
+              <BookmarkIcon className="size-[23px]" />
+            )}
+          </button>
+        </div>
+      </div>
+      {description && (
+        <p
+          className={`${textStyles['body-small']} line-clamp-2 text-text-secondary`}
+        >
+          {description}
+        </p>
+      )}
     </div>
+  );
+}
+
+function EditPencilIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 18 18" fill="none" {...props}>
+      <path
+        d="M11.7 3.6L14.4 6.3M2.7 15.3L3.6 11.7L11.7 3.6L14.4 6.3L6.3 14.4L2.7 15.3Z"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
 
@@ -295,13 +473,15 @@ function InfoRow({
   distance: string;
 }) {
   return (
-    <div className="flex w-full items-center justify-between">
-      <div className="flex items-center gap-1">
-        <PinIcon className="size-4 text-primary" />
-        <span className={`${textStyles['body-small-med']} text-text-primary`}>
+    <div className="flex w-full items-center justify-between gap-2">
+      <div className="flex min-w-0 flex-1 items-center gap-1">
+        <PinIcon className="size-4 shrink-0 text-primary" />
+        <span
+          className={`${textStyles['body-small-med']} shrink-0 text-text-primary`}
+        >
           시작 위치
         </span>
-        <span className={`${textStyles['body-small']} text-[#667080]`}>
+        <span className={`${textStyles['body-small']} truncate text-[#667080]`}>
           {location}
         </span>
       </div>

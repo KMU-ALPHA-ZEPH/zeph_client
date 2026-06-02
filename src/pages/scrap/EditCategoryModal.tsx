@@ -16,6 +16,7 @@ type Props = {
     name: string;
     description: string;
     imageUrl?: string;
+    imageFile?: File;
   }) => void;
 };
 
@@ -31,12 +32,14 @@ export default function EditCategoryModal({
   const [name, setName] = useState(initialName);
   const [description, setDescription] = useState(initialDescription);
   const [imageUrl, setImageUrl] = useState<string | undefined>(initialImageUrl);
+  const [imageFile, setImageFile] = useState<File | undefined>(undefined);
 
   useEffect(() => {
     if (isOpen) {
       setName(initialName);
       setDescription(initialDescription);
       setImageUrl(initialImageUrl);
+      setImageFile(undefined);
     }
   }, [isOpen, initialName, initialDescription, initialImageUrl]);
 
@@ -48,6 +51,7 @@ export default function EditCategoryModal({
       name: name.trim(),
       description: description.trim(),
       imageUrl,
+      imageFile,
     });
     onClose();
   };
@@ -59,6 +63,7 @@ export default function EditCategoryModal({
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (!file) return;
+      setImageFile(file);
       const reader = new FileReader();
       reader.onload = () => {
         if (typeof reader.result === 'string') setImageUrl(reader.result);
