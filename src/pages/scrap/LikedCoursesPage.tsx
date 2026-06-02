@@ -91,7 +91,7 @@ export default function LikedCoursesPage() {
 
   return (
     <div className="flex flex-col px-5">
-      <header className="-mx-5 flex h-[60px] items-center px-3">
+      <header className="sticky top-0 z-10 -mx-5 flex h-[calc(60px+env(safe-area-inset-top))] items-center bg-surface-white px-3 pt-[env(safe-area-inset-top)]">
         <button
           type="button"
           aria-label="뒤로 가기"
