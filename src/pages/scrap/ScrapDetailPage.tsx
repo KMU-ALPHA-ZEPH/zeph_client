@@ -7,7 +7,7 @@ import EditCategoryModal from '@/pages/scrap/EditCategoryModal';
 import ScrapCourseThumb from '@/pages/scrap/ScrapCourseThumb';
 import ConfirmModal from '@/components/common/ConfirmModal';
 import { isPinned as readIsPinned, togglePinned } from '@/pages/scrap/pinned';
-import { getGroups, updateGroup } from '@/apis/groups';
+import { deleteGroup, getGroups, updateGroup } from '@/apis/groups';
 import {
   getScrapsByGroup,
   unsetScrapGroup,
@@ -48,6 +48,8 @@ export default function ScrapDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [navigating, setNavigating] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
+  const [isDeleteGroupOpen, setIsDeleteGroupOpen] = useState(false);
+  const [deletingGroup, setDeletingGroup] = useState(false);
   const [pinned, setPinned] = useState(() =>
     Number.isFinite(groupId) ? readIsPinned(groupId) : false,
   );
@@ -133,6 +135,26 @@ export default function ScrapDetailPage() {
       alert('스크랩 제거에 실패했습니다.');
     } finally {
       setPendingDeleteId(null);
+    }
+  };
+
+  const handleDeleteGroupRequest = () => {
+    setIsEditOpen(false);
+    setIsDeleteGroupOpen(true);
+  };
+
+  const confirmDeleteGroup = async () => {
+    if (!Number.isFinite(groupId) || deletingGroup) return;
+    setDeletingGroup(true);
+    try {
+      await deleteGroup(groupId);
+      setIsDeleteGroupOpen(false);
+      navigate('/scrap', { replace: true });
+    } catch (e) {
+      console.error('[ScrapDetailPage] deleteGroup failed:', e);
+      alert('카테고리 삭제에 실패했습니다.');
+    } finally {
+      setDeletingGroup(false);
     }
   };
 
@@ -285,6 +307,7 @@ export default function ScrapDetailPage() {
         initialDescription={description}
         initialImageUrl={imageUrl}
         onSubmit={handleEdit}
+        onDelete={handleDeleteGroupRequest}
       />
 
       <ConfirmModal
@@ -295,6 +318,16 @@ export default function ScrapDetailPage() {
         confirmLabel="삭제"
         cancelLabel="취소"
         onConfirm={confirmDelete}
+      />
+
+      <ConfirmModal
+        isOpen={isDeleteGroupOpen}
+        onClose={() => setIsDeleteGroupOpen(false)}
+        title="카테고리를 삭제하시겠습니까?"
+        message="카테고리에 담긴 스크랩도 함께 정리됩니다."
+        confirmLabel="삭제"
+        cancelLabel="취소"
+        onConfirm={confirmDeleteGroup}
       />
     </div>
   );

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PauseIcon } from '@/components/common/Icon/PauseIcon';
 import { PlayIcon } from '@/components/common/Icon/PlayIcon';
@@ -56,6 +56,12 @@ export default function TrackingActive() {
   const [isPaused, setIsPaused] = useState(false);
   const [showEndModal, setShowEndModal] = useState(false);
 
+  // 트래킹 시작 시각 — 마운트 시점 한 번만 캡처.
+  const startTimeRef = useRef<string>(new Date().toISOString());
+  // 일시정지 누적 초 + 일시정지가 시작된 시각.
+  const [pausedSec, setPausedSec] = useState(0);
+  const pausedAtRef = useRef<number | null>(null);
+
   // 추천 경로(배경) — pathData.points 에서 좌표 추출
   const recommendedPath: LatLng[] = useMemo(
     () =>
@@ -66,16 +72,20 @@ export default function TrackingActive() {
   );
 
   // GPS 추적: 일시정지가 아닐 때만 위치를 받아 trackedPath/거리에 누적
-  // (sim 모드면 실제 GPS 대신 추천 경로를 따라 이동을 시뮬레이션)
-  const sim = isSimMode();
-  const { trackedPath, position, distanceKm } = useRunTracking(
-    !isPaused,
-    sim ? recommendedPath : null,
-  );
+  const { trackedPath, trackedPoints, position, distanceKm } =
+    useRunTracking(!isPaused);
 
   // 경과 시간 타이머 (일시정지 시 멈춤)
   useEffect(() => {
-    if (isPaused) return;
+    if (isPaused) {
+      pausedAtRef.current = Date.now();
+      return;
+    }
+    if (pausedAtRef.current != null) {
+      const delta = Math.round((Date.now() - pausedAtRef.current) / 1000);
+      if (delta > 0) setPausedSec((s) => s + delta);
+      pausedAtRef.current = null;
+    }
     const id = setInterval(() => setElapsedSec((s) => s + 1), 1000);
     return () => clearInterval(id);
   }, [isPaused]);
@@ -86,12 +96,21 @@ export default function TrackingActive() {
   const courseName = form.startName || '추천 코스';
 
   const finishRun = () => {
+    // 종료 시점에 일시정지 중이면 마지막 멈춤 구간도 합산
+    let finalPausedSec = pausedSec;
+    if (pausedAtRef.current != null) {
+      finalPausedSec += Math.round((Date.now() - pausedAtRef.current) / 1000);
+    }
     setSummary({
       courseName,
       distanceKm,
       elapsedSec,
       speedKmh,
       trackedPath,
+      trackedPoints,
+      startTime: startTimeRef.current,
+      endTime: new Date().toISOString(),
+      pausedSec: finalPausedSec,
     });
     navigate('/tracking/done');
   };
