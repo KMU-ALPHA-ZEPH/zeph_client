@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { LatLng } from '@/components/CourseMap';
 import { haversineMeters } from '@/utils/geo';
 
@@ -17,12 +17,16 @@ export type RunTracking = {
 };
 
 /**
- * navigator.geolocation.watchPosition 으로 현재 위치를 추적한다.
+ * 현재 위치를 추적해 경로/거리를 누적한다.
  *
- * @param running true 일 때만 위치를 받아 경로/거리에 누적한다.
- *                (일시정지하면 false 로 내려 watch 를 멈춘다)
+ * @param running       true 일 때만 위치를 받아 누적한다(일시정지 시 false).
+ * @param simulatePath  지정하면 실제 GPS 대신 이 경로를 따라 이동을 시뮬레이션한다.
+ *                      (데스크톱에서 러닝 흐름을 확인할 때 사용 — devSim 참고)
  */
-export function useRunTracking(running: boolean): RunTracking {
+export function useRunTracking(
+  running: boolean,
+  simulatePath?: LatLng[] | null,
+): RunTracking {
   const [trackedPath, setTrackedPath] = useState<LatLng[]>([]);
   const [position, setPosition] = useState<LatLng | null>(null);
   const [distanceKm, setDistanceKm] = useState(0);
@@ -31,44 +35,56 @@ export function useRunTracking(running: boolean): RunTracking {
   // 직전 좌표 — 거리 증분 계산용. 일시정지/재개 시 점프 방지를 위해 ref 로 관리.
   const lastPointRef = useRef<LatLng | null>(null);
 
+  // 새 좌표 수신 공통 처리(실제 GPS / 시뮬 둘 다 사용)
+  const pushPosition = useCallback((next: LatLng) => {
+    setHasFix(true);
+    setPosition(next);
+
+    const prev = lastPointRef.current;
+    if (prev) {
+      const stepM = haversineMeters(prev, next);
+      if (stepM >= MIN_STEP_M) {
+        setDistanceKm((d) => d + stepM / 1000);
+        setTrackedPath((path) => [...path, next]);
+        lastPointRef.current = next;
+      }
+    } else {
+      setTrackedPath((path) => [...path, next]);
+      lastPointRef.current = next;
+    }
+  }, []);
+
+  const simulating = !!simulatePath && simulatePath.length > 1;
+
+  // 실제 GPS 추적
   useEffect(() => {
-    if (!running) return;
+    if (!running || simulating) return;
     if (!navigator.geolocation) return;
 
     // 재개 시점: 다음 좌표가 첫 점이 되도록 초기화(멈춰 있던 구간을 거리에 더하지 않음)
     lastPointRef.current = null;
 
     const id = navigator.geolocation.watchPosition(
-      (pos) => {
-        const next: LatLng = {
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-        };
-        setHasFix(true);
-        setPosition(next);
-
-        const prev = lastPointRef.current;
-        if (prev) {
-          const stepM = haversineMeters(prev, next);
-          if (stepM >= MIN_STEP_M) {
-            setDistanceKm((d) => d + stepM / 1000);
-            setTrackedPath((path) => [...path, next]);
-            lastPointRef.current = next;
-          }
-        } else {
-          // 첫 좌표
-          setTrackedPath((path) => [...path, next]);
-          lastPointRef.current = next;
-        }
-      },
-      (err) => {
-        console.warn('watchPosition failed', err);
-      },
+      (pos) =>
+        pushPosition({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      (err) => console.warn('watchPosition failed', err),
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 1000 },
     );
 
     return () => navigator.geolocation.clearWatch(id);
-  }, [running]);
+  }, [running, simulating, pushPosition]);
+
+  // 시뮬레이션: 추천 경로를 따라 한 점씩 이동
+  useEffect(() => {
+    if (!running || !simulating || !simulatePath) return;
+    lastPointRef.current = null;
+    let i = 0;
+    const id = setInterval(() => {
+      pushPosition(simulatePath[i]);
+      if (i < simulatePath.length - 1) i += 1;
+    }, 600);
+    return () => clearInterval(id);
+  }, [running, simulating, simulatePath, pushPosition]);
 
   return { trackedPath, position, distanceKm, hasFix };
 }

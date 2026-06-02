@@ -95,5 +95,43 @@
   filter: brightness(0.75) saturate(0.95); /* detail — 살짝만 어둡게 */
 }
 .map-dark img {
-  filter: brightness(0.62) saturate(0.92); /* tracking — 중간 정도 어둡게 */
+  filter: brightness(0.8) saturate(0.92); /* tracking — 살짝 어둡게 */
+}
+
+/* 현재 위치 마커: 네이버 내비처럼 원형 점 + 펄스(파동) */
+.run-dot {
+  position: relative;
+  width: 18px;
+  height: 18px;
+}
+.run-dot__core {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: #2f7bff;
+  border: 3px solid #fff;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.15),
+    0 2px 5px rgba(0, 0, 0, 0.35);
+}
+.run-dot__pulse {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 18px;
+  height: 18px;
+  transform: translate(-50%, -50%);
+  border-radius: 9999px;
+  background: rgba(47, 123, 255, 0.35);
+  animation: run-dot-pulse 1.8s ease-out infinite;
+}
+@keyframes run-dot-pulse {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(3.4);
+    opacity: 0;
+  }
 }

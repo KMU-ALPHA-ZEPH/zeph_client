@@ -10,6 +10,7 @@ import { extractLatLng } from '@/apis/courses';
 import { useRunTracking } from '@/hooks/useRunTracking';
 import { useCourseStore } from '@/stores/courseStore';
 import { useTrackingStore } from '@/stores/trackingStore';
+import { isSimMode } from '@/utils/devSim';
 
 function formatElapsed(totalSec: number) {
   const pad = (n: number) => String(n).padStart(2, '0');
@@ -65,7 +66,12 @@ export default function TrackingActive() {
   );
 
   // GPS 추적: 일시정지가 아닐 때만 위치를 받아 trackedPath/거리에 누적
-  const { trackedPath, position, distanceKm } = useRunTracking(!isPaused);
+  // (sim 모드면 실제 GPS 대신 추천 경로를 따라 이동을 시뮬레이션)
+  const sim = isSimMode();
+  const { trackedPath, position, distanceKm } = useRunTracking(
+    !isPaused,
+    sim ? recommendedPath : null,
+  );
 
   // 경과 시간 타이머 (일시정지 시 멈춤)
   useEffect(() => {

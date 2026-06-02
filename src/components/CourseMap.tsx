@@ -2,9 +2,13 @@ import { useEffect, useRef } from 'react';
 import {
   useKakaoMaps,
   type KakaoMap,
-  type KakaoMarker,
+  type KakaoCustomOverlay,
   type KakaoPolyline,
 } from '@/hooks/useKakaoMaps';
+
+// 현재 위치 마커 HTML (네이버 내비처럼 원형 점 + 펄스)
+const CURRENT_DOT_HTML =
+  '<div class="run-dot"><span class="run-dot__pulse"></span><span class="run-dot__core"></span></div>';
 
 export type LatLng = { lat: number; lng: number };
 
@@ -47,7 +51,7 @@ export default function CourseMap({
   const mapRef = useRef<KakaoMap | null>(null);
   const recommendedLineRef = useRef<KakaoPolyline | null>(null);
   const trackedLineRef = useRef<KakaoPolyline | null>(null);
-  const markerRef = useRef<KakaoMarker | null>(null);
+  const markerRef = useRef<KakaoCustomOverlay | null>(null);
   const fittedRef = useRef(false);
   const { ready, error } = useKakaoMaps();
 
@@ -123,7 +127,14 @@ export default function CourseMap({
     if (markerRef.current) {
       markerRef.current.setPosition(latLng);
     } else {
-      markerRef.current = new kakao.maps.Marker({ position: latLng, map });
+      markerRef.current = new kakao.maps.CustomOverlay({
+        position: latLng,
+        content: CURRENT_DOT_HTML,
+        xAnchor: 0.5,
+        yAnchor: 0.5,
+        zIndex: 10,
+        map,
+      });
     }
     if (followCurrent) map.panTo(latLng);
   }, [ready, currentPosition, followCurrent]);
