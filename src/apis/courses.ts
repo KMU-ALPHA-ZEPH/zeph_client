@@ -157,6 +157,14 @@ export type UpdateCourseRequest = {
   description?: string;
 };
 
+/** 코스 경로를 GPX 파일 내용(XML 문자열)으로 받아온다. 다운로드/공유에 사용. */
+export async function getCourseGpx(courseId: number): Promise<string> {
+  const { data } = await api.get<string>(`/v0/courses/${courseId}/gpx`, {
+    responseType: 'text',
+  });
+  return data;
+}
+
 export async function updateCourse(
   courseId: number,
   body: UpdateCourseRequest,
