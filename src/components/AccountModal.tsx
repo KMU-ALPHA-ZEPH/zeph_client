@@ -16,6 +16,7 @@ type Props = {
   onProfileSubmit?: (data: {
     nickname: string;
     avatarUrl?: string;
+    imageFile?: File;
   }) => Promise<void> | void;
 };
 
@@ -48,6 +49,7 @@ export default function AccountModal({
   const handleProfileSubmit = async (data: {
     nickname: string;
     avatarUrl?: string;
+    imageFile?: File;
   }) => {
     setDisplayName(data.nickname);
     setDisplayAvatar(data.avatarUrl);

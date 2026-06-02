@@ -126,3 +126,69 @@ export async function recommendCourse(
   );
   return data;
 }
+
+/** 기존 코스 상세 (CourseDetailResponse) */
+export type CourseDetailResponse = {
+  id: number;
+  type: string;
+  distanceKm: number;
+  startLat: number;
+  startLng: number;
+  pathData: PathData;
+  name?: string;
+  description?: string;
+  likeCount?: number;
+  isLiked?: boolean;
+};
+
+export async function getCourseDetail(
+  courseId: number,
+): Promise<CourseDetailResponse> {
+  const { data } = await api.get<CourseDetailResponse>(
+    `/v0/courses/${courseId}`,
+  );
+  return data;
+}
+
+export type UpdateCourseRequest = {
+  name?: string;
+  description?: string;
+};
+
+export async function updateCourse(
+  courseId: number,
+  body: UpdateCourseRequest,
+): Promise<void> {
+  await api.patch(`/v0/courses/${courseId}`, body);
+}
+
+/** 코스 목록 (CourseResponse) */
+export type CourseListItem = {
+  id: number;
+  name: string;
+  description?: string;
+  type: string;
+  roundTrip: boolean;
+  region: string;
+  likeCount: number;
+  isLiked?: boolean;
+  createdAt?: string;
+};
+
+export type GetCoursesParams = {
+  sort?: 'NEAREST' | 'POPULAR' | 'LATEST';
+  lat?: number;
+  lng?: number;
+  radiusKm?: number;
+  minDistanceKm?: number;
+  maxDistanceKm?: number;
+  type?: 'walk' | 'safety' | 'exercise' | 'workout';
+  liked?: boolean;
+};
+
+export async function getCourses(
+  params: GetCoursesParams = {},
+): Promise<CourseListItem[]> {
+  const { data } = await api.get<CourseListItem[]>('/v0/courses', { params });
+  return data;
+}

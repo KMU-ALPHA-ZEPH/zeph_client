@@ -48,6 +48,26 @@ const initialForm: CourseForm = {
 type CourseState = {
   form: CourseForm;
   result: RecommendCourseResponse | null;
+  /**
+   * 현재 디테일 페이지/트래킹 세션에서 다루고 있는 코스의 식별자.
+   * - null: 아직 백엔드에 저장되지 않은 추천 결과
+   * - 양수: 백엔드에 저장된 코스의 id
+   */
+  currentCourseId: number | null;
+  /**
+   * 현재 코스가 속한 스크랩의 식별자.
+   * - null: 스크랩되지 않음
+   * - 양수: 백엔드 scrapId
+   * - -1: 방금 생성해서 아직 백엔드 id 를 모르는 임시 활성 상태
+   */
+  currentScrapId: number | null;
+  /**
+   * 사용자가 디테일/편집 모달에서 수정한 코스 이름. 아직 저장되지 않은
+   * 추천 코스는 백엔드 PATCH 가 불가하므로 store 에 보관했다가 스크랩 저장 시 함께 보낸다.
+   */
+  currentCourseName: string | null;
+  /** 사용자가 입력/수정한 코스 설명. 동일하게 스크랩 저장 시점에 함께 보낸다. */
+  currentCourseDescription: string | null;
   /** step01: 시작 위치 저장 */
   setStart: (p: {
     name: string;
@@ -59,6 +79,13 @@ type CourseState = {
   setForm: (partial: Partial<CourseForm>) => void;
   /** 추천 결과 저장 */
   setResult: (result: RecommendCourseResponse | null) => void;
+  /** 현재 코스/스크랩 식별자 + 이름/설명 부분 갱신 */
+  setCurrent: (p: {
+    courseId?: number | null;
+    scrapId?: number | null;
+    courseName?: string | null;
+    courseDescription?: string | null;
+  }) => void;
   /** 플로우 초기화 */
   reset: () => void;
 };
@@ -66,6 +93,10 @@ type CourseState = {
 export const useCourseStore = create<CourseState>((set) => ({
   form: initialForm,
   result: null,
+  currentCourseId: null,
+  currentScrapId: null,
+  currentCourseName: null,
+  currentCourseDescription: null,
   setStart: (p) =>
     set((s) => ({
       form: {
@@ -78,7 +109,27 @@ export const useCourseStore = create<CourseState>((set) => ({
     })),
   setForm: (partial) => set((s) => ({ form: { ...s.form, ...partial } })),
   setResult: (result) => set({ result }),
-  reset: () => set({ form: initialForm, result: null }),
+  setCurrent: (p) =>
+    set((s) => ({
+      currentCourseId:
+        p.courseId === undefined ? s.currentCourseId : p.courseId,
+      currentScrapId: p.scrapId === undefined ? s.currentScrapId : p.scrapId,
+      currentCourseName:
+        p.courseName === undefined ? s.currentCourseName : p.courseName,
+      currentCourseDescription:
+        p.courseDescription === undefined
+          ? s.currentCourseDescription
+          : p.courseDescription,
+    })),
+  reset: () =>
+    set({
+      form: initialForm,
+      result: null,
+      currentCourseId: null,
+      currentScrapId: null,
+      currentCourseName: null,
+      currentCourseDescription: null,
+    }),
 }));
 
 /**

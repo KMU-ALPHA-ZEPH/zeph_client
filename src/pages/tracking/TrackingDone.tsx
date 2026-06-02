@@ -11,8 +11,11 @@ import BookmarkToast from '@/pages/popular/BookmarkToast';
 import { useSaveToScrap, todayString } from '@/hooks/useSaveToScrap';
 import { useTrackingStore } from '@/stores/trackingStore';
 import { useCourseStore } from '@/stores/courseStore';
-import { extractLatLng } from '@/apis/courses';
+import { extractLatLng, toCourseType, toSlopePreference } from '@/apis/courses';
+import { unlikeCourse } from '@/apis/likes';
+import { createScrap, unsetScrapGroup } from '@/apis/scraps';
 import CourseMap, { type LatLng } from '@/components/CourseMap';
+import ConfirmModal from '@/components/common/ConfirmModal';
 import { formatDuration } from '@/utils/format';
 
 function Stat({
@@ -44,17 +47,52 @@ function Stat({
 }
 
 export default function TrackingDone() {
-  const [liked, setLiked] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const [likedCourseId, setLikedCourseId] = useState<number | null>(null);
+  const [likeBusy, setLikeBusy] = useState(false);
   const [showMemo, setShowMemo] = useState(false);
   const [memo, setMemo] = useState('');
   const [showLikeToast, setShowLikeToast] = useState(false);
+  const [isUnscrapOpen, setIsUnscrapOpen] = useState(false);
   const navigate = useNavigate();
   const summary = useTrackingStore((s) => s.summary);
   const result = useCourseStore((s) => s.result);
-  const { requestSave, saveToScrapElement } = useSaveToScrap(() =>
-    setSaved(true),
+  const form = useCourseStore((s) => s.form);
+  const scrapId = useCourseStore((s) => s.currentScrapId);
+  const storedName = useCourseStore((s) => s.currentCourseName);
+  const storedDescription = useCourseStore((s) => s.currentCourseDescription);
+  const setCurrent = useCourseStore((s) => s.setCurrent);
+  const saved = scrapId !== null;
+  const { requestSave, saveToScrapElement } = useSaveToScrap(
+    async (groupId) => {
+      try {
+        await createScrap({
+          groupId,
+          courseId: 0,
+          courseData: {
+            name:
+              storedName ||
+              summary?.courseName ||
+              form.startName ||
+              '추천 코스',
+            description: storedDescription?.trim() || undefined,
+            type: toCourseType(form.courseType),
+            distanceKm: result?.totalDistanceKm ?? summary?.distanceKm ?? 0,
+            pathData: result?.pathData ?? { points: [] },
+            roundTrip: result?.roundTrip ?? form.roundTrip ?? true,
+            preferLighting: form.lighting === 'bright',
+            preferConvenience: form.facility === 'prefer',
+            slopePreference: toSlopePreference(form.slope),
+          },
+        });
+        // 새로 스크랩되었으므로 scrapId 는 별도 조회 없이 임시로 -1 로 표시(활성 상태 유지)
+        setCurrent({ scrapId: -1 });
+      } catch (e) {
+        console.error('[TrackingDone] createScrap failed:', e);
+        alert('스크랩 저장에 실패했습니다.');
+      }
+    },
   );
+  const liked = likedCourseId !== null;
 
   // 추천 경로 + 내가 실제로 뛴 경로를 지도에 함께 표시
   const recommendedPath: LatLng[] = useMemo(
@@ -66,14 +104,15 @@ export default function TrackingDone() {
   );
   const trackedPath = summary?.trackedPath ?? [];
 
-  const courseName = summary?.courseName ?? '추천 코스';
+  const courseName =
+    storedName || summary?.courseName || form.startName || '추천 코스';
   const speedText = (summary?.speedKmh ?? 0).toFixed(1);
   const distanceText = (summary?.distanceKm ?? 0).toFixed(2);
   const timeText = formatDuration(summary?.elapsedSec ?? 0);
 
   const toggleSave = () => {
     if (saved) {
-      setSaved(false);
+      setIsUnscrapOpen(true);
       return;
     }
     requestSave({
@@ -81,6 +120,53 @@ export default function TrackingDone() {
       name: courseName,
       date: todayString(),
     });
+  };
+
+  const handleUnscrap = async () => {
+    if (scrapId == null || scrapId < 0) {
+      // 백엔드 scrapId 없는 임시 활성 상태 → 그냥 비활성화만
+      setCurrent({ scrapId: null });
+      setIsUnscrapOpen(false);
+      return;
+    }
+    try {
+      await unsetScrapGroup(scrapId);
+      setCurrent({ scrapId: null });
+    } catch (e) {
+      console.error('[TrackingDone] unsetScrapGroup failed:', e);
+      alert('스크랩 해제에 실패했습니다.');
+    } finally {
+      setIsUnscrapOpen(false);
+    }
+  };
+
+  const toggleLike = async () => {
+    if (likeBusy) return;
+    setLikeBusy(true);
+    try {
+      if (liked) {
+        if (likedCourseId != null) {
+          await unlikeCourse(likedCourseId);
+        }
+        setLikedCourseId(null);
+      } else {
+        // TODO: 백엔드에 추천 코스 단독 저장 API 가 추가되면 아래 흐름으로 교체.
+        //   import { likeCourse } from '@/apis/likes';
+        //   const { id } = await saveCourse({ name: courseName, ... });
+        //   await likeCourse(id);
+        //   setLikedCourseId(id);
+        //   setShowLikeToast(true);
+        alert(
+          '좋아요 기능은 곧 활성화됩니다. 코스 저장 API 연결 후 사용 가능합니다.',
+        );
+        return;
+      }
+    } catch (e) {
+      console.error('[TrackingDone] toggleLike failed:', e);
+      alert('좋아요 처리에 실패했습니다.');
+    } finally {
+      setLikeBusy(false);
+    }
   };
 
   return (
@@ -107,11 +193,8 @@ export default function TrackingDone() {
                 type="button"
                 aria-label="좋아요"
                 aria-pressed={liked}
-                onClick={() => {
-                  const next = !liked;
-                  setLiked(next);
-                  if (next) setShowLikeToast(true);
-                }}
+                onClick={toggleLike}
+                disabled={likeBusy}
                 className="block size-[22px]"
               >
                 <HeartSolidIcon
@@ -186,6 +269,15 @@ export default function TrackingDone() {
       <BookmarkToast
         isOpen={showLikeToast}
         onClose={() => setShowLikeToast(false)}
+      />
+
+      <ConfirmModal
+        isOpen={isUnscrapOpen}
+        onClose={() => setIsUnscrapOpen(false)}
+        title="스크랩을 해제하시겠습니까?"
+        confirmLabel="해제"
+        cancelLabel="취소"
+        onConfirm={handleUnscrap}
       />
 
       {saveToScrapElement}

@@ -12,6 +12,7 @@ type Props = {
   onSubmit?: (data: {
     nickname: string;
     avatarUrl?: string;
+    imageFile?: File;
   }) => void | Promise<void>;
 };
 
@@ -26,11 +27,13 @@ export default function ProfileEditModal({
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(
     initialAvatarUrl,
   );
+  const [imageFile, setImageFile] = useState<File | undefined>(undefined);
 
   useEffect(() => {
     if (isOpen) {
       setNickname(initialNickname);
       setAvatarUrl(initialAvatarUrl);
+      setImageFile(undefined);
     }
   }, [isOpen, initialNickname, initialAvatarUrl]);
 
@@ -40,7 +43,7 @@ export default function ProfileEditModal({
     if (submitting) return;
     setSubmitting(true);
     try {
-      await onSubmit?.({ nickname, avatarUrl });
+      await onSubmit?.({ nickname, avatarUrl, imageFile });
       onClose();
     } finally {
       setSubmitting(false);
@@ -54,6 +57,7 @@ export default function ProfileEditModal({
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (!file) return;
+      setImageFile(file);
       const reader = new FileReader();
       reader.onload = () => {
         if (typeof reader.result === 'string') setAvatarUrl(reader.result);
