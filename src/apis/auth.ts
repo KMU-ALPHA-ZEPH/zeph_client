@@ -68,6 +68,12 @@ export async function getProfile(id: number): Promise<UserProfile> {
   return data;
 }
 
+/** 인증(쿠키/JWT)으로 식별되는 현재 로그인 사용자 프로필 조회 */
+export async function getMyProfile(): Promise<UserProfile> {
+  const { data } = await api.get<UserProfile>('/users/me');
+  return data;
+}
+
 export async function updateProfile(
   id: number,
   body: { name?: string; image?: File | null },
