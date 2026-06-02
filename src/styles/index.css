@@ -74,10 +74,29 @@
 
 @layer base {
   html,
+  body,
+  #root {
+    /* iOS 홈화면(standalone) PWA에서 하단 흰색 스트립 + 드래그해야 채워지는
+       문제 해결: 뷰포트 전체를 고정 높이로 잡고 바운스(오버스크롤)를 끈다.
+       body 배경을 검정으로 둬서 safe-area/바운스 영역이 흰색으로 비치지 않게 한다. */
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--color-black);
+  }
+  html,
   body {
     font-family: var(--font-sans);
     color: var(--color-text-primary);
-    background-color: var(--color-surface-white);
+    /* 페이지 단위 스크롤/바운스를 막고, 스크롤은 각 화면 내부 컨테이너가 담당 */
+    overflow: hidden;
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  body {
+    position: fixed;
+    inset: 0;
   }
 }
 
