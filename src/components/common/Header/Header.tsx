@@ -157,14 +157,16 @@ export default function Header({
       {title && (
         <h1 className={`${textStyles['heading-h1']} text-black`}>{title}</h1>
       )}
-      <button
-        type="button"
-        onClick={onMenuClick}
-        aria-label="메뉴 열기"
-        className="ml-auto flex size-6 items-center justify-center text-black"
-      >
-        <MenuIcon />
-      </button>
+      {onMenuClick && (
+        <button
+          type="button"
+          onClick={onMenuClick}
+          aria-label="메뉴 열기"
+          className="ml-auto flex size-6 items-center justify-center text-black"
+        >
+          <MenuIcon />
+        </button>
+      )}
     </header>
   );
 }
