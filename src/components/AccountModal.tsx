@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import ProfileIcon from '@/assets/icons/profile_avatar.svg?react';
 import { BackIcon } from '@/components/common/Icon/BackIcon';
 import ProfileEditModal from '@/components/ProfileEditModal';
+import ForgotPasswordModal from '@/pages/onboarding/ForgotPasswordModal';
 
 type Props = {
   isOpen: boolean;
@@ -32,6 +33,7 @@ export default function AccountModal({
   onProfileSubmit,
 }: Props) {
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isForgotOpen, setIsForgotOpen] = useState(false);
   const [displayName, setDisplayName] = useState(name);
   const [displayAvatar, setDisplayAvatar] = useState<string | undefined>(
     avatarUrl,
@@ -130,7 +132,10 @@ export default function AccountModal({
               <li>
                 <button
                   type="button"
-                  onClick={onPasswordClick}
+                  onClick={() => {
+                    onPasswordClick?.();
+                    setIsForgotOpen(true);
+                  }}
                   className="flex h-[56px] w-full items-center px-[14px] text-left text-body-md text-text-primary"
                 >
                   비밀번호 변경
@@ -164,6 +169,21 @@ export default function AccountModal({
             initialAvatarUrl={displayAvatar}
             onSubmit={handleProfileSubmit}
           />
+
+          {/* 비밀번호 변경: 로그인 페이지의 비밀번호 재설정 모달을 그대로 띄운다 */}
+          <AnimatePresence>
+            {isForgotOpen && (
+              <motion.div
+                initial={{ y: '100%' }}
+                animate={{ y: 0 }}
+                exit={{ y: '100%' }}
+                transition={{ type: 'spring', damping: 50, stiffness: 280 }}
+                className="fixed inset-x-0 bottom-0 top-[52px] z-[60] mx-auto w-full max-w-[390px]"
+              >
+                <ForgotPasswordModal onClose={() => setIsForgotOpen(false)} />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </>
       )}
     </AnimatePresence>
