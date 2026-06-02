@@ -12,6 +12,7 @@ import CourseMap, { type LatLng } from '@/components/CourseMap';
 import { extractLatLng } from '@/apis/courses';
 import { useCourseStore } from '@/stores/courseStore';
 import { haversineMeters } from '@/utils/geo';
+import { isSimMode } from '@/utils/devSim';
 
 // 현재 위치가 시작 위치에서 이 거리(m) 안에 들어와야 러닝을 시작할 수 있다.
 const START_RADIUS_M = 60;
@@ -63,9 +64,12 @@ export default function TrackingStart() {
   }, [result, form.startLat, form.startLng]);
 
   // 현재 위치 ~ 시작 지점 거리(m). 60m 이내면 출발 가능.
+  // sim 모드(데스크톱 확인용)면 위치 판정을 통과시킨다.
+  const sim = isSimMode();
   const distanceToStart =
     myPosition && startPoint ? haversineMeters(myPosition, startPoint) : null;
-  const atStart = distanceToStart != null && distanceToStart <= START_RADIUS_M;
+  const atStart =
+    sim || (distanceToStart != null && distanceToStart <= START_RADIUS_M);
 
   const courseName = `${form.startName || '추천'} 코스`;
 

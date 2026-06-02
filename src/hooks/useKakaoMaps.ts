@@ -26,6 +26,11 @@ export type KakaoPolyline = {
   setMap(map: KakaoMap | null): void;
 };
 
+export type KakaoCustomOverlay = {
+  setPosition(latLng: KakaoLatLng): void;
+  setMap(map: KakaoMap | null): void;
+};
+
 type KakaoMaps = {
   Map: new (
     container: HTMLElement,
@@ -43,6 +48,14 @@ type KakaoMaps = {
     strokeStyle?: string;
     map?: KakaoMap;
   }) => KakaoPolyline;
+  CustomOverlay: new (options: {
+    position: KakaoLatLng;
+    content: string | HTMLElement;
+    xAnchor?: number;
+    yAnchor?: number;
+    zIndex?: number;
+    map?: KakaoMap;
+  }) => KakaoCustomOverlay;
   LatLng: new (lat: number, lng: number) => KakaoLatLng;
   LatLngBounds: new () => KakaoLatLngBounds;
   load(cb: () => void): void;
