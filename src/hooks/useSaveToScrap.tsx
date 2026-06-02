@@ -2,10 +2,14 @@ import { useState, type ReactNode } from 'react';
 import SaveToScrapModal from '@/pages/popular/SaveToScrapModal';
 import BookmarkToast from '@/pages/popular/BookmarkToast';
 import BookmarkFilledIcon from '@/assets/icons/circum_bookmark_filled.svg?react';
-import { addSavedCourse } from '@/pages/scrap/savedCourses';
-import type { ScrapCourseItem } from '@/pages/scrap/ScrapCourseThumb';
 
-export type SaveCandidate = Omit<ScrapCourseItem, 'isBookmarked'>;
+export type SaveCandidate = {
+  id: string;
+  name: string;
+  date: string;
+  region?: string;
+  imageUrl?: string;
+};
 
 export const todayString = () => {
   const d = new Date();
@@ -15,34 +19,25 @@ export const todayString = () => {
 };
 
 /**
- * 코스를 스크랩 카테고리에 저장하는 공통 플로우.
- * `requestSave(course)`로 카테고리 선택 모달을 열고, 선택하면 저장 후
- * "~에 저장되었습니다" 토스트를 띄운다. 렌더링은 `saveToScrapElement`를 JSX에 두면 된다.
+ * 코스를 스크랩 그룹에 저장하는 공통 플로우.
+ * `requestSave(course)`로 카테고리 선택 모달을 열고, 선택하면 토스트를 띄운다.
+ * 실제 저장은 onSaved 콜백에서 처리한다.
  */
 export function useSaveToScrap(
-  onSaved?: (
-    categoryId: string,
-    categoryTitle: string,
-    course: SaveCandidate,
-  ) => void,
+  onSaved?: (groupId: number, groupName: string, course: SaveCandidate) => void,
 ): {
   requestSave: (course: SaveCandidate) => void;
   saveToScrapElement: ReactNode;
 } {
   const [pending, setPending] = useState<SaveCandidate | null>(null);
-  const [toast, setToast] = useState<{ categoryTitle: string } | null>(null);
+  const [toast, setToast] = useState<{ groupName: string } | null>(null);
 
   const requestSave = (course: SaveCandidate) => setPending(course);
 
-  const handleSelect = (categoryId: string, categoryTitle: string) => {
+  const handleSelect = (groupId: number, groupName: string) => {
     if (pending) {
-      addSavedCourse(categoryId, {
-        ...pending,
-        id: `${pending.id}-${categoryId}`,
-        isBookmarked: true,
-      });
-      setToast({ categoryTitle });
-      onSaved?.(categoryId, categoryTitle, pending);
+      setToast({ groupName });
+      onSaved?.(groupId, groupName, pending);
     }
     setPending(null);
   };
@@ -57,7 +52,7 @@ export function useSaveToScrap(
       <BookmarkToast
         isOpen={toast !== null}
         onClose={() => setToast(null)}
-        message={`${toast?.categoryTitle ?? ''}에 저장되었습니다`}
+        message={`${toast?.groupName ?? ''}에 저장되었습니다`}
         icon={<BookmarkFilledIcon className="text-primary" />}
       />
     </>

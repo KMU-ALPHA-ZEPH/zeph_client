@@ -1,24 +1,32 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { BackIcon } from '@/components/common/Icon/BackIcon';
 import ZephIcon from '@/assets/icons/zeph.svg?react';
-import HeartIcon from '@/assets/icons/mynaui_heart-solid.svg?react';
 import TabBarLayout from '@/components/layout/TabBarLayout';
-import ScrapCourseThumb from '@/pages/scrap/ScrapCourseThumb';
 import EditCategoryModal from '@/pages/scrap/EditCategoryModal';
+import ScrapCourseThumb from '@/pages/scrap/ScrapCourseThumb';
 import ConfirmModal from '@/components/common/ConfirmModal';
 import { isPinned as readIsPinned, togglePinned } from '@/pages/scrap/pinned';
-import { setOverride } from '@/pages/scrap/overrides';
-import { getCategory, SCRAP_CATEGORIES } from '@/pages/scrap/data';
-import { getSavedCourses } from '@/pages/scrap/savedCourses';
-
-const FALLBACK = SCRAP_CATEGORIES[1];
+import { getGroups, updateGroup } from '@/apis/groups';
+import {
+  getScrapsByGroup,
+  unsetScrapGroup,
+  type ScrapPreviewResponse,
+} from '@/apis/scraps';
+import { getCourseDetail } from '@/apis/courses';
+import { useCourseStore } from '@/stores/courseStore';
 
 type NavState = {
   title?: string;
   description?: string;
   imageUrl?: string;
-  iconType?: 'heart';
+};
+
+const TYPE_TO_FORM: Record<string, 'workout' | 'walk' | 'safety' | null> = {
+  walk: 'walk',
+  safety: 'safety',
+  exercise: 'workout',
+  workout: 'workout',
 };
 
 export default function ScrapDetailPage() {
@@ -26,37 +34,142 @@ export default function ScrapDetailPage() {
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
   const navState = (location.state ?? {}) as NavState;
-  const categoryId = id ?? FALLBACK.id;
-  const sample = getCategory(categoryId) ?? FALLBACK;
+  const groupId = id ? Number(id) : NaN;
 
-  const [title, setTitle] = useState(navState.title ?? sample.title);
-  const [description, setDescription] = useState(
-    navState.description ?? sample.description ?? '',
-  );
+  const [title, setTitle] = useState(navState.title ?? '');
+  const [description, setDescription] = useState(navState.description ?? '');
   const [imageUrl, setImageUrl] = useState<string | undefined>(
-    navState.imageUrl ?? sample.imageUrl,
+    navState.imageUrl,
   );
-  const [courses, setCourses] = useState(() => [
-    ...getSavedCourses(categoryId),
-    ...sample.courses,
-  ]);
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const [pinned, setPinned] = useState(() => readIsPinned(categoryId));
-  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
-  const isLiked = (navState.iconType ?? sample.iconType) === 'heart';
 
-  const visible = useMemo(
-    () => courses.filter((c) => c.isBookmarked !== false),
-    [courses],
+  const [scraps, setScraps] = useState<ScrapPreviewResponse[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [navigating, setNavigating] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
+  const [pinned, setPinned] = useState(() =>
+    Number.isFinite(groupId) ? readIsPinned(groupId) : false,
   );
 
-  const confirmDelete = () => {
-    if (!pendingDeleteId) return;
-    setCourses((prev) =>
-      prev.map((c) =>
-        c.id === pendingDeleteId ? { ...c, isBookmarked: false } : c,
-      ),
-    );
+  const setResult = useCourseStore((s) => s.setResult);
+  const setForm = useCourseStore((s) => s.setForm);
+  const resetCourse = useCourseStore((s) => s.reset);
+
+  useEffect(() => {
+    if (!Number.isFinite(groupId)) {
+      setError('잘못된 카테고리입니다.');
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    getScrapsByGroup(groupId)
+      .then((data) => setScraps(data))
+      .catch((e) => {
+        console.error('[ScrapDetailPage] getScrapsByGroup failed:', e);
+        setError('스크랩 목록을 불러오지 못했습니다.');
+      })
+      .finally(() => setLoading(false));
+
+    // 새로고침/직접 진입 시 navState가 비어있으므로 그룹 메타정보를 백엔드에서 보강
+    getGroups()
+      .then((groups) => {
+        const g = groups.find((x) => x.id === groupId);
+        if (!g) return;
+        setTitle((prev) => prev || g.name);
+        setDescription((prev) => prev || g.description || '');
+        setImageUrl(g.imageUrl);
+      })
+      .catch(() => {
+        // ignore: fall back to navState
+      });
+  }, [groupId]);
+
+  const handleEdit = async ({
+    name,
+    description: desc,
+    imageUrl: nextImage,
+    imageFile,
+  }: {
+    name: string;
+    description: string;
+    imageUrl?: string;
+    imageFile?: File;
+  }) => {
+    if (!Number.isFinite(groupId)) {
+      alert('잘못된 카테고리입니다.');
+      return;
+    }
+    try {
+      await updateGroup(groupId, {
+        name,
+        description: desc,
+        image: imageFile,
+      });
+      setTitle(name);
+      setDescription(desc);
+      setImageUrl(nextImage);
+      // PATCH 응답에 새 image URL이 없으므로 GET으로 보강
+      try {
+        const groups = await getGroups();
+        const fresh = groups.find((g) => g.id === groupId);
+        if (fresh?.imageUrl) setImageUrl(fresh.imageUrl);
+      } catch {
+        // ignore: keep preview URL
+      }
+    } catch {
+      alert('카테고리 수정에 실패했습니다.');
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (pendingDeleteId == null) return;
+    try {
+      await unsetScrapGroup(pendingDeleteId);
+      setScraps((prev) => prev.filter((s) => s.scrapId !== pendingDeleteId));
+    } catch (e) {
+      console.error('[ScrapDetailPage] unsetScrapGroup failed:', e);
+      alert('스크랩 제거에 실패했습니다.');
+    } finally {
+      setPendingDeleteId(null);
+    }
+  };
+
+  const handleOpenCourse = async (scrap: ScrapPreviewResponse) => {
+    if (navigating) return;
+    setNavigating(true);
+    try {
+      const detail = await getCourseDetail(scrap.courseId);
+      resetCourse();
+      setForm({
+        startName: scrap.name,
+        startAddress: scrap.region ?? '',
+        startLat: detail.startLat,
+        startLng: detail.startLng,
+        distanceKm: detail.distanceKm,
+        courseType: TYPE_TO_FORM[detail.type] ?? null,
+      });
+      setResult({
+        totalDistanceKm: detail.distanceKm,
+        type: detail.type,
+        startLat: detail.startLat,
+        startLng: detail.startLng,
+        pathData: detail.pathData,
+      });
+      navigate('/course/detail', {
+        state: {
+          scrapId: scrap.scrapId,
+          courseId: scrap.courseId,
+          initialName: scrap.name,
+          initialDescription: scrap.description,
+        },
+      });
+    } catch {
+      alert('코스 정보를 불러오지 못했습니다.');
+    } finally {
+      setNavigating(false);
+    }
   };
 
   return (
@@ -74,9 +187,7 @@ export default function ScrapDetailPage() {
 
       <section className="flex gap-[14px]">
         <div className="grid size-[120px] flex-shrink-0 place-items-center overflow-hidden rounded-[10px] bg-gray-300">
-          {isLiked ? (
-            <HeartIcon className="size-[60px] text-[#FF5C5C]" />
-          ) : imageUrl ? (
+          {imageUrl ? (
             <img src={imageUrl} alt="" className="h-full w-full object-cover" />
           ) : (
             <ZephIcon className="h-full w-full" />
@@ -111,8 +222,9 @@ export default function ScrapDetailPage() {
             <button
               type="button"
               onClick={() => {
-                togglePinned(categoryId);
-                setPinned((v) => !v);
+                if (!Number.isFinite(groupId)) return;
+                const next = togglePinned(groupId);
+                setPinned(next);
               }}
               className={`h-[27px] w-[63px] flex-shrink-0 rounded-[5px] border-[0.5px] text-body-sm ${
                 pinned
@@ -127,21 +239,42 @@ export default function ScrapDetailPage() {
       </section>
 
       <p className="mt-5 text-body-sm text-text-primary">
-        총 {visible.length}개의 코스
+        총 {scraps.length}개의 코스
       </p>
 
       <div className="mt-2 h-px bg-gray-400" />
 
-      <ul className="grid grid-cols-3 gap-x-[13px] gap-y-1 pb-[110px] pt-4">
-        {visible.map((course) => (
-          <li key={course.id}>
-            <ScrapCourseThumb
-              data={course}
-              onBookmarkToggle={() => setPendingDeleteId(course.id)}
-            />
-          </li>
-        ))}
-      </ul>
+      {loading ? (
+        <p className="mt-10 self-center text-body-sm text-gray-500">
+          불러오는 중...
+        </p>
+      ) : error ? (
+        <p className="mt-10 self-center text-body-sm text-status-error">
+          {error}
+        </p>
+      ) : scraps.length === 0 ? (
+        <p className="mt-10 self-center text-body-sm text-gray-500">
+          아직 스크랩된 코스가 없습니다
+        </p>
+      ) : (
+        <ul className="grid grid-cols-3 gap-x-[13px] gap-y-1 pb-[110px] pt-4">
+          {scraps.map((s) => (
+            <li key={s.scrapId}>
+              <ScrapCourseThumb
+                data={{
+                  id: String(s.scrapId),
+                  name: s.name,
+                  description: s.description,
+                  region: s.region,
+                  isBookmarked: true,
+                }}
+                onClick={() => handleOpenCourse(s)}
+                onBookmarkToggle={() => setPendingDeleteId(s.scrapId)}
+              />
+            </li>
+          ))}
+        </ul>
+      )}
 
       <TabBarLayout activeTab="scrap" />
 
@@ -151,22 +284,13 @@ export default function ScrapDetailPage() {
         initialName={title}
         initialDescription={description}
         initialImageUrl={imageUrl}
-        onSubmit={({ name, description: desc, imageUrl: nextImage }) => {
-          setTitle(name);
-          setDescription(desc);
-          setImageUrl(nextImage);
-          setOverride(categoryId, {
-            title: name,
-            description: desc,
-            imageUrl: nextImage,
-          });
-        }}
+        onSubmit={handleEdit}
       />
 
       <ConfirmModal
         isOpen={pendingDeleteId !== null}
         onClose={() => setPendingDeleteId(null)}
-        title="이 산책 경로를 삭제하시겠습니까?"
+        title="이 코스를 삭제하시겠습니까?"
         message="삭제하면 이 카테고리에서 제거됩니다."
         confirmLabel="삭제"
         cancelLabel="취소"

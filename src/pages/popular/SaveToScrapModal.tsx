@@ -1,63 +1,40 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { BackIcon } from '@/components/common/Icon/BackIcon';
 import ScrapCard from '@/pages/scrap/ScrapCard';
-import { readOverrides } from '@/pages/scrap/overrides';
-import { readPinned } from '@/pages/scrap/pinned';
-import { readSavedCourses } from '@/pages/scrap/savedCourses';
-import { SCRAP_CATEGORIES } from '@/pages/scrap/data';
-
-const CATEGORIES = SCRAP_CATEGORIES.map((c) => ({
-  id: c.id,
-  title: c.title,
-  description: c.description,
-  imageUrl: c.imageUrl,
-  iconType: c.iconType,
-  count: c.iconType === 'heart' ? undefined : c.courses.length,
-  courses: c.courses,
-}));
+import { getGroups, type GroupResponse } from '@/apis/groups';
+import { LIKED_GROUP_NAME } from '@/apis/likes';
 
 type Props = {
   isOpen: boolean;
   onClose: () => void;
-  onSelect: (categoryId: string, categoryTitle: string) => void;
+  onSelect: (groupId: number, groupName: string) => void;
 };
 
 export default function SaveToScrapModal({ isOpen, onClose, onSelect }: Props) {
   const [search, setSearch] = useState('');
+  const [groups, setGroups] = useState<GroupResponse[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const overrides = useMemo(() => (isOpen ? readOverrides() : {}), [isOpen]);
-  const pinnedIds = useMemo(() => (isOpen ? readPinned() : []), [isOpen]);
-  const saved = useMemo(() => (isOpen ? readSavedCourses() : {}), [isOpen]);
-
-  const sorted = useMemo(() => {
-    const withPin = CATEGORIES.map((c) => {
-      const o = overrides[c.id];
-      const courses = [...(saved[c.id] ?? []), ...c.courses];
-      return {
-        ...c,
-        title: o?.title ?? c.title,
-        description: o?.description ?? c.description,
-        imageUrl: o?.imageUrl ?? c.imageUrl,
-        courses,
-        count: c.iconType === 'heart' ? undefined : courses.length,
-        isPinned: pinnedIds.includes(c.id),
-      };
-    });
-    return [...withPin].sort((a, b) => {
-      const aTop = a.iconType === 'heart' ? 2 : a.isPinned ? 1 : 0;
-      const bTop = b.iconType === 'heart' ? 2 : b.isPinned ? 1 : 0;
-      return bTop - aTop;
-    });
-  }, [overrides, pinnedIds, saved]);
+  useEffect(() => {
+    if (!isOpen) return;
+    setLoading(true);
+    setError(null);
+    getGroups()
+      .then((data) =>
+        // 좋아요 표시한 경로는 좋아요로만 들어가는 곳이라 임의 저장 불가
+        setGroups(data.filter((g) => g.name !== LIKED_GROUP_NAME)),
+      )
+      .catch(() => setError('스크랩 목록을 불러오지 못했습니다.'))
+      .finally(() => setLoading(false));
+  }, [isOpen]);
 
   const filtered = useMemo(() => {
-    if (!search.trim()) return sorted;
+    if (!search.trim()) return groups;
     const q = search.toLowerCase();
-    return sorted.filter((c) =>
-      c.courses.some((course) => course.name.toLowerCase().includes(q)),
-    );
-  }, [search, sorted]);
+    return groups.filter((g) => g.name.toLowerCase().includes(q));
+  }, [search, groups]);
 
   const handleClose = () => {
     setSearch('');
@@ -121,20 +98,40 @@ export default function SaveToScrapModal({ isOpen, onClose, onSelect }: Props) {
               </p>
             </div>
 
-            <ul className="flex flex-1 flex-col gap-3 overflow-y-auto px-5 pb-4">
-              {filtered.map((cat) => (
-                <li key={cat.id}>
-                  <ScrapCard
-                    data={cat}
-                    onClick={() => {
-                      onSelect(cat.id, cat.title);
-                      setSearch('');
-                      onClose();
-                    }}
-                  />
-                </li>
-              ))}
-            </ul>
+            {loading ? (
+              <p className="flex-1 py-10 text-center text-body-sm text-gray-500">
+                불러오는 중...
+              </p>
+            ) : error ? (
+              <p className="flex-1 py-10 text-center text-body-sm text-status-error">
+                {error}
+              </p>
+            ) : filtered.length === 0 ? (
+              <p className="flex-1 py-10 text-center text-body-sm text-gray-500">
+                {search.trim()
+                  ? '검색 결과가 없습니다'
+                  : '스크랩한 카테고리가 없습니다'}
+              </p>
+            ) : (
+              <ul className="flex flex-1 flex-col gap-3 overflow-y-auto px-5 pb-4">
+                {filtered.map((group) => (
+                  <li key={group.id}>
+                    <ScrapCard
+                      data={{
+                        id: String(group.id),
+                        title: group.name,
+                        count: group.courseCount,
+                      }}
+                      onClick={() => {
+                        onSelect(group.id, group.name);
+                        setSearch('');
+                        onClose();
+                      }}
+                    />
+                  </li>
+                ))}
+              </ul>
+            )}
           </motion.div>
         </>
       )}

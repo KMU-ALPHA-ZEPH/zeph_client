@@ -15,6 +15,7 @@ import FilterPage from '@/pages/popular/FilterPage';
 import StatsPage from '@/pages/stats/StatsPage';
 import ScrapPage from '@/pages/scrap/ScrapPage';
 import ScrapDetailPage from '@/pages/scrap/ScrapDetailPage';
+import LikedCoursesPage from '@/pages/scrap/LikedCoursesPage';
 import EmptyLayout from '@/components/layout/EmptyLayout';
 import CourseMainPage from '@/pages/course/CourseMainPage';
 import CourseLocationPage from '@/pages/course/CourseLocationPage';
@@ -75,6 +76,7 @@ export default function App() {
 
         <Route element={<EmptyLayout />}>
           <Route path="/scrap/:id" element={<ScrapDetailPage />} />
+          <Route path="/liked" element={<LikedCoursesPage />} />
         </Route>
 
         {/* 404 */}

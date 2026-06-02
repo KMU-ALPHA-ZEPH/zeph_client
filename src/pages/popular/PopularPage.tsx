@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import CourseCard, { type Course } from '@/pages/popular/CourseCard';
+import CourseCard from '@/pages/popular/CourseCard';
 import PopularWayCourseChoose, {
   type PopularWayTab,
 } from '@/pages/popular/PopularWayCourseChoose';
@@ -9,182 +9,33 @@ import AlignModal, {
   ALIGN_OPTIONS,
   type AlignKey,
 } from '@/pages/popular/AlignModal';
-import { useSaveToScrap, todayString } from '@/hooks/useSaveToScrap';
-import BookmarkToast from '@/pages/popular/BookmarkToast';
-import BookmarkIcon from '@/assets/icons/circum_bookmark.svg?react';
-import { readFilter, readUserLocation } from '@/pages/popular/FilterPage';
+import {
+  getCourseDetail,
+  getCourses,
+  type CourseListItem,
+} from '@/apis/courses';
+import { useCourseStore } from '@/stores/courseStore';
 
-type SampleCourse = Course & { id: string; tab: PopularWayTab };
+/** 백엔드 type 문자열을 인기경로 탭과 매칭 */
+const TYPE_TO_TAB: Record<string, PopularWayTab> = {
+  walk: 'walk',
+  safety: 'safety',
+  exercise: 'general',
+  workout: 'general',
+};
 
-const initialCourses: SampleCourse[] = [
-  // 산책 코스
-  {
-    id: 'w1',
-    tab: 'walk',
-    rank: 1,
-    city: '서울시',
-    district: '광진구 광장동',
-    distance: 8,
-    description: '벚꽃 길 특화 산책 코스~!',
-    isBookmarked: false,
-    lat: 37.5469,
-    lng: 127.1086,
-    roundTrip: true,
-  },
-  {
-    id: 'w2',
-    tab: 'walk',
-    rank: 2,
-    city: '서울시',
-    district: '성동구 성수동',
-    distance: 5,
-    description: '한강뷰 산책 코스',
-    isBookmarked: false,
-    lat: 37.5446,
-    lng: 127.0563,
-    roundTrip: true,
-  },
-  {
-    id: 'w3',
-    tab: 'walk',
-    rank: 3,
-    city: '서울시',
-    district: '용산구 이태원동',
-    distance: 3,
-    description: '도심 야경 산책',
-    isBookmarked: false,
-    lat: 37.5345,
-    lng: 126.9947,
-  },
-  {
-    id: 'w4',
-    tab: 'walk',
-    rank: 4,
-    city: '서울시',
-    district: '종로구 부암동',
-    distance: 6,
-    description: '북악산 자락길 산책',
-    isBookmarked: false,
-    lat: 37.5921,
-    lng: 126.9633,
-  },
-  {
-    id: 'w5',
-    tab: 'walk',
-    rank: 5,
-    city: '서울시',
-    district: '강서구 마곡동',
-    distance: 4,
-    description: '서울식물원 둘레 산책',
-    isBookmarked: false,
-    lat: 37.5594,
-    lng: 126.8252,
-    roundTrip: true,
-  },
-  // 안전 코스
-  {
-    id: 's1',
-    tab: 'safety',
-    rank: 1,
-    city: '서울시',
-    district: '서대문구 신촌동',
-    distance: 4,
-    description: 'CCTV·가로등 많은 안심 코스',
-    isBookmarked: false,
-    lat: 37.5556,
-    lng: 126.9377,
-  },
-  {
-    id: 's2',
-    tab: 'safety',
-    rank: 2,
-    city: '서울시',
-    district: '마포구 합정동',
-    distance: 6,
-    description: '경찰서 인근 안심 코스',
-    isBookmarked: false,
-    lat: 37.5495,
-    lng: 126.9134,
-    roundTrip: true,
-  },
-  {
-    id: 's3',
-    tab: 'safety',
-    rank: 3,
-    city: '서울시',
-    district: '동작구 흑석동',
-    distance: 3,
-    description: '인적 많은 한강대교 야간 코스',
-    isBookmarked: false,
-    lat: 37.5071,
-    lng: 126.9603,
-  },
-  // 일반 코스
-  {
-    id: 'g1',
-    tab: 'general',
-    rank: 1,
-    city: '서울시',
-    district: '강남구 신사동',
-    distance: 7,
-    description: '가로수길 도심 코스',
-    isBookmarked: false,
-    lat: 37.521,
-    lng: 127.0214,
-  },
-  {
-    id: 'g2',
-    tab: 'general',
-    rank: 2,
-    city: '서울시',
-    district: '송파구 잠실동',
-    distance: 10,
-    description: '석촌호수 둘레 코스',
-    isBookmarked: false,
-    lat: 37.5133,
-    lng: 127.1027,
-    roundTrip: true,
-  },
-  {
-    id: 'g3',
-    tab: 'general',
-    rank: 3,
-    city: '서울시',
-    district: '영등포구 여의도동',
-    distance: 9,
-    description: '여의도 한강공원 일주',
-    isBookmarked: false,
-    lat: 37.5235,
-    lng: 126.9277,
-  },
-  {
-    id: 'g4',
-    tab: 'general',
-    rank: 4,
-    city: '서울시',
-    district: '중구 명동',
-    distance: 4,
-    description: '명동 도심 산책 코스',
-    isBookmarked: false,
-    lat: 37.5634,
-    lng: 126.9858,
-  },
-];
+const TYPE_TO_FORM: Record<string, 'workout' | 'walk' | 'safety' | null> = {
+  walk: 'walk',
+  safety: 'safety',
+  exercise: 'workout',
+  workout: 'workout',
+};
 
-function haversineKm(
-  lat1: number,
-  lng1: number,
-  lat2: number,
-  lng2: number,
-): number {
-  const R = 6371;
-  const toRad = (deg: number) => (deg * Math.PI) / 180;
-  const dLat = toRad(lat2 - lat1);
-  const dLng = toRad(lng2 - lng1);
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+/** "region" 문자열을 city/district 두 토막으로 쪼갠다 */
+function splitRegion(region: string): { city: string; district: string } {
+  if (!region) return { city: '', district: '' };
+  const parts = region.split(/\s+/);
+  return { city: parts[0] ?? '', district: parts.slice(1).join(' ') };
 }
 
 export default function PopularPage() {
@@ -193,95 +44,90 @@ export default function PopularPage() {
   const [compact, setCompact] = useState(false);
   const [alignValue, setAlignValue] = useState<AlignKey>('popular');
   const [isAlignOpen, setIsAlignOpen] = useState(false);
-  const [courses, setCourses] = useState(initialCourses);
-  const { requestSave, saveToScrapElement } = useSaveToScrap(
-    (_cat, _title, course) =>
-      setCourses((prev) =>
-        prev.map((c) =>
-          c.id === course.id ? { ...c, isBookmarked: true } : c,
-        ),
-      ),
-  );
-  const [showRemoveToast, setShowRemoveToast] = useState(false);
-  const [filter, setFilter] = useState(() => readFilter());
+  const [courses, setCourses] = useState<CourseListItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [navigating, setNavigating] = useState(false);
   const lastScrollY = useRef(0);
 
+  const setResult = useCourseStore((s) => s.setResult);
+  const setForm = useCourseStore((s) => s.setForm);
+  const resetCourse = useCourseStore((s) => s.reset);
+
   useEffect(() => {
-    setFilter(readFilter());
+    setLoading(true);
+    setError(null);
+    getCourses()
+      .then((data) => setCourses(data))
+      .catch((e) => {
+        console.error('[PopularPage] getCourses failed:', e);
+        setError('코스 목록을 불러오지 못했습니다.');
+      })
+      .finally(() => setLoading(false));
   }, []);
 
-  const userLocation = readUserLocation();
+  const filteredCourses = useMemo(
+    () => courses.filter((c) => TYPE_TO_TAB[c.type] === activeTab),
+    [courses, activeTab],
+  );
 
-  const filteredCourses = courses
-    .filter((c) => c.tab === activeTab)
-    .filter((c) => {
-      if (c.distance < filter.minDistance) return false;
-      if (filter.maxDistance > 0 && c.distance > filter.maxDistance)
-        return false;
-      if (filter.region && c.lat != null && c.lng != null) {
-        const dist = haversineKm(
-          filter.region.lat,
-          filter.region.lng,
-          c.lat,
-          c.lng,
-        );
-        if (dist > filter.radius) return false;
-      }
-      if (filter.roundTrip && !c.roundTrip) return false;
-      return true;
-    });
+  const visibleCourses = useMemo(() => {
+    const arr = [...filteredCourses];
+    // CourseResponse 에 distanceKm 이 없어서 거리 정렬은 일단 인기순으로 fallback
+    arr.sort((a, b) => (b.likeCount ?? 0) - (a.likeCount ?? 0));
+    return arr;
+  }, [filteredCourses, alignValue]);
 
-  const visibleCourses = [...filteredCourses].sort((a, b) => {
-    if (alignValue === 'distance-asc') return a.distance - b.distance;
-    if (alignValue === 'distance-desc') return b.distance - a.distance;
-    if (
-      alignValue === 'nearest' &&
-      userLocation &&
-      a.lat != null &&
-      a.lng != null &&
-      b.lat != null &&
-      b.lng != null
-    ) {
-      const da = haversineKm(userLocation.lat, userLocation.lng, a.lat, a.lng);
-      const db = haversineKm(userLocation.lat, userLocation.lng, b.lat, b.lng);
-      return da - db;
+  const handleOpenCourse = async (c: CourseListItem) => {
+    if (navigating) return;
+    setNavigating(true);
+    try {
+      const detail = await getCourseDetail(c.id);
+      resetCourse();
+      setForm({
+        startName: c.name ?? '',
+        startAddress: c.region ?? '',
+        startLat: detail.startLat,
+        startLng: detail.startLng,
+        distanceKm: detail.distanceKm,
+        courseType: TYPE_TO_FORM[detail.type ?? c.type] ?? null,
+      });
+      setResult({
+        totalDistanceKm: detail.distanceKm,
+        type: detail.type ?? c.type,
+        startLat: detail.startLat,
+        startLng: detail.startLng,
+        pathData: detail.pathData,
+        roundTrip: c.roundTrip,
+      });
+      navigate('/course/detail', {
+        state: {
+          courseId: c.id,
+          initialName: c.name,
+          initialDescription: c.description,
+          editable: false,
+        },
+      });
+    } catch (e) {
+      console.error('[PopularPage] getCourseDetail failed:', e);
+      alert('코스 정보를 불러오지 못했습니다.');
+    } finally {
+      setNavigating(false);
     }
-    return (a.rank ?? 0) - (b.rank ?? 0);
-  });
-
-  const handleBookmarkClick = (id: string) => {
-    const target = courses.find((c) => c.id === id);
-    if (!target) return;
-    if (target.isBookmarked) {
-      setCourses((prev) =>
-        prev.map((c) => (c.id === id ? { ...c, isBookmarked: false } : c)),
-      );
-      setShowRemoveToast(true);
-      return;
-    }
-    requestSave({
-      id: target.id,
-      name: target.description,
-      date: todayString(),
-      region: `${target.city}\n${target.district}`,
-      imageUrl: target.imageUrl,
-    });
   };
-  const compactRef = useRef(false);
-  const lastToggleAt = useRef(0);
 
+  const compactRef = useRef(false);
   compactRef.current = compact;
+  const lastToggleAt = useRef(0);
 
   const alignLabel =
     ALIGN_OPTIONS.find((o) => o.key === alignValue)?.label ?? '인기순';
 
   useEffect(() => {
     let ticking = false;
-
     const handleScroll = () => {
       if (ticking) return;
       ticking = true;
-
       requestAnimationFrame(() => {
         const now = Date.now();
         const y = window.scrollY;
@@ -289,12 +135,10 @@ export default function PopularPage() {
         const threshold = 30;
         const minDelta = 8;
         const lockMs = 350;
-
         let next: boolean | null = null;
         if (y < threshold) next = false;
         else if (delta > minDelta) next = true;
         else if (delta < -minDelta) next = false;
-
         if (next !== null) {
           if (
             next !== compactRef.current &&
@@ -305,11 +149,9 @@ export default function PopularPage() {
           }
           lastScrollY.current = y;
         }
-
         ticking = false;
       });
     };
-
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -326,20 +168,43 @@ export default function PopularPage() {
         compact={compact}
       />
 
-      <ul
-        className={`flex flex-col gap-3 pb-[86px] transition-[margin-top] duration-300 ease-out ${
-          compact ? 'mt-4' : 'mt-[100px]'
-        }`}
-      >
-        {visibleCourses.map((course) => (
-          <li key={course.id}>
-            <CourseCard
-              course={course}
-              onBookmarkToggle={() => handleBookmarkClick(course.id)}
-            />
-          </li>
-        ))}
-      </ul>
+      {loading ? (
+        <p className="mt-[120px] self-center text-center text-body-sm text-gray-500">
+          불러오는 중...
+        </p>
+      ) : error ? (
+        <p className="mt-[120px] self-center text-center text-body-sm text-status-error">
+          {error}
+        </p>
+      ) : visibleCourses.length === 0 ? (
+        <p className="mt-[120px] self-center text-center text-body-sm text-gray-500">
+          코스가 없습니다
+        </p>
+      ) : (
+        <ul
+          className={`flex flex-col gap-3 pb-[86px] transition-[margin-top] duration-300 ease-out ${
+            compact ? 'mt-4' : 'mt-[100px]'
+          }`}
+        >
+          {visibleCourses.map((c) => {
+            const { city, district } = splitRegion(c.region);
+            return (
+              <li key={c.id}>
+                <CourseCard
+                  course={{
+                    city,
+                    district,
+                    distance: 0,
+                    description: c.description || c.name || '',
+                    roundTrip: c.roundTrip,
+                  }}
+                  onClick={() => handleOpenCourse(c)}
+                />
+              </li>
+            );
+          })}
+        </ul>
+      )}
 
       <TabBarLayout activeTab="popular" />
 
@@ -348,15 +213,6 @@ export default function PopularPage() {
         onClose={() => setIsAlignOpen(false)}
         value={alignValue}
         onChange={setAlignValue}
-      />
-
-      {saveToScrapElement}
-
-      <BookmarkToast
-        isOpen={showRemoveToast}
-        onClose={() => setShowRemoveToast(false)}
-        message="스크랩이 해제되었습니다"
-        icon={<BookmarkIcon className="text-gray-300" />}
       />
     </>
   );
