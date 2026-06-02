@@ -146,6 +146,7 @@ export default function LikedCoursesPage() {
                   name: c.name,
                   description: c.description,
                   region: c.region,
+                  coursePath: c.coursePath,
                   isBookmarked: true,
                 }}
                 iconType="heart"

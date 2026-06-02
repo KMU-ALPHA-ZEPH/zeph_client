@@ -14,7 +14,15 @@ export type KakaoMap = {
   setCenter(latLng: KakaoLatLng): void;
   setLevel(level: number): void;
   getLevel(): number;
-  setBounds(bounds: KakaoLatLngBounds): void;
+  setBounds(
+    bounds: KakaoLatLngBounds,
+    paddingTop?: number,
+    paddingRight?: number,
+    paddingBottom?: number,
+    paddingLeft?: number,
+  ): void;
+  setDraggable?(draggable: boolean): void;
+  setZoomable?(zoomable: boolean): void;
 };
 
 export type KakaoMouseEvent = { latLng: KakaoLatLng };

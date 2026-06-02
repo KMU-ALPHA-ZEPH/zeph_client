@@ -17,7 +17,9 @@ import {
   saveCourse,
   toCourseType,
   toSlopePreference,
+  updateCourse,
 } from '@/apis/courses';
+import CourseEditModal from '@/pages/course/CourseEditModal';
 import { likeCourse, unlikeCourse } from '@/apis/likes';
 import { createScrap, deleteScrap } from '@/apis/scraps';
 import {
@@ -67,6 +69,7 @@ export default function TrackingDone() {
   const [isUnscrapOpen, setIsUnscrapOpen] = useState(false);
   const [memoSaving, setMemoSaving] = useState(false);
   const [memoStatus, setMemoStatus] = useState('방금 작성됨');
+  const [isEditOpen, setIsEditOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const navState = (location.state ?? {}) as { runId?: number };
@@ -278,6 +281,27 @@ export default function TrackingDone() {
     });
   };
 
+  const handleCourseEdit = async ({
+    name,
+    description,
+  }: {
+    name: string;
+    description: string;
+  }) => {
+    if (courseId == null) {
+      // 아직 백엔드에 저장되지 않은 추천 코스는 store 에만 보관 (createScrap 시 함께 전송)
+      setCurrent({ courseName: name, courseDescription: description });
+      return;
+    }
+    try {
+      await updateCourse(courseId, { name, description });
+      setCurrent({ courseName: name, courseDescription: description });
+    } catch (e) {
+      console.error('[TrackingDone] updateCourse failed:', e);
+      alert('코스 수정에 실패했습니다.');
+    }
+  };
+
   const handleMemoSave = async () => {
     if (memoSaving) return;
     if (runId == null) {
@@ -369,11 +393,19 @@ export default function TrackingDone() {
       <div className="absolute bottom-[44px] left-1/2 z-20 flex w-[319px] -translate-x-1/2 flex-col gap-3">
         {/* 요약 카드 */}
         <div className="rounded-[10px] bg-surface-white px-5 pb-5 pt-[18px] shadow-[0px_4px_10px_rgba(0,0,0,0.25)]">
-          <div className="flex items-center justify-between">
-            <span className="text-h2 font-semibold tracking-[-0.4px] text-black">
+          <div className="flex items-center justify-between gap-2">
+            <span className="truncate text-h2 font-semibold tracking-[-0.4px] text-black">
               {courseName}
             </span>
             <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                aria-label="코스 편집"
+                onClick={() => setIsEditOpen(true)}
+                className="flex size-[22px] items-center justify-center text-gray-500"
+              >
+                <EditPencilIcon className="size-[18px]" />
+              </button>
               <button
                 type="button"
                 aria-label="좋아요"
@@ -473,7 +505,29 @@ export default function TrackingDone() {
         onConfirm={handleUnscrap}
       />
 
+      <CourseEditModal
+        isOpen={isEditOpen}
+        onClose={() => setIsEditOpen(false)}
+        initialName={courseName}
+        initialDescription={storedDescription ?? ''}
+        onSubmit={handleCourseEdit}
+      />
+
       {saveToScrapElement}
     </div>
+  );
+}
+
+function EditPencilIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 18 18" fill="none" {...props}>
+      <path
+        d="M11.7 3.6L14.4 6.3M2.7 15.3L3.6 11.7L11.7 3.6L14.4 6.3L6.3 14.4L2.7 15.3Z"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }

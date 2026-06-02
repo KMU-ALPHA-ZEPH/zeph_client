@@ -108,6 +108,13 @@
 .map-dark img {
   filter: brightness(0.8) saturate(0.92); /* tracking — 살짝 어둡게 */
 }
+/* 카드 썸네일용: 채도/디테일을 크게 죽이고 약간 블러로 지명까지 흐리게 */
+.map-faded {
+  background-color: #e8edf2;
+}
+.map-faded img {
+  filter: brightness(0.75) saturate(0.35) blur(1px);
+}
 
 /* 현재 위치 마커: 네이버 내비처럼 원형 점 + 펄스(파동) */
 .run-dot {
