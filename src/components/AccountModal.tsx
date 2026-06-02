@@ -110,7 +110,7 @@ export default function AccountModal({
                 <ProfileIcon className="size-12" />
               )}
               <div className="flex flex-1 items-center justify-between">
-                <div className="flex flex-col gap-[3px]">
+                <div className="flex flex-col gap-[1px]">
                   <span className="text-body-md text-text-primary">
                     {displayName}
                   </span>
