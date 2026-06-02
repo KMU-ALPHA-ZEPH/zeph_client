@@ -26,6 +26,10 @@ export type RecordDetailResponse = {
   memo?: string;
   scrapped?: boolean;
   liked?: boolean;
+  /** 백엔드 추가 예정: 좋아요 토글 시 필요한 코스 식별자 */
+  courseId?: number | null;
+  /** 백엔드 추가 예정: 스크랩 해제 시 필요한 스크랩 식별자 */
+  scrapId?: number | null;
   coursePath: LatLng[];
   actualPath: LatLng[];
 };
@@ -85,6 +89,16 @@ export async function getRecordStats(
   return data;
 }
 
-export async function createRecord(body: CreateRecordRequest): Promise<void> {
-  await api.post('/v0/records', body);
+export async function createRecord(
+  body: CreateRecordRequest,
+): Promise<{ runId: number }> {
+  const { data } = await api.post<{ runId: number }>('/v0/records', body);
+  return data;
+}
+
+export async function updateRecordMemo(
+  recordId: number,
+  body: { memo: string },
+): Promise<void> {
+  await api.patch(`/v0/records/${recordId}`, body);
 }

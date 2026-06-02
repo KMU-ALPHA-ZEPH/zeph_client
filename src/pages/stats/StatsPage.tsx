@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import TabSelector, { type TabItem } from '@/components/common/TabSelector';
 import PeriodSelector, { type Period } from '@/pages/stats/PeriodSelector';
 import StatsChart, { type ChartDataPoint } from '@/pages/stats/StatsChart';
@@ -53,6 +54,7 @@ function toDateParam(d: Date): string {
 }
 
 export default function StatsPage() {
+  const navigate = useNavigate();
   const [category, setCategory] = useState<StatsCategory>('all');
   const [period, setPeriod] = useState<Period>('month');
   const [datesByPeriod, setDatesByPeriod] = useState<Record<Period, Date>>(
@@ -190,6 +192,9 @@ export default function StatsPage() {
                     avgPace: r.avgPace,
                     coursePath: r.coursePath,
                   }}
+                  onClick={() =>
+                    navigate('/tracking/done', { state: { runId: r.runId } })
+                  }
                 />
               </li>
             ))}

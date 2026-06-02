@@ -15,7 +15,8 @@ export type RunSummary = {
   courseName: string;
   distanceKm: number;
   elapsedSec: number;
-  speedKmh: number;
+  /** 평균 페이스(초/km) — UI 에선 formatPace 로 m'ss" 형태로 표시 */
+  paceSecPerKm: number;
   /** 실제 이동 경로(GPS 좌표 배열, 표시용) */
   trackedPath: { lat: number; lng: number }[];
   /** 좌표별 타임스탬프 포함 (백엔드 기록 등록 전송용) */
