@@ -11,8 +11,13 @@ import BookmarkToast from '@/pages/popular/BookmarkToast';
 import { useSaveToScrap, todayString } from '@/hooks/useSaveToScrap';
 import { useTrackingStore } from '@/stores/trackingStore';
 import { useCourseStore } from '@/stores/courseStore';
-import { extractLatLng, toCourseType, toSlopePreference } from '@/apis/courses';
-import { unlikeCourse } from '@/apis/likes';
+import {
+  extractLatLng,
+  saveCourse,
+  toCourseType,
+  toSlopePreference,
+} from '@/apis/courses';
+import { likeCourse, unlikeCourse } from '@/apis/likes';
 import { createScrap, unsetScrapGroup } from '@/apis/scraps';
 import CourseMap, { type LatLng } from '@/components/CourseMap';
 import ConfirmModal from '@/components/common/ConfirmModal';
@@ -58,6 +63,7 @@ export default function TrackingDone() {
   const result = useCourseStore((s) => s.result);
   const form = useCourseStore((s) => s.form);
   const scrapId = useCourseStore((s) => s.currentScrapId);
+  const courseId = useCourseStore((s) => s.currentCourseId);
   const storedName = useCourseStore((s) => s.currentCourseName);
   const storedDescription = useCourseStore((s) => s.currentCourseDescription);
   const setCurrent = useCourseStore((s) => s.setCurrent);
@@ -149,18 +155,29 @@ export default function TrackingDone() {
           await unlikeCourse(likedCourseId);
         }
         setLikedCourseId(null);
-      } else {
-        // TODO: 백엔드에 추천 코스 단독 저장 API 가 추가되면 아래 흐름으로 교체.
-        //   import { likeCourse } from '@/apis/likes';
-        //   const { id } = await saveCourse({ name: courseName, ... });
-        //   await likeCourse(id);
-        //   setLikedCourseId(id);
-        //   setShowLikeToast(true);
-        alert(
-          '좋아요 기능은 곧 활성화됩니다. 코스 저장 API 연결 후 사용 가능합니다.',
-        );
         return;
       }
+      // 이미 저장된 코스라면 바로 좋아요. 아니면 saveCourse 로 영구 저장 후 likeCourse.
+      let targetId = courseId ?? null;
+      if (targetId == null) {
+        const saved = await saveCourse({
+          name: courseName,
+          description: storedDescription?.trim() || undefined,
+          type: toCourseType(form.courseType),
+          distanceKm: result?.totalDistanceKm ?? summary?.distanceKm ?? 0,
+          pathData: result?.pathData ?? { points: [] },
+          roundTrip: result?.roundTrip ?? form.roundTrip ?? true,
+          preferLighting: form.lighting === 'bright',
+          preferConvenience: form.facility === 'prefer',
+          slopePreference: toSlopePreference(form.slope),
+        });
+        targetId = saved.id;
+        // 이후 좋아요/스크랩 등에 재사용할 수 있도록 store 에도 반영
+        setCurrent({ courseId: targetId });
+      }
+      await likeCourse(targetId);
+      setLikedCourseId(targetId);
+      setShowLikeToast(true);
     } catch (e) {
       console.error('[TrackingDone] toggleLike failed:', e);
       alert('좋아요 처리에 실패했습니다.');
