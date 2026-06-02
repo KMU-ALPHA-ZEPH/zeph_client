@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import HeartSolidIcon from '@/assets/icons/mynaui_heart-solid.svg?react';
+import { HeartOutlineIcon } from '@/components/common/Icon/HeartOutlineIcon';
 import BookmarkIcon from '@/assets/icons/circum_bookmark.svg?react';
 import BookmarkFilledIcon from '@/assets/icons/circum_bookmark_filled.svg?react';
 import { ShareIcon } from '@/components/common/Icon/ShareIcon';
@@ -272,9 +273,11 @@ export default function TrackingDone() {
                 disabled={likeBusy}
                 className="block size-[22px]"
               >
-                <HeartSolidIcon
-                  className={`size-full transition ${liked ? '' : 'opacity-50 grayscale'}`}
-                />
+                {liked ? (
+                  <HeartSolidIcon className="size-full transition" />
+                ) : (
+                  <HeartOutlineIcon className="size-full text-gray-300 transition" />
+                )}
               </button>
               <button
                 type="button"

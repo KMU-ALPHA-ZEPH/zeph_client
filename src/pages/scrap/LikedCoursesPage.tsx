@@ -91,7 +91,7 @@ export default function LikedCoursesPage() {
 
   return (
     <div className="flex flex-col px-5">
-      <header className="-mx-5 flex h-[60px] items-center px-3">
+      <header className="sticky top-0 z-10 -mx-5 flex h-[calc(60px+env(safe-area-inset-top))] items-center bg-surface-white px-3 pt-[env(safe-area-inset-top)]">
         <button
           type="button"
           aria-label="뒤로 가기"
@@ -111,7 +111,9 @@ export default function LikedCoursesPage() {
             좋아요 표시한 코스
           </h1>
           <p className="line-clamp-2 text-body-md text-text-secondary">
-            마음에 들어 좋아요 표시한 코스들이에요
+            좋아요를 남긴 코스는
+            <br />
+            인기 코스 집계에 활용돼요.
           </p>
         </div>
       </section>

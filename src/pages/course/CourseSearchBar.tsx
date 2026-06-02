@@ -41,7 +41,7 @@ export default function CourseSearchBar({
   return (
     <div className="relative w-full max-w-[280px]">
       <label className="flex h-[40px] w-full items-center gap-1 rounded-full bg-[#B0F0DB]/70 px-[22px] shadow-[0_2px_6px_rgba(0,0,0,0.2)]">
-        <span className="grid size-[18px] place-items-center text-gray-500">
+        <span className="grid size-[18px] shrink-0 place-items-center text-gray-500">
           <SearchIcon />
         </span>
         <input

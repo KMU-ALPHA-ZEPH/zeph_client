@@ -12,6 +12,7 @@ import CourseMap, { type LatLng } from '@/components/CourseMap';
 import { extractLatLng } from '@/apis/courses';
 import { useCourseStore } from '@/stores/courseStore';
 import { haversineMeters } from '@/utils/geo';
+import { isSimMode } from '@/utils/devSim';
 
 // 현재 위치가 시작 위치에서 이 거리(m) 안에 들어와야 러닝을 시작할 수 있다.
 const START_RADIUS_M = 60;
@@ -63,9 +64,12 @@ export default function TrackingStart() {
   }, [result, form.startLat, form.startLng]);
 
   // 현재 위치 ~ 시작 지점 거리(m). 60m 이내면 출발 가능.
+  // sim 모드(데스크톱 확인용)면 위치 판정을 통과시킨다.
+  const sim = isSimMode();
   const distanceToStart =
     myPosition && startPoint ? haversineMeters(myPosition, startPoint) : null;
-  const atStart = distanceToStart != null && distanceToStart <= START_RADIUS_M;
+  const atStart =
+    sim || (distanceToStart != null && distanceToStart <= START_RADIUS_M);
 
   const courseName = `${form.startName || '추천'} 코스`;
 
@@ -125,13 +129,13 @@ export default function TrackingStart() {
         type="button"
         aria-label="뒤로가기"
         onClick={() => navigate(-1)}
-        className="absolute left-3 top-4 z-30 grid size-7 place-items-center text-white"
+        className="absolute left-3 top-[calc(env(safe-area-inset-top)+16px)] z-30 grid size-7 place-items-center text-white"
       >
         <BackIcon />
       </button>
 
       {/* 코스 정보 + GPS 뱃지 */}
-      <div className="absolute left-[42px] top-[61px] z-20 flex items-start gap-6">
+      <div className="absolute left-[42px] top-[calc(env(safe-area-inset-top)+61px)] z-20 flex items-start gap-6">
         <div className="w-[203px]">
           <p className={`text-white ${textStyles['heading-h2']}`}>
             {courseName}

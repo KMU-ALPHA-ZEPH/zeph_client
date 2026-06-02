@@ -2,9 +2,13 @@ import { useEffect, useRef } from 'react';
 import {
   useKakaoMaps,
   type KakaoMap,
-  type KakaoMarker,
+  type KakaoCustomOverlay,
   type KakaoPolyline,
 } from '@/hooks/useKakaoMaps';
+
+// 현재 위치 마커 HTML (네이버 내비처럼 원형 점 + 펄스)
+const CURRENT_DOT_HTML =
+  '<div class="run-dot"><span class="run-dot__pulse"></span><span class="run-dot__core"></span></div>';
 
 export type LatLng = { lat: number; lng: number };
 
@@ -19,6 +23,8 @@ type CourseMapProps = {
   fitToRecommended?: boolean;
   /** currentPosition 이 바뀔 때 지도를 그 위치로 따라가게 할지 (러닝 중에만 true) */
   followCurrent?: boolean;
+  /** 추천 경로에 맞춘 뒤 추가로 줌인할 레벨 수 (러닝 중 살짝 더 확대용) */
+  zoomInLevels?: number;
   /** 지도 밝기: light(원본) / dim(살짝 어둡게) / dark(중간 어둡게) */
   theme?: 'light' | 'dim' | 'dark';
   className?: string;
@@ -40,6 +46,7 @@ export default function CourseMap({
   currentPosition,
   fitToRecommended = true,
   followCurrent = true,
+  zoomInLevels = 0,
   theme = 'dark',
   className,
 }: CourseMapProps) {
@@ -47,7 +54,7 @@ export default function CourseMap({
   const mapRef = useRef<KakaoMap | null>(null);
   const recommendedLineRef = useRef<KakaoPolyline | null>(null);
   const trackedLineRef = useRef<KakaoPolyline | null>(null);
-  const markerRef = useRef<KakaoMarker | null>(null);
+  const markerRef = useRef<KakaoCustomOverlay | null>(null);
   const fittedRef = useRef(false);
   const { ready, error } = useKakaoMaps();
 
@@ -99,9 +106,13 @@ export default function CourseMap({
       const bounds = new kakao.maps.LatLngBounds();
       path.forEach((latLng) => bounds.extend(latLng));
       map.setBounds(bounds);
+      // 경로에 맞춘 뒤 살짝 더 확대 (레벨 숫자가 작을수록 확대)
+      if (zoomInLevels > 0) {
+        map.setLevel(Math.max(1, map.getLevel() - zoomInLevels));
+      }
       fittedRef.current = true;
     }
-  }, [ready, recommendedPath, fitToRecommended]);
+  }, [ready, recommendedPath, fitToRecommended, zoomInLevels]);
 
   // 3) 실제 이동 경로 갱신
   useEffect(() => {
@@ -123,7 +134,14 @@ export default function CourseMap({
     if (markerRef.current) {
       markerRef.current.setPosition(latLng);
     } else {
-      markerRef.current = new kakao.maps.Marker({ position: latLng, map });
+      markerRef.current = new kakao.maps.CustomOverlay({
+        position: latLng,
+        content: CURRENT_DOT_HTML,
+        xAnchor: 0.5,
+        yAnchor: 0.5,
+        zIndex: 10,
+        map,
+      });
     }
     if (followCurrent) map.panTo(latLng);
   }, [ready, currentPosition, followCurrent]);

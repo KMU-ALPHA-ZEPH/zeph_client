@@ -10,6 +10,7 @@ import SplashPage from './pages/onboarding/SplashPage';
 import StartPage from './pages/onboarding/StartPage';
 import LoginPage from '@/pages/onboarding/LoginPage';
 import KakaoCallbackPage from '@/pages/onboarding/KakaoCallbackPage';
+import ResetPasswordPage from '@/pages/onboarding/ResetPasswordPage';
 import FilterPage from '@/pages/popular/FilterPage';
 import StatsPage from '@/pages/stats/StatsPage';
 import ScrapPage from '@/pages/scrap/ScrapPage';
@@ -37,6 +38,7 @@ export default function App() {
           <Route path="/splash" element={<SplashPage />} />
           <Route path="/start" element={<StartPage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/oauth/callback" element={<KakaoCallbackPage />} />
           <Route path="/course/main" element={<CourseMainPage />} />
           <Route path="/course/main/step04" element={<CourseLoadingPage />} />
