@@ -175,6 +175,26 @@ export type CourseListItem = {
   createdAt?: string;
 };
 
+/**
+ * 추천 코스를 백엔드에 영구 저장한다.
+ * - POST /v0/courses/save
+ * - 응답의 id 는 이후 likeCourse/unlikeCourse 등 코스 식별이 필요한 API 호출에 사용한다.
+ */
+export async function saveCourse(body: {
+  name: string;
+  description?: string;
+  type: string;
+  distanceKm: number;
+  pathData: PathData;
+  roundTrip: boolean;
+  preferLighting: boolean;
+  preferConvenience: boolean;
+  slopePreference: string;
+}): Promise<{ id: number }> {
+  const { data } = await api.post<{ id: number }>('/v0/courses/save', body);
+  return data;
+}
+
 export type GetCoursesParams = {
   sort?: 'NEAREST' | 'POPULAR' | 'LATEST';
   lat?: number;
