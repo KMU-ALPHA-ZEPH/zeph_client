@@ -5,9 +5,13 @@ import { haversineMeters } from '@/utils/geo';
 /** GPS 떨림으로 인한 미세 이동은 거리에 더하지 않는다(m) */
 const MIN_STEP_M = 3;
 
+export type TrackedPoint = LatLng & { recordedAt: string };
+
 export type RunTracking = {
   /** 실제 이동 경로 좌표 배열 */
   trackedPath: LatLng[];
+  /** 같은 경로의 좌표별 타임스탬프 포함 버전 (백엔드 전송용) */
+  trackedPoints: TrackedPoint[];
   /** 현재 위치 */
   position: LatLng | null;
   /** 누적 이동 거리(km) */
@@ -28,6 +32,7 @@ export function useRunTracking(
   simulatePath?: LatLng[] | null,
 ): RunTracking {
   const [trackedPath, setTrackedPath] = useState<LatLng[]>([]);
+  const [trackedPoints, setTrackedPoints] = useState<TrackedPoint[]>([]);
   const [position, setPosition] = useState<LatLng | null>(null);
   const [distanceKm, setDistanceKm] = useState(0);
   const [hasFix, setHasFix] = useState(false);
@@ -65,9 +70,35 @@ export function useRunTracking(
     lastPointRef.current = null;
 
     const id = navigator.geolocation.watchPosition(
-      (pos) =>
-        pushPosition({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-      (err) => console.warn('watchPosition failed', err),
+      (pos) => {
+        const next: LatLng = {
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+        };
+        const recordedAt = new Date().toISOString();
+        setHasFix(true);
+        setPosition(next);
+
+        const prev = lastPointRef.current;
+        if (prev) {
+          const stepM = haversineMeters(prev, next);
+          if (stepM >= MIN_STEP_M) {
+            setDistanceKm((d) => d + stepM / 1000);
+            setTrackedPath((path) => [...path, next]);
+            setTrackedPoints((arr) => [...arr, { ...next, recordedAt }]);
+            lastPointRef.current = next;
+          }
+        } else {
+          // 첫 좌표
+          setTrackedPath((path) => [...path, next]);
+          setTrackedPoints((arr) => [...arr, { ...next, recordedAt }]);
+          lastPointRef.current = next;
+        }
+      },
+      (err) => {
+        console.warn('watchPosition failed', err);
+      },
+
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 1000 },
     );
 
@@ -86,5 +117,5 @@ export function useRunTracking(
     return () => clearInterval(id);
   }, [running, simulating, simulatePath, pushPosition]);
 
-  return { trackedPath, position, distanceKm, hasFix };
+  return { trackedPath, trackedPoints, position, distanceKm, hasFix };
 }

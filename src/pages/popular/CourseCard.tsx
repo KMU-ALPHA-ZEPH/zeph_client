@@ -2,8 +2,7 @@ import ZephIcon from '@/assets/icons/zeph.svg?react';
 
 export type Course = {
   rank?: number;
-  city: string;
-  district: string;
+  name: string;
   distance: number;
   description: string;
   imageUrl?: string;
@@ -19,8 +18,7 @@ type Props = {
 };
 
 export default function CourseCard({ course, onClick }: Props) {
-  const { city, district, distance, description, imageUrl } = course;
-  const region = [city, district].filter(Boolean).join(' ');
+  const { name, distance, description, imageUrl } = course;
 
   return (
     <div
@@ -36,22 +34,20 @@ export default function CourseCard({ course, onClick }: Props) {
         )}
       </div>
 
-      <div className="flex flex-1 items-center justify-between self-stretch">
-        <div className="flex flex-col items-start gap-1">
-          <div className="flex items-center gap-[5px]">
+      <div className="flex min-w-0 flex-1 items-center justify-between self-stretch gap-2">
+        <div className="flex min-w-0 flex-col items-start gap-1">
+          <div className="flex w-full items-center gap-[5px]">
+            <span className="truncate text-body-md font-normal text-text-primary">
+              {name}
+            </span>
             {distance > 0 && (
-              <span className="text-body-md font-normal text-text-primary">
-                {distance} km
-              </span>
-            )}
-            {region && (
-              <span className="text-body-md font-normal text-gray-500">
-                {region}
+              <span className="shrink-0 text-body-md font-normal text-gray-500">
+                {Math.round(distance)} km
               </span>
             )}
           </div>
           {description && (
-            <p className="line-clamp-1 w-[116px] text-body-sm font-normal text-gray-500">
+            <p className="line-clamp-1 w-full text-body-sm font-normal text-gray-500">
               {description}
             </p>
           )}
