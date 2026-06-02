@@ -79,7 +79,7 @@
     /* iOS standalone PWA에서 초기 로드 시 하단 흰 공간이 생기지 않게
        실제(동적) 뷰포트 높이로 항상 화면을 채운다. overflow/position은
        건드리지 않아 window 스크롤은 그대로 유지된다. */
-    min-height: 100vh; /* 구형 폴백 */
+    /*min-height: 100vh; !* 구형 폴백 *!*/
     min-height: 100dvh; /* 실제 동적 뷰포트 높이 */
   }
   html,
