@@ -14,6 +14,7 @@ import { useTrackingStore } from '@/stores/trackingStore';
 import { useCourseStore } from '@/stores/courseStore';
 import {
   extractLatLng,
+  getCourseGpx,
   saveCourse,
   toCourseType,
   toSlopePreference,
@@ -281,6 +282,50 @@ export default function TrackingDone() {
     });
   };
 
+  const [shareBusy, setShareBusy] = useState(false);
+  const handleShare = async () => {
+    if (shareBusy) return;
+    if (courseId == null) {
+      alert('아직 저장되지 않은 코스라 공유할 수 없습니다.');
+      return;
+    }
+    setShareBusy(true);
+    try {
+      const gpx = await getCourseGpx(courseId);
+      const fileName = `${courseName || 'course'}.gpx`;
+      const blob = new Blob([gpx], { type: 'application/gpx+xml' });
+      const file = new File([blob], fileName, { type: 'application/gpx+xml' });
+      // Web Share API 가능하면 시스템 공유 시트를 띄우고, 아니면 다운로드로 폴백
+      if (
+        typeof navigator !== 'undefined' &&
+        navigator.canShare?.({ files: [file] })
+      ) {
+        await navigator.share({ files: [file], title: courseName });
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      }
+    } catch (e) {
+      // 사용자가 공유 시트를 취소한 경우는 무시
+      if (
+        e instanceof DOMException &&
+        (e.name === 'AbortError' || e.name === 'NotAllowedError')
+      ) {
+        return;
+      }
+      console.error('[TrackingDone] getCourseGpx failed:', e);
+      alert('공유에 실패했습니다.');
+    } finally {
+      setShareBusy(false);
+    }
+  };
+
   const handleCourseEdit = async ({
     name,
     description,
@@ -469,9 +514,13 @@ export default function TrackingDone() {
         <div className="flex gap-[7px]">
           <button
             type="button"
-            className="flex h-[43px] w-[105px] items-center justify-center gap-1.5 rounded-[5px] bg-black text-white shadow-[0px_4px_5px_rgba(0,0,0,0.25)] transition-transform active:scale-95"
+            onClick={handleShare}
+            disabled={shareBusy}
+            className="flex h-[43px] w-[105px] items-center justify-center gap-1.5 rounded-[5px] bg-black text-white shadow-[0px_4px_5px_rgba(0,0,0,0.25)] transition-transform active:scale-95 disabled:opacity-60"
           >
-            <span className={textStyles['body-small-med']}>공유하기</span>
+            <span className={textStyles['body-small-med']}>
+              {shareBusy ? '준비 중...' : '공유하기'}
+            </span>
             <span className="block size-[18px]">
               <ShareIcon />
             </span>

@@ -228,18 +228,9 @@ export default function ScrapDetailPage() {
             <button
               type="button"
               onClick={() => setIsEditOpen(true)}
-              className="h-[27px] w-[63px] flex-shrink-0 rounded-[5px] border-[0.5px] border-gray-500 text-body-sm text-gray-500"
+              className="h-[27px] w-[132px] flex-shrink-0 rounded-[5px] border-[0.5px] border-gray-500 text-body-sm text-gray-500"
             >
               편집
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                /* TODO: share */
-              }}
-              className="h-[27px] w-[63px] flex-shrink-0 rounded-[5px] border-[0.5px] border-gray-500 text-body-sm text-gray-500"
-            >
-              공유
             </button>
             <button
               type="button"
