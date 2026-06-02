@@ -125,7 +125,7 @@ export default function CourseDetailPage() {
       />
 
       {/* 상단 뒤로가기 */}
-      <div className="absolute inset-x-0 top-0 z-30 flex h-[60px] items-center px-3">
+      <div className="absolute inset-x-0 top-0 z-30 flex h-[calc(60px+env(safe-area-inset-top))] items-center px-3 pt-[env(safe-area-inset-top)]">
         <button
           type="button"
           aria-label="뒤로 가기"
