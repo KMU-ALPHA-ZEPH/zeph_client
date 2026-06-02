@@ -35,7 +35,7 @@ export default function CourseCard({ course, onClick }: Props) {
       </div>
 
       <div className="flex min-w-0 flex-1 items-center justify-between self-stretch gap-2">
-        <div className="flex min-w-0 flex-col items-start gap-1">
+        <div className="flex min-w-0 flex-col items-start gap-[0.5px]">
           <div className="flex w-full items-center gap-[5px]">
             <span className="truncate text-body-md font-normal text-text-primary">
               {name}
