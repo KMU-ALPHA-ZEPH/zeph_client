@@ -11,11 +11,13 @@ import { login } from '@/apis/auth';
 import { saveAuth } from '@/lib/auth';
 import { API_BASE_URL } from '@/lib/axios';
 import SignupModal from './SignupModal';
+import ForgotPasswordModal from './ForgotPasswordModal';
 
 const KAKAO_AUTH_URL = `${API_BASE_URL}/oauth2/authorization/kakao`;
 
 export default function LoginPage() {
   const [isSignupOpen, setIsSignupOpen] = useState(false);
+  const [isForgotOpen, setIsForgotOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -68,7 +70,7 @@ export default function LoginPage() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 1.0, ease: [0.4, 0, 0.2, 1] }}
-          className="flex flex-col items-center gap-3"
+          className="flex w-full flex-col items-center gap-3 px-8"
         >
           <InputBox
             strokeNone
@@ -77,6 +79,7 @@ export default function LoginPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             autoComplete="email"
+            className="w-full"
           />
           <InputBox
             strokeNone
@@ -85,30 +88,39 @@ export default function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             autoComplete="current-password"
+            className="w-full"
           />
           {error && (
             <p className={`${textStyles['caption-medium']} text-status-error`}>
               {error}
             </p>
           )}
-          <Button type="submit" inactive={submitting}>
+          <Button type="submit" inactive={submitting} className="w-full">
             {submitting ? '로그인 중...' : '로그인'}
           </Button>
 
           <p
             className={`${textStyles['caption-medium']} text-center text-white`}
           >
-            아이디 찾기 | 비밀번호 찾기 |{' '}
+            {/*아이디 찾기 |{' '}*/}
+            <button
+              type="button"
+              onClick={() => setIsForgotOpen(true)}
+              className="cursor-pointer text-white"
+            >
+              비밀번호 찾기
+            </button>{' '}
+            |{' '}
             <button
               type="button"
               onClick={() => setIsSignupOpen(true)}
               className="cursor-pointer text-white"
             >
-              회원가입
+              회원가입 하기
             </button>
           </p>
 
-          <div className="mt-6 flex w-76 items-center gap-3">
+          <div className="mt-6 flex w-full items-center gap-3">
             <div className="h-px flex-1 bg-white" />
             <span className={`${textStyles['footnote']} text-white`}>
               SNS 계정으로 로그인
@@ -119,7 +131,7 @@ export default function LoginPage() {
           <Button
             type="button"
             onClick={handleKakaoLogin}
-            className="gap-2 !bg-[#ffea00] !text-black"
+            className="w-full gap-2 !bg-[#ffea00] !text-black"
           >
             <img src={kakaoIcon} alt="" className="size-5" />
             카카오 로그인
@@ -137,6 +149,20 @@ export default function LoginPage() {
             className="absolute inset-x-0 bottom-0 top-[52px] z-50"
           >
             <SignupModal onClose={() => setIsSignupOpen(false)} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isForgotOpen && (
+          <motion.div
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', damping: 50, stiffness: 280 }}
+            className="absolute inset-x-0 bottom-0 top-[52px] z-50"
+          >
+            <ForgotPasswordModal onClose={() => setIsForgotOpen(false)} />
           </motion.div>
         )}
       </AnimatePresence>
