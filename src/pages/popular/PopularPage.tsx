@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import CourseCard from '@/pages/popular/CourseCard';
 import PopularWayCourseChoose, {
   type PopularWayTab,
@@ -13,7 +13,9 @@ import {
   getCourseDetail,
   getCourses,
   type CourseListItem,
+  type GetCoursesParams,
 } from '@/apis/courses';
+import { readFilter, type FilterValue } from '@/pages/popular/FilterPage';
 import { useCourseStore } from '@/stores/courseStore';
 
 /** 백엔드 type 문자열을 인기경로 탭과 매칭 */
@@ -31,52 +33,110 @@ const TYPE_TO_FORM: Record<string, 'workout' | 'walk' | 'safety' | null> = {
   workout: 'workout',
 };
 
-/** "region" 문자열을 city/district 두 토막으로 쪼갠다 */
-function splitRegion(region: string): { city: string; district: string } {
-  if (!region) return { city: '', district: '' };
-  const parts = region.split(/\s+/);
-  return { city: parts[0] ?? '', district: parts.slice(1).join(' ') };
+const ALIGN_TO_SORT: Record<AlignKey, NonNullable<GetCoursesParams['sort']>> = {
+  popular: 'POPULAR',
+  nearest: 'NEAREST',
+  'distance-asc': 'DISTANCE_ASC',
+  'distance-desc': 'DISTANCE_DESC',
+};
+
+/** 가까운순에 사용할 사용자 현재 좌표를 한 번 받아온다. */
+function getCurrentPosition(): Promise<{ lat: number; lng: number }> {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error('geolocation not supported'));
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      reject,
+      { timeout: 5000 },
+    );
+  });
 }
 
 export default function PopularPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState<PopularWayTab>('walk');
   const [compact, setCompact] = useState(false);
   const [alignValue, setAlignValue] = useState<AlignKey>('popular');
   const [isAlignOpen, setIsAlignOpen] = useState(false);
   const [courses, setCourses] = useState<CourseListItem[]>([]);
+  const [filter, setFilter] = useState<FilterValue>(() => readFilter());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [navigating, setNavigating] = useState(false);
   const lastScrollY = useRef(0);
+
+  // FilterPage 에서 돌아왔을 때 localStorage 의 최신 값을 다시 읽는다.
+  useEffect(() => {
+    setFilter(readFilter());
+  }, [location.key]);
 
   const setResult = useCourseStore((s) => s.setResult);
   const setForm = useCourseStore((s) => s.setForm);
   const resetCourse = useCourseStore((s) => s.reset);
 
   useEffect(() => {
-    setLoading(true);
-    setError(null);
-    getCourses()
-      .then((data) => setCourses(data))
-      .catch((e) => {
-        console.error('[PopularPage] getCourses failed:', e);
-        setError('코스 목록을 불러오지 못했습니다.');
-      })
-      .finally(() => setLoading(false));
-  }, []);
+    let cancelled = false;
+    const load = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const params: GetCoursesParams = { sort: ALIGN_TO_SORT[alignValue] };
 
-  const filteredCourses = useMemo(
-    () => courses.filter((c) => TYPE_TO_TAB[c.type] === activeTab),
-    [courses, activeTab],
+        // 지역이 선택돼 있으면 그 좌표를 중심으로 반경 필터. 가까운순도 이 좌표 기준.
+        if (filter.region) {
+          params.lat = filter.region.lat;
+          params.lng = filter.region.lng;
+          params.radiusKm = filter.radius;
+        } else if (alignValue === 'nearest') {
+          try {
+            const pos = await getCurrentPosition();
+            params.lat = pos.lat;
+            params.lng = pos.lng;
+          } catch {
+            // 위치 권한 거부/실패 시 인기순으로 폴백
+            params.sort = 'POPULAR';
+          }
+        }
+
+        if (filter.minDistance > 0) params.minDistanceKm = filter.minDistance;
+        if (filter.maxDistance > 0) params.maxDistanceKm = filter.maxDistance;
+
+        const data = await getCourses(params);
+        if (!cancelled) setCourses(data);
+      } catch (e) {
+        if (!cancelled) {
+          console.error('[PopularPage] getCourses failed:', e);
+          setError('코스 목록을 불러오지 못했습니다.');
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    alignValue,
+    filter.region?.lat,
+    filter.region?.lng,
+    filter.radius,
+    filter.minDistance,
+    filter.maxDistance,
+  ]);
+
+  // 정렬·반경·거리 필터는 백엔드가 처리하고, 왕복 토글과 탭 필터만 클라이언트에서 적용한다.
+  const visibleCourses = useMemo(
+    () =>
+      courses
+        .filter((c) => TYPE_TO_TAB[c.type] === activeTab)
+        .filter((c) => !filter.roundTrip || c.roundTrip === true),
+    [courses, activeTab, filter.roundTrip],
   );
-
-  const visibleCourses = useMemo(() => {
-    const arr = [...filteredCourses];
-    // CourseResponse 에 distanceKm 이 없어서 거리 정렬은 일단 인기순으로 fallback
-    arr.sort((a, b) => (b.likeCount ?? 0) - (a.likeCount ?? 0));
-    return arr;
-  }, [filteredCourses, alignValue]);
 
   const handleOpenCourse = async (c: CourseListItem) => {
     if (navigating) return;
@@ -103,6 +163,7 @@ export default function PopularPage() {
       navigate('/course/detail', {
         state: {
           courseId: c.id,
+          scrapId: detail.scrapId ?? c.scrapId ?? undefined,
           initialName: c.name,
           initialDescription: c.description,
           editable: false,
@@ -186,23 +247,19 @@ export default function PopularPage() {
             compact ? 'mt-4' : 'mt-[100px]'
           }`}
         >
-          {visibleCourses.map((c) => {
-            const { city, district } = splitRegion(c.region);
-            return (
-              <li key={c.id}>
-                <CourseCard
-                  course={{
-                    city,
-                    district,
-                    distance: 0,
-                    description: c.description || c.name || '',
-                    roundTrip: c.roundTrip,
-                  }}
-                  onClick={() => handleOpenCourse(c)}
-                />
-              </li>
-            );
-          })}
+          {visibleCourses.map((c) => (
+            <li key={c.id}>
+              <CourseCard
+                course={{
+                  name: c.name,
+                  distance: c.distanceKm ?? 0,
+                  description: c.description || '',
+                  roundTrip: c.roundTrip,
+                }}
+                onClick={() => handleOpenCourse(c)}
+              />
+            </li>
+          ))}
         </ul>
       )}
 

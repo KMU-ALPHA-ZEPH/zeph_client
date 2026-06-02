@@ -18,6 +18,8 @@ type Props = {
     imageUrl?: string;
     imageFile?: File;
   }) => void;
+  /** 카테고리 수정 모드일 때만 전달. 클릭 시 부모에서 삭제 확인/처리를 담당. */
+  onDelete?: () => void;
 };
 
 export default function EditCategoryModal({
@@ -28,6 +30,7 @@ export default function EditCategoryModal({
   initialDescription = '',
   initialImageUrl,
   onSubmit,
+  onDelete,
 }: Props) {
   const [name, setName] = useState(initialName);
   const [description, setDescription] = useState(initialDescription);
@@ -109,6 +112,15 @@ export default function EditCategoryModal({
               <p className="text-body-lg font-medium text-text-primary">
                 {title}
               </p>
+              {onDelete && (
+                <button
+                  type="button"
+                  onClick={onDelete}
+                  className="absolute right-3 text-body-sm text-status-error"
+                >
+                  삭제
+                </button>
+              )}
             </header>
 
             <div className="mt-[54px] flex justify-center">

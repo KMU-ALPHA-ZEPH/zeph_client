@@ -5,9 +5,13 @@ import { haversineMeters } from '@/utils/geo';
 /** GPS 떨림으로 인한 미세 이동은 거리에 더하지 않는다(m) */
 const MIN_STEP_M = 3;
 
+export type TrackedPoint = LatLng & { recordedAt: string };
+
 export type RunTracking = {
   /** 실제 이동 경로 좌표 배열 */
   trackedPath: LatLng[];
+  /** 같은 경로의 좌표별 타임스탬프 포함 버전 (백엔드 전송용) */
+  trackedPoints: TrackedPoint[];
   /** 현재 위치 */
   position: LatLng | null;
   /** 누적 이동 거리(km) */
@@ -24,6 +28,7 @@ export type RunTracking = {
  */
 export function useRunTracking(running: boolean): RunTracking {
   const [trackedPath, setTrackedPath] = useState<LatLng[]>([]);
+  const [trackedPoints, setTrackedPoints] = useState<TrackedPoint[]>([]);
   const [position, setPosition] = useState<LatLng | null>(null);
   const [distanceKm, setDistanceKm] = useState(0);
   const [hasFix, setHasFix] = useState(false);
@@ -44,6 +49,7 @@ export function useRunTracking(running: boolean): RunTracking {
           lat: pos.coords.latitude,
           lng: pos.coords.longitude,
         };
+        const recordedAt = new Date().toISOString();
         setHasFix(true);
         setPosition(next);
 
@@ -53,11 +59,13 @@ export function useRunTracking(running: boolean): RunTracking {
           if (stepM >= MIN_STEP_M) {
             setDistanceKm((d) => d + stepM / 1000);
             setTrackedPath((path) => [...path, next]);
+            setTrackedPoints((arr) => [...arr, { ...next, recordedAt }]);
             lastPointRef.current = next;
           }
         } else {
           // 첫 좌표
           setTrackedPath((path) => [...path, next]);
+          setTrackedPoints((arr) => [...arr, { ...next, recordedAt }]);
           lastPointRef.current = next;
         }
       },
@@ -70,5 +78,5 @@ export function useRunTracking(running: boolean): RunTracking {
     return () => navigator.geolocation.clearWatch(id);
   }, [running]);
 
-  return { trackedPath, position, distanceKm, hasFix };
+  return { trackedPath, trackedPoints, position, distanceKm, hasFix };
 }

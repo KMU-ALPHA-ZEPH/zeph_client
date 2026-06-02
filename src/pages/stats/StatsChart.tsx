@@ -4,7 +4,7 @@ import { type Period } from '@/pages/stats/PeriodSelector';
 import MonthPicker from '@/pages/stats/MonthPicker';
 import { formatDuration, formatPace } from '@/utils/format';
 
-export type ChartDataPoint = { x: number; value: number };
+export type ChartDataPoint = { x: number; value: number; label?: string };
 
 type Props = {
   period: Period;
@@ -38,7 +38,13 @@ function getXAxisInfo(
   }
   if (period === 'month') {
     const max = daysInMonth(d);
-    const stops = [1, 5, 10, 15, 20, 25, max];
+    // 1부터 그 달의 마지막 날까지를 6등분하여 7개 라벨을 만든다.
+    // 막대는 (day - 1) / (max - 1) 비율로 그려지므로, 라벨 사이 비율에 맞춰 위치한다.
+    const stops: number[] = [1];
+    for (let i = 1; i < 6; i++) {
+      stops.push(Math.floor(1 + ((max - 1) * i) / 6));
+    }
+    stops.push(max);
     return {
       xMin: 1,
       xMax: max,
@@ -122,7 +128,20 @@ export default function StatsChart({
   onDateChange,
 }: Props) {
   const dateObj = typeof date === 'string' ? new Date(date) : date;
-  const { xMin, xMax, labels } = getXAxisInfo(period, dateObj, joinYear);
+  const fallbackAxis = getXAxisInfo(period, dateObj, joinYear);
+  // 데이터에 label 이 들어있으면 백엔드 breakdown 을 그대로 x축에 사용한다.
+  // 단 month 는 일자가 30개 가까이 와서 라벨이 너무 빽빽하므로 자체 stops 를 쓴다.
+  const hasBackendLabels =
+    period !== 'month' && data.some((d) => typeof d.label === 'string');
+  const xMin = hasBackendLabels
+    ? Math.min(...data.map((d) => d.x))
+    : fallbackAxis.xMin;
+  const xMax = hasBackendLabels
+    ? Math.max(...data.map((d) => d.x))
+    : fallbackAxis.xMax;
+  const labels = hasBackendLabels
+    ? data.map((d) => ({ x: d.x, text: d.label ?? String(d.x) }))
+    : fallbackAxis.labels;
   const maxValue = data.reduce((acc, d) => Math.max(acc, d.value), 0);
   const yAxis = computeYAxis(maxValue);
   const yMax = yAxis[yAxis.length - 1];

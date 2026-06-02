@@ -139,6 +139,8 @@ export type CourseDetailResponse = {
   description?: string;
   likeCount?: number;
   isLiked?: boolean;
+  /** 현재 사용자가 이 코스를 스크랩해두었다면 그 scrapId. 안 했다면 null/undefined. */
+  scrapId?: number | null;
 };
 
 export async function getCourseDetail(
@@ -170,8 +172,10 @@ export type CourseListItem = {
   type: string;
   roundTrip: boolean;
   region: string;
+  distanceKm?: number;
   likeCount: number;
   isLiked?: boolean;
+  scrapId?: number | null;
   createdAt?: string;
 };
 
@@ -196,13 +200,14 @@ export async function saveCourse(body: {
 }
 
 export type GetCoursesParams = {
-  sort?: 'NEAREST' | 'POPULAR' | 'LATEST';
+  sort?: 'POPULAR' | 'NEAREST' | 'DISTANCE_ASC' | 'DISTANCE_DESC';
+  region?: string;
+  type?: 'walk' | 'safety' | 'exercise' | 'workout';
   lat?: number;
   lng?: number;
   radiusKm?: number;
   minDistanceKm?: number;
   maxDistanceKm?: number;
-  type?: 'walk' | 'safety' | 'exercise' | 'workout';
   liked?: boolean;
 };
 

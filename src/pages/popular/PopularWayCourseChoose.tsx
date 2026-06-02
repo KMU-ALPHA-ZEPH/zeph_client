@@ -6,7 +6,7 @@ export type PopularWayTab = 'walk' | 'safety' | 'general';
 const DEFAULT_TABS: TabItem<PopularWayTab>[] = [
   { key: 'walk', label: '산책 코스' },
   { key: 'safety', label: '안전 코스' },
-  { key: 'general', label: '일반 코스' },
+  { key: 'general', label: '운동 코스' },
 ];
 
 type Props = {

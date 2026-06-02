@@ -41,3 +41,7 @@ export async function updateGroup(
   if (body.image) formData.append('image', body.image);
   await api.patch(`/v0/groups/${groupId}`, formData);
 }
+
+export async function deleteGroup(groupId: number): Promise<void> {
+  await api.delete(`/v0/groups/${groupId}`);
+}

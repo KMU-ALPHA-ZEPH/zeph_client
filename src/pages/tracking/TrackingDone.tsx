@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import HeartSolidIcon from '@/assets/icons/mynaui_heart-solid.svg?react';
 import BookmarkIcon from '@/assets/icons/circum_bookmark.svg?react';
 import BookmarkFilledIcon from '@/assets/icons/circum_bookmark_filled.svg?react';
@@ -19,6 +19,7 @@ import {
 } from '@/apis/courses';
 import { likeCourse, unlikeCourse } from '@/apis/likes';
 import { createScrap, unsetScrapGroup } from '@/apis/scraps';
+import { createRecord } from '@/apis/records';
 import CourseMap, { type LatLng } from '@/components/CourseMap';
 import ConfirmModal from '@/components/common/ConfirmModal';
 import { formatDuration } from '@/utils/format';
@@ -112,6 +113,63 @@ export default function TrackingDone() {
 
   const courseName =
     storedName || summary?.courseName || form.startName || '추천 코스';
+
+  // 트래킹 종료 직후 1회만 백엔드에 러닝 기록을 등록한다.
+  const recordCreatedRef = useRef(false);
+  useEffect(() => {
+    if (recordCreatedRef.current) return;
+    if (!summary || summary.trackedPoints.length === 0) return;
+    recordCreatedRef.current = true;
+    (async () => {
+      try {
+        let cid = courseId;
+        if (cid == null) {
+          // 추천 코스가 아직 저장 안 됐다면 먼저 저장하고 그 id 로 기록을 만든다.
+          const saved = await saveCourse({
+            name: courseName,
+            description: storedDescription?.trim() || undefined,
+            type: toCourseType(form.courseType),
+            distanceKm: summary.distanceKm,
+            pathData: result?.pathData ?? { points: [] },
+            roundTrip: result?.roundTrip ?? form.roundTrip ?? true,
+            preferLighting: form.lighting === 'bright',
+            preferConvenience: form.facility === 'prefer',
+            slopePreference: toSlopePreference(form.slope),
+          });
+          cid = saved.id;
+          setCurrent({ courseId: cid });
+        }
+        await createRecord({
+          courseId: cid,
+          startTime: summary.startTime,
+          endTime: summary.endTime,
+          distanceKm: summary.distanceKm,
+          durationSec: summary.elapsedSec,
+          pausedSec: summary.pausedSec,
+          points: summary.trackedPoints,
+          pausedSecValid: true,
+          timeRangeValid: true,
+        });
+      } catch (e) {
+        // 실패해도 화면 표시는 유지. 사용자 재시도는 추후 작업.
+        console.error('[TrackingDone] createRecord failed:', e);
+        recordCreatedRef.current = false;
+      }
+    })();
+  }, [
+    summary,
+    courseId,
+    courseName,
+    storedDescription,
+    form.courseType,
+    form.roundTrip,
+    form.lighting,
+    form.facility,
+    form.slope,
+    result?.pathData,
+    result?.roundTrip,
+    setCurrent,
+  ]);
   const speedText = (summary?.speedKmh ?? 0).toFixed(1);
   const distanceText = (summary?.distanceKm ?? 0).toFixed(2);
   const timeText = formatDuration(summary?.elapsedSec ?? 0);
