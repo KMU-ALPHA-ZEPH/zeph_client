@@ -13,8 +13,11 @@ export type KakaoMap = {
   panTo(latLng: KakaoLatLng): void;
   setCenter(latLng: KakaoLatLng): void;
   setLevel(level: number): void;
+  getLevel(): number;
   setBounds(bounds: KakaoLatLngBounds): void;
 };
+
+export type KakaoMouseEvent = { latLng: KakaoLatLng };
 
 export type KakaoMarker = {
   setPosition(latLng: KakaoLatLng): void;
@@ -58,6 +61,13 @@ type KakaoMaps = {
   }) => KakaoCustomOverlay;
   LatLng: new (lat: number, lng: number) => KakaoLatLng;
   LatLngBounds: new () => KakaoLatLngBounds;
+  event: {
+    addListener(
+      target: KakaoMap,
+      type: string,
+      handler: (e: KakaoMouseEvent) => void,
+    ): void;
+  };
   load(cb: () => void): void;
 };
 

@@ -23,6 +23,8 @@ type CourseMapProps = {
   fitToRecommended?: boolean;
   /** currentPosition 이 바뀔 때 지도를 그 위치로 따라가게 할지 (러닝 중에만 true) */
   followCurrent?: boolean;
+  /** 추천 경로에 맞춘 뒤 추가로 줌인할 레벨 수 (러닝 중 살짝 더 확대용) */
+  zoomInLevels?: number;
   /** 지도 밝기: light(원본) / dim(살짝 어둡게) / dark(중간 어둡게) */
   theme?: 'light' | 'dim' | 'dark';
   className?: string;
@@ -44,6 +46,7 @@ export default function CourseMap({
   currentPosition,
   fitToRecommended = true,
   followCurrent = true,
+  zoomInLevels = 0,
   theme = 'dark',
   className,
 }: CourseMapProps) {
@@ -103,9 +106,13 @@ export default function CourseMap({
       const bounds = new kakao.maps.LatLngBounds();
       path.forEach((latLng) => bounds.extend(latLng));
       map.setBounds(bounds);
+      // 경로에 맞춘 뒤 살짝 더 확대 (레벨 숫자가 작을수록 확대)
+      if (zoomInLevels > 0) {
+        map.setLevel(Math.max(1, map.getLevel() - zoomInLevels));
+      }
       fittedRef.current = true;
     }
-  }, [ready, recommendedPath, fitToRecommended]);
+  }, [ready, recommendedPath, fitToRecommended, zoomInLevels]);
 
   // 3) 실제 이동 경로 갱신
   useEffect(() => {

@@ -47,9 +47,25 @@ export default function CourseMainPage() {
   useEffect(() => {
     if (!mapsReady || !mapContainerRef.current || mapRef.current) return;
     const { kakao } = window;
-    mapRef.current = new kakao.maps.Map(mapContainerRef.current, {
+    const map = new kakao.maps.Map(mapContainerRef.current, {
       center: new kakao.maps.LatLng(DEFAULT_CENTER.lat, DEFAULT_CENTER.lng),
       level: DEFAULT_LEVEL,
+    });
+    mapRef.current = map;
+
+    // 지도에서 클릭한 지점을 시작 위치로 설정
+    kakao.maps.event.addListener(map, 'click', async (mouseEvent) => {
+      const latlng = mouseEvent.latLng;
+      const lat = latlng.getLat();
+      const lng = latlng.getLng();
+      if (markerRef.current) {
+        markerRef.current.setPosition(latlng);
+      } else {
+        markerRef.current = new kakao.maps.Marker({ position: latlng, map });
+      }
+      map.panTo(latlng);
+      const place = await reverseGeocode(lat, lng);
+      selectPlace(place ?? { name: '선택한 위치', address: '', lat, lng });
     });
   }, [mapsReady]);
 

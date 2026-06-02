@@ -103,6 +103,7 @@ export default function TrackingActive() {
         recommendedPath={recommendedPath}
         trackedPath={trackedPath}
         currentPosition={position}
+        zoomInLevels={1}
         className="absolute inset-0 z-0"
       />
 
