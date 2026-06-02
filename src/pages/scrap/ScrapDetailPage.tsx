@@ -60,7 +60,7 @@ export default function ScrapDetailPage() {
   };
 
   return (
-    <div className="flex flex-col px-5">
+    <div className="flex flex-col px-5 pt-[env(safe-area-inset-top)]">
       <header className="-mx-5 flex h-[60px] items-center px-3">
         <button
           type="button"

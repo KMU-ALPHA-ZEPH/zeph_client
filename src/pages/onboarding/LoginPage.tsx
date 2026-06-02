@@ -60,7 +60,7 @@ export default function LoginPage() {
       />
       <div className="absolute inset-0 bg-black/50" />
 
-      <div className="relative flex h-full flex-col pb-22">
+      <div className="relative flex h-full flex-col pt-[env(safe-area-inset-top)] pb-[calc(5.5rem+env(safe-area-inset-bottom))]">
         <div className="flex flex-1 items-center justify-center">
           <div className="h-[100px] w-[100px]" />
         </div>

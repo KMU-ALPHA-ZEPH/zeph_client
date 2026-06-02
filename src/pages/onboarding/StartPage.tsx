@@ -25,7 +25,7 @@ export default function StartPage() {
       />
       <div className="absolute inset-0 bg-black/50" />
 
-      <div className="relative flex h-full flex-col items-center justify-center">
+      <div className="relative flex h-full flex-col items-center justify-center pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
         <div className="h-[100px] w-[100px]" />
         <div
           className={`-mt-1 ${textStyles['heading-h3-onboarding']} text-center text-white`}
