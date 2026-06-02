@@ -6,7 +6,7 @@ import { ShareIcon } from '@/components/common/Icon/ShareIcon';
 import { ArrowRightIcon } from '@/components/common/Icon/ArrowRightIcon';
 import { textStyles } from '@/styles/tokens';
 import { MemoInput } from './components/MemoInput';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import BookmarkToast from '@/pages/popular/BookmarkToast';
 import { useSaveToScrap, todayString } from '@/hooks/useSaveToScrap';
 import { useTrackingStore } from '@/stores/trackingStore';
@@ -19,10 +19,14 @@ import {
 } from '@/apis/courses';
 import { likeCourse, unlikeCourse } from '@/apis/likes';
 import { createScrap, unsetScrapGroup } from '@/apis/scraps';
-import { createRecord } from '@/apis/records';
+import {
+  createRecord,
+  getRecordDetail,
+  updateRecordMemo,
+} from '@/apis/records';
 import CourseMap, { type LatLng } from '@/components/CourseMap';
 import ConfirmModal from '@/components/common/ConfirmModal';
-import { formatDuration } from '@/utils/format';
+import { formatDuration, formatPace } from '@/utils/format';
 
 function Stat({
   value,
@@ -40,7 +44,7 @@ function Stat({
           {value}
         </span>
         {unit && (
-          <span className={`text-text-secondary ${textStyles['body-large']}`}>
+          <span className={`text-text-secondary ${textStyles['body-medium']}`}>
             {unit}
           </span>
         )}
@@ -59,9 +63,18 @@ export default function TrackingDone() {
   const [memo, setMemo] = useState('');
   const [showLikeToast, setShowLikeToast] = useState(false);
   const [isUnscrapOpen, setIsUnscrapOpen] = useState(false);
+  const [memoSaving, setMemoSaving] = useState(false);
+  const [memoStatus, setMemoStatus] = useState('방금 작성됨');
   const navigate = useNavigate();
+  const location = useLocation();
+  const navState = (location.state ?? {}) as { runId?: number };
+  // 통계 페이지에서 들어온 "기록 보기" 모드인지. runId 가 있으면 replay.
+  const replayRunId = navState.runId ?? null;
+  const [runId, setRunId] = useState<number | null>(replayRunId);
   const summary = useTrackingStore((s) => s.summary);
+  const setStoreSummary = useTrackingStore((s) => s.setSummary);
   const result = useCourseStore((s) => s.result);
+  const setResult = useCourseStore((s) => s.setResult);
   const form = useCourseStore((s) => s.form);
   const scrapId = useCourseStore((s) => s.currentScrapId);
   const courseId = useCourseStore((s) => s.currentCourseId);
@@ -115,7 +128,60 @@ export default function TrackingDone() {
     storedName || summary?.courseName || form.startName || '추천 코스';
 
   // 트래킹 종료 직후 1회만 백엔드에 러닝 기록을 등록한다.
-  const recordCreatedRef = useRef(false);
+  // replay 모드면 기록을 새로 만들지 않는다. 초기값을 true 로 둬서 자동 호출을 막는다.
+  const recordCreatedRef = useRef(replayRunId !== null);
+
+  // 통계 → 기록 보기로 진입한 경우, 백엔드에서 상세를 가져와 store 를 채운다.
+  useEffect(() => {
+    if (replayRunId == null) return;
+    let cancelled = false;
+    getRecordDetail(replayRunId)
+      .then((detail) => {
+        if (cancelled) return;
+        setStoreSummary({
+          courseName: detail.courseName,
+          distanceKm: detail.distanceKm,
+          elapsedSec: detail.durationSec,
+          // 백엔드 avgPace 는 초/km 단위라 그대로 사용한다.
+          paceSecPerKm: detail.avgPace > 0 ? detail.avgPace : 0,
+          trackedPath: detail.actualPath,
+          trackedPoints: [],
+          startTime: detail.startTime,
+          endTime: detail.endTime,
+          pausedSec: 0,
+        });
+        // 지도에 추천 경로(=저장된 코스 경로)를 깔기 위해 result 도 채운다.
+        setResult({
+          totalDistanceKm: detail.distanceKm,
+          type: undefined,
+          startLat: detail.coursePath[0]?.lat ?? 0,
+          startLng: detail.coursePath[0]?.lng ?? 0,
+          pathData: { points: detail.coursePath },
+        });
+        // 좋아요/스크랩 상태 + 메모/이름 동기화
+        setCurrent({
+          courseId: detail.courseId ?? null,
+          scrapId: detail.scrapped
+            ? (detail.scrapId ?? -1)
+            : (detail.scrapId ?? null),
+          courseName: detail.courseName ?? null,
+          courseDescription: detail.memo ?? null,
+        });
+        if (detail.liked && detail.courseId != null) {
+          setLikedCourseId(detail.courseId);
+        }
+        if (detail.memo) {
+          setMemo(detail.memo);
+          setShowMemo(true);
+        }
+      })
+      .catch((e) => {
+        console.error('[TrackingDone] getRecordDetail failed:', e);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [replayRunId, setStoreSummary, setResult, setCurrent]);
   useEffect(() => {
     if (recordCreatedRef.current) return;
     if (!summary || summary.trackedPoints.length === 0) return;
@@ -139,7 +205,7 @@ export default function TrackingDone() {
           cid = saved.id;
           setCurrent({ courseId: cid });
         }
-        await createRecord({
+        const created = await createRecord({
           courseId: cid,
           startTime: summary.startTime,
           endTime: summary.endTime,
@@ -150,6 +216,8 @@ export default function TrackingDone() {
           pausedSecValid: true,
           timeRangeValid: true,
         });
+        // 응답 runId 를 보관해 메모 수정에 사용한다.
+        if (created?.runId != null) setRunId(created.runId);
       } catch (e) {
         // 실패해도 화면 표시는 유지. 사용자 재시도는 추후 작업.
         console.error('[TrackingDone] createRecord failed:', e);
@@ -170,7 +238,7 @@ export default function TrackingDone() {
     result?.roundTrip,
     setCurrent,
   ]);
-  const speedText = (summary?.speedKmh ?? 0).toFixed(1);
+  const speedText = formatPace(summary?.paceSecPerKm ?? 0);
   const distanceText = (summary?.distanceKm ?? 0).toFixed(2);
   const timeText = formatDuration(summary?.elapsedSec ?? 0);
 
@@ -184,6 +252,24 @@ export default function TrackingDone() {
       name: courseName,
       date: todayString(),
     });
+  };
+
+  const handleMemoSave = async () => {
+    if (memoSaving) return;
+    if (runId == null) {
+      alert('아직 기록이 저장되지 않았습니다. 잠시 후 다시 시도해주세요.');
+      return;
+    }
+    setMemoSaving(true);
+    try {
+      await updateRecordMemo(runId, { memo: memo.trim() });
+      setMemoStatus('방금 수정됨');
+    } catch (e) {
+      console.error('[TrackingDone] updateRecordMemo failed:', e);
+      alert('메모 저장에 실패했습니다.');
+    } finally {
+      setMemoSaving(false);
+    }
   };
 
   const handleUnscrap = async () => {
@@ -295,14 +381,20 @@ export default function TrackingDone() {
           <div className="my-[14px] h-px bg-gray-200" />
 
           <div className="flex justify-between">
-            <Stat value={speedText} unit="km/h" label="페이스" />
+            <Stat value={speedText} unit="m/km" label="페이스" />
             <Stat value={distanceText} unit="km" label="거리" />
             <Stat value={timeText} label="시간" />
           </div>
 
           <div className="mt-4">
             {showMemo ? (
-              <MemoInput value={memo} onChange={setMemo} />
+              <MemoInput
+                value={memo}
+                onChange={setMemo}
+                onSave={handleMemoSave}
+                saving={memoSaving}
+                status={memoStatus}
+              />
             ) : (
               <button
                 type="button"

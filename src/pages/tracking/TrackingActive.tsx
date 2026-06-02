@@ -4,6 +4,7 @@ import { PauseIcon } from '@/components/common/Icon/PauseIcon';
 import { PlayIcon } from '@/components/common/Icon/PlayIcon';
 import { GoEndIcon } from '@/components/common/Icon/GoEndIcon';
 import { textStyles } from '@/styles/tokens';
+import { formatPace } from '@/utils/format';
 import ConfirmModal from '@/components/common/ConfirmModal';
 import CourseMap, { type LatLng } from '@/components/CourseMap';
 import { extractLatLng } from '@/apis/courses';
@@ -89,8 +90,9 @@ export default function TrackingActive() {
     return () => clearInterval(id);
   }, [isPaused]);
 
-  // 페이스(속도 km/h) = 거리 / 시간
-  const speedKmh = elapsedSec > 0 ? distanceKm / (elapsedSec / 3600) : 0;
+  // 평균 페이스(초/km) = 경과 시간 / 거리.
+  // 50m 미만에선 GPS 노이즈로 분모가 너무 작아 비현실적인 값이 나오므로 0 처리.
+  const paceSecPerKm = distanceKm >= 0.05 ? elapsedSec / distanceKm : 0;
 
   const courseName = form.startName || '추천 코스';
 
@@ -104,7 +106,7 @@ export default function TrackingActive() {
       courseName,
       distanceKm,
       elapsedSec,
-      speedKmh,
+      paceSecPerKm,
       trackedPath,
       trackedPoints,
       startTime: startTimeRef.current,
@@ -127,7 +129,11 @@ export default function TrackingActive() {
       <div className="absolute bottom-[109px] left-1/2 z-20 flex w-[319px] -translate-x-1/2 flex-col gap-[23px]">
         {/* 거리 / 페이스 통계 */}
         <div className="flex gap-[19px]">
-          <StatCard value={speedKmh.toFixed(1)} unit="km/h" label="페이스" />
+          <StatCard
+            value={formatPace(paceSecPerKm)}
+            unit="m/km"
+            label="페이스"
+          />
           <StatCard value={distanceKm.toFixed(2)} unit="km" label="거리" />
         </div>
 
