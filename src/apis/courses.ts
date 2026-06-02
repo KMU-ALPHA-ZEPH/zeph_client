@@ -176,6 +176,7 @@ export type CourseListItem = {
   likeCount: number;
   isLiked?: boolean;
   scrapId?: number | null;
+  coursePath?: { lat: number; lng: number }[];
   createdAt?: string;
 };
 

@@ -34,6 +34,7 @@ export type ScrapPreviewResponse = {
   groupId: number;
   groupName: string;
   savedAt: string;
+  coursePath?: { lat: number; lng: number }[];
 };
 
 export async function getScrapsByGroup(

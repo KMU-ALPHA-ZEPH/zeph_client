@@ -254,6 +254,7 @@ export default function PopularPage() {
                   name: c.name,
                   distance: c.distanceKm ?? 0,
                   description: c.description || '',
+                  coursePath: c.coursePath,
                   roundTrip: c.roundTrip,
                 }}
                 onClick={() => handleOpenCourse(c)}

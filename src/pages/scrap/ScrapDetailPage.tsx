@@ -288,6 +288,7 @@ export default function ScrapDetailPage() {
                   name: s.name,
                   description: s.description,
                   region: s.region,
+                  coursePath: s.coursePath,
                   isBookmarked: true,
                 }}
                 onClick={() => handleOpenCourse(s)}
