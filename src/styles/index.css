@@ -74,10 +74,21 @@
 
 @layer base {
   html,
+  body,
+  #root {
+    /* iOS standalone PWA에서 초기 로드 시 하단 흰 공간이 생기지 않게
+       실제(동적) 뷰포트 높이로 항상 화면을 채운다. overflow/position은
+       건드리지 않아 window 스크롤은 그대로 유지된다. */
+    min-height: 100vh; /* 구형 폴백 */
+    min-height: 100dvh; /* 실제 동적 뷰포트 높이 */
+  }
+  html,
   body {
     font-family: var(--font-sans);
     color: var(--color-text-primary);
     background-color: var(--color-surface-white);
+    /* 더블탭 확대 방지 (스크롤·탭은 유지) */
+    touch-action: manipulation;
   }
 }
 
