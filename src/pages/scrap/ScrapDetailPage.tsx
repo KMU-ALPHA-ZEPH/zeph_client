@@ -10,7 +10,7 @@ import { isPinned as readIsPinned, togglePinned } from '@/pages/scrap/pinned';
 import { deleteGroup, getGroups, updateGroup } from '@/apis/groups';
 import {
   getScrapsByGroup,
-  unsetScrapGroup,
+  deleteScrap,
   type ScrapPreviewResponse,
 } from '@/apis/scraps';
 import { getCourseDetail } from '@/apis/courses';
@@ -128,10 +128,10 @@ export default function ScrapDetailPage() {
   const confirmDelete = async () => {
     if (pendingDeleteId == null) return;
     try {
-      await unsetScrapGroup(pendingDeleteId);
+      await deleteScrap(pendingDeleteId);
       setScraps((prev) => prev.filter((s) => s.scrapId !== pendingDeleteId));
     } catch (e) {
-      console.error('[ScrapDetailPage] unsetScrapGroup failed:', e);
+      console.error('[ScrapDetailPage] deleteScrap failed:', e);
       alert('스크랩 제거에 실패했습니다.');
     } finally {
       setPendingDeleteId(null);
@@ -314,7 +314,7 @@ export default function ScrapDetailPage() {
         isOpen={pendingDeleteId !== null}
         onClose={() => setPendingDeleteId(null)}
         title="이 코스를 삭제하시겠습니까?"
-        message="삭제하면 이 카테고리에서 제거됩니다."
+        message="스크랩 목록에서 완전히 사라집니다."
         confirmLabel="삭제"
         cancelLabel="취소"
         onConfirm={confirmDelete}

@@ -19,7 +19,7 @@ import {
   toSlopePreference,
 } from '@/apis/courses';
 import { likeCourse, unlikeCourse } from '@/apis/likes';
-import { createScrap, unsetScrapGroup } from '@/apis/scraps';
+import { createScrap, deleteScrap } from '@/apis/scraps';
 import {
   createRecord,
   getRecordDetail,
@@ -73,6 +73,9 @@ export default function TrackingDone() {
   // 통계 페이지에서 들어온 "기록 보기" 모드인지. runId 가 있으면 replay.
   const replayRunId = navState.runId ?? null;
   const [runId, setRunId] = useState<number | null>(replayRunId);
+  // replay 모드에서 getRecordDetail 응답 대기 중인지. true 동안엔 북마크 토글을 막아
+  // 이미 스크랩된 코스가 또 저장되는 것을 방지한다.
+  const [isReplayLoading, setIsReplayLoading] = useState(replayRunId !== null);
   const summary = useTrackingStore((s) => s.summary);
   const setStoreSummary = useTrackingStore((s) => s.setSummary);
   const result = useCourseStore((s) => s.result);
@@ -87,24 +90,30 @@ export default function TrackingDone() {
   const { requestSave, saveToScrapElement } = useSaveToScrap(
     async (groupId) => {
       try {
+        // record 와 같은 코스에 스크랩이 묶이도록 store 의 courseId 를 우선 사용한다.
+        // 없을 때만 새 코스 생성용 courseData 를 함께 전달.
         await createScrap({
           groupId,
-          courseId: 0,
-          courseData: {
-            name:
-              storedName ||
-              summary?.courseName ||
-              form.startName ||
-              '추천 코스',
-            description: storedDescription?.trim() || undefined,
-            type: toCourseType(form.courseType),
-            distanceKm: result?.totalDistanceKm ?? summary?.distanceKm ?? 0,
-            pathData: result?.pathData ?? { points: [] },
-            roundTrip: result?.roundTrip ?? form.roundTrip ?? true,
-            preferLighting: form.lighting === 'bright',
-            preferConvenience: form.facility === 'prefer',
-            slopePreference: toSlopePreference(form.slope),
-          },
+          courseId: courseId ?? 0,
+          courseData:
+            courseId != null
+              ? undefined
+              : {
+                  name:
+                    storedName ||
+                    summary?.courseName ||
+                    form.startName ||
+                    '추천 코스',
+                  description: storedDescription?.trim() || undefined,
+                  type: toCourseType(form.courseType),
+                  distanceKm:
+                    result?.totalDistanceKm ?? summary?.distanceKm ?? 0,
+                  pathData: result?.pathData ?? { points: [] },
+                  roundTrip: result?.roundTrip ?? form.roundTrip ?? true,
+                  preferLighting: form.lighting === 'bright',
+                  preferConvenience: form.facility === 'prefer',
+                  slopePreference: toSlopePreference(form.slope),
+                },
         });
         // 새로 스크랩되었으므로 scrapId 는 별도 조회 없이 임시로 -1 로 표시(활성 상태 유지)
         setCurrent({ scrapId: -1 });
@@ -137,8 +146,9 @@ export default function TrackingDone() {
   useEffect(() => {
     if (replayRunId == null) return;
     let cancelled = false;
-    getRecordDetail(replayRunId)
-      .then((detail) => {
+    (async () => {
+      try {
+        const detail = await getRecordDetail(replayRunId);
         if (cancelled) return;
         // 거리는 "실제 뛴 거리"가 아니라 "뛰기 전 만들어진 코스의 거리"를 표시한다.
         // (코스 경로 좌표 길이로 계산. 경로가 없으면 기록 거리로 폴백)
@@ -150,7 +160,6 @@ export default function TrackingDone() {
           courseName: detail.courseName,
           distanceKm: courseDistanceKm,
           elapsedSec: detail.durationSec,
-          // 백엔드 avgPace 는 초/km 단위라 그대로 사용한다.
           paceSecPerKm: detail.avgPace > 0 ? detail.avgPace : 0,
           trackedPath: detail.actualPath,
           trackedPoints: [],
@@ -158,7 +167,6 @@ export default function TrackingDone() {
           endTime: detail.endTime,
           pausedSec: 0,
         });
-        // 지도에 추천 경로(=저장된 코스 경로)를 깔기 위해 result 도 채운다.
         setResult({
           totalDistanceKm: courseDistanceKm,
           type: undefined,
@@ -166,12 +174,16 @@ export default function TrackingDone() {
           startLng: detail.coursePath[0]?.lng ?? 0,
           pathData: { points: detail.coursePath },
         });
-        // 좋아요/스크랩 상태 + 메모/이름 동기화
+        // detail.scrapId 가 있으면 그대로 사용해 실제 백엔드 해제까지 가능.
+        // 보강용으로 scrapped 가 true 인데 scrapId 가 없는 경우엔 임시로 -1.
         setCurrent({
           courseId: detail.courseId ?? null,
-          scrapId: detail.scrapped
-            ? (detail.scrapId ?? -1)
-            : (detail.scrapId ?? null),
+          scrapId:
+            detail.scrapId != null
+              ? detail.scrapId
+              : detail.scrapped
+                ? -1
+                : null,
           courseName: detail.courseName ?? null,
           courseDescription: detail.memo ?? null,
         });
@@ -182,10 +194,12 @@ export default function TrackingDone() {
           setMemo(detail.memo);
           setShowMemo(true);
         }
-      })
-      .catch((e) => {
+      } catch (e) {
         console.error('[TrackingDone] getRecordDetail failed:', e);
-      });
+      } finally {
+        if (!cancelled) setIsReplayLoading(false);
+      }
+    })();
     return () => {
       cancelled = true;
     };
@@ -251,6 +265,8 @@ export default function TrackingDone() {
   const timeText = formatDuration(summary?.elapsedSec ?? 0);
 
   const toggleSave = () => {
+    // 기록 보기 모드에서 상세 응답이 도착하기 전이라면 스크랩 상태가 확정되지 않았으므로 잠시 대기시킨다.
+    if (isReplayLoading) return;
     if (saved) {
       setIsUnscrapOpen(true);
       return;
@@ -288,10 +304,10 @@ export default function TrackingDone() {
       return;
     }
     try {
-      await unsetScrapGroup(scrapId);
+      await deleteScrap(scrapId);
       setCurrent({ scrapId: null });
     } catch (e) {
-      console.error('[TrackingDone] unsetScrapGroup failed:', e);
+      console.error('[TrackingDone] deleteScrap failed:', e);
       alert('스크랩 해제에 실패했습니다.');
     } finally {
       setIsUnscrapOpen(false);
