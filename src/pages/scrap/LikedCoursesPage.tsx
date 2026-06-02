@@ -111,7 +111,9 @@ export default function LikedCoursesPage() {
             좋아요 표시한 코스
           </h1>
           <p className="line-clamp-2 text-body-md text-text-secondary">
-            마음에 들어 좋아요 표시한 코스들이에요
+            좋아요를 남긴 코스는
+            <br />
+            인기 코스 집계에 활용돼요.
           </p>
         </div>
       </section>
