@@ -70,7 +70,7 @@ export default function LoginPage() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 1.0, ease: [0.4, 0, 0.2, 1] }}
-          className="flex flex-col items-center gap-3"
+          className="flex w-full flex-col items-center gap-3 px-8"
         >
           <InputBox
             strokeNone
@@ -79,6 +79,7 @@ export default function LoginPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             autoComplete="email"
+            className="w-full"
           />
           <InputBox
             strokeNone
@@ -87,13 +88,14 @@ export default function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             autoComplete="current-password"
+            className="w-full"
           />
           {error && (
             <p className={`${textStyles['caption-medium']} text-status-error`}>
               {error}
             </p>
           )}
-          <Button type="submit" inactive={submitting}>
+          <Button type="submit" inactive={submitting} className="w-full">
             {submitting ? '로그인 중...' : '로그인'}
           </Button>
 
@@ -118,7 +120,7 @@ export default function LoginPage() {
             </button>
           </p>
 
-          <div className="mt-6 flex w-76 items-center gap-3">
+          <div className="mt-6 flex w-full items-center gap-3">
             <div className="h-px flex-1 bg-white" />
             <span className={`${textStyles['footnote']} text-white`}>
               SNS 계정으로 로그인
@@ -129,7 +131,7 @@ export default function LoginPage() {
           <Button
             type="button"
             onClick={handleKakaoLogin}
-            className="gap-2 !bg-[#ffea00] !text-black"
+            className="w-full gap-2 !bg-[#ffea00] !text-black"
           >
             <img src={kakaoIcon} alt="" className="size-5" />
             카카오 로그인
