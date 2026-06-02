@@ -70,7 +70,7 @@ export default function App() {
           <Route path="/stats" element={<StatsPage />} />
         </Route>
 
-        <Route element={<AppLayout headerVariant="add" title="스크랩" />}>
+        <Route element={<AppLayout headerVariant="title" title="스크랩" />}>
           <Route path="/scrap" element={<ScrapPage />} />
         </Route>
 
