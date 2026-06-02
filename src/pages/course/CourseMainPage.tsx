@@ -126,7 +126,7 @@ export default function CourseMainPage() {
         </div>
       )}
 
-      <div className="absolute inset-x-0 top-[53px] z-20 flex justify-center px-5">
+      <div className="absolute inset-x-0 top-[calc(env(safe-area-inset-top)+53px)] z-20 flex justify-center px-5">
         <CourseSearchBar
           value={searchValue}
           onChange={setSearchValue}

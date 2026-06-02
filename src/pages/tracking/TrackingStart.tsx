@@ -129,13 +129,13 @@ export default function TrackingStart() {
         type="button"
         aria-label="뒤로가기"
         onClick={() => navigate(-1)}
-        className="absolute left-3 top-4 z-30 grid size-7 place-items-center text-white"
+        className="absolute left-3 top-[calc(env(safe-area-inset-top)+16px)] z-30 grid size-7 place-items-center text-white"
       >
         <BackIcon />
       </button>
 
       {/* 코스 정보 + GPS 뱃지 */}
-      <div className="absolute left-[42px] top-[61px] z-20 flex items-start gap-6">
+      <div className="absolute left-[42px] top-[calc(env(safe-area-inset-top)+61px)] z-20 flex items-start gap-6">
         <div className="w-[203px]">
           <p className={`text-white ${textStyles['heading-h2']}`}>
             {courseName}
