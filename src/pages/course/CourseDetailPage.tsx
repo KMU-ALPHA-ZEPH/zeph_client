@@ -14,7 +14,7 @@ import {
   toSlopePreference,
   updateCourse,
 } from '@/apis/courses';
-import { createScrap, unsetScrapGroup } from '@/apis/scraps';
+import { createScrap, deleteScrap } from '@/apis/scraps';
 import ConfirmModal from '@/components/common/ConfirmModal';
 import CourseEditModal from '@/pages/course/CourseEditModal';
 import { useCourseStore, type CourseForm } from '@/stores/courseStore';
@@ -122,20 +122,24 @@ export default function CourseDetailPage() {
     async (groupId) => {
       if (!result) return;
       try {
+        // 이미 저장된 코스라면 courseId 로 묶고, 새 추천 코스만 courseData 로 생성한다.
         await createScrap({
           groupId,
-          courseId: 0,
-          courseData: {
-            name: storedName || form.startName || '추천 코스',
-            description: storedDescription?.trim() || undefined,
-            type: toCourseType(form.courseType),
-            distanceKm: result.totalDistanceKm ?? form.distanceKm ?? 0,
-            pathData: result.pathData ?? { points: [] },
-            roundTrip: result.roundTrip ?? form.roundTrip ?? true,
-            preferLighting: form.lighting === 'bright',
-            preferConvenience: form.facility === 'prefer',
-            slopePreference: toSlopePreference(form.slope),
-          },
+          courseId: courseId ?? 0,
+          courseData:
+            courseId != null
+              ? undefined
+              : {
+                  name: storedName || form.startName || '추천 코스',
+                  description: storedDescription?.trim() || undefined,
+                  type: toCourseType(form.courseType),
+                  distanceKm: result.totalDistanceKm ?? form.distanceKm ?? 0,
+                  pathData: result.pathData ?? { points: [] },
+                  roundTrip: result.roundTrip ?? form.roundTrip ?? true,
+                  preferLighting: form.lighting === 'bright',
+                  preferConvenience: form.facility === 'prefer',
+                  slopePreference: toSlopePreference(form.slope),
+                },
         });
         // 새로 스크랩되었으므로 scrapId 는 별도 조회 없이 임시로 -1로 표시(활성 상태 유지)
         setCurrent({ scrapId: -1 });
@@ -154,10 +158,10 @@ export default function CourseDetailPage() {
       return;
     }
     try {
-      await unsetScrapGroup(scrapId);
+      await deleteScrap(scrapId);
       setCurrent({ scrapId: null });
     } catch (e) {
-      console.error('[CourseDetailPage] unsetScrapGroup failed:', e);
+      console.error('[CourseDetailPage] deleteScrap failed:', e);
       alert('스크랩 해제에 실패했습니다.');
     } finally {
       setIsUnscrapOpen(false);

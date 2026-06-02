@@ -49,3 +49,8 @@ export async function getScrapsByGroup(
 export async function unsetScrapGroup(scrapId: number): Promise<void> {
   await api.patch(`/v0/scraps/${scrapId}`, { groupId: null });
 }
+
+/** 스크랩 자체를 삭제한다. */
+export async function deleteScrap(scrapId: number): Promise<void> {
+  await api.delete(`/v0/scraps/${scrapId}`);
+}

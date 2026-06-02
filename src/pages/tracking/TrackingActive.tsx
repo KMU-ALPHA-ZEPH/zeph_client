@@ -104,7 +104,8 @@ export default function TrackingActive() {
       courseName,
       distanceKm,
       elapsedSec,
-      speedKmh,
+      // store 는 초/km 페이스 단위로 저장한다.
+      paceSecPerKm: distanceKm > 0 ? elapsedSec / distanceKm : 0,
       trackedPath,
       trackedPoints,
       startTime: startTimeRef.current,
