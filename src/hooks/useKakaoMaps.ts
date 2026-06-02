@@ -13,8 +13,11 @@ export type KakaoMap = {
   panTo(latLng: KakaoLatLng): void;
   setCenter(latLng: KakaoLatLng): void;
   setLevel(level: number): void;
+  getLevel(): number;
   setBounds(bounds: KakaoLatLngBounds): void;
 };
+
+export type KakaoMouseEvent = { latLng: KakaoLatLng };
 
 export type KakaoMarker = {
   setPosition(latLng: KakaoLatLng): void;
@@ -23,6 +26,11 @@ export type KakaoMarker = {
 
 export type KakaoPolyline = {
   setPath(path: KakaoLatLng[]): void;
+  setMap(map: KakaoMap | null): void;
+};
+
+export type KakaoCustomOverlay = {
+  setPosition(latLng: KakaoLatLng): void;
   setMap(map: KakaoMap | null): void;
 };
 
@@ -43,8 +51,23 @@ type KakaoMaps = {
     strokeStyle?: string;
     map?: KakaoMap;
   }) => KakaoPolyline;
+  CustomOverlay: new (options: {
+    position: KakaoLatLng;
+    content: string | HTMLElement;
+    xAnchor?: number;
+    yAnchor?: number;
+    zIndex?: number;
+    map?: KakaoMap;
+  }) => KakaoCustomOverlay;
   LatLng: new (lat: number, lng: number) => KakaoLatLng;
   LatLngBounds: new () => KakaoLatLngBounds;
+  event: {
+    addListener(
+      target: KakaoMap,
+      type: string,
+      handler: (e: KakaoMouseEvent) => void,
+    ): void;
+  };
   load(cb: () => void): void;
 };
 

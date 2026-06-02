@@ -40,6 +40,19 @@ export async function logoutApi(): Promise<void> {
   await api.post('/users/logout');
 }
 
+/** 비밀번호 재설정 메일 발송 요청 */
+export async function requestPasswordReset(email: string): Promise<void> {
+  await api.post('/users/password-reset/request', { email });
+}
+
+/** 메일로 받은 토큰 + 새 비밀번호로 비밀번호 재설정 */
+export async function confirmPasswordReset(
+  token: string,
+  newPassword: string,
+): Promise<void> {
+  await api.post('/users/password-reset/confirm', { token, newPassword });
+}
+
 export type UserProfile = {
   id: number;
   kakaoId?: number;
