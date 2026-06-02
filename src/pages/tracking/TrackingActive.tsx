@@ -10,7 +10,6 @@ import { extractLatLng } from '@/apis/courses';
 import { useRunTracking } from '@/hooks/useRunTracking';
 import { useCourseStore } from '@/stores/courseStore';
 import { useTrackingStore } from '@/stores/trackingStore';
-import { isSimMode } from '@/utils/devSim';
 
 function formatElapsed(totalSec: number) {
   const pad = (n: number) => String(n).padStart(2, '0');

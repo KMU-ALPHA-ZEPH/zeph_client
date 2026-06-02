@@ -1,10 +1,15 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/layout/AppLayout';
 import AccountModal from '@/components/AccountModal';
 import ConfirmModal from '@/components/common/ConfirmModal';
 import { getUser, logout, saveUser } from '@/lib/auth';
-import { deleteAccount, getProfile, updateProfile } from '@/apis/auth';
+import {
+  deleteAccount,
+  getMyProfile,
+  getProfile,
+  updateProfile,
+} from '@/apis/auth';
 
 type Props = {
   title?: string;
@@ -16,6 +21,25 @@ export default function ProfileLayout({ title = '통계' }: Props) {
   const [isLogoutOpen, setIsLogoutOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [user, setUser] = useState(getUser());
+
+  // 진입 시 /users/me 로 실제 프로필(이름·이메일·이미지)을 받아와 표시/저장
+  useEffect(() => {
+    getMyProfile()
+      .then((me) => {
+        const next = {
+          id: me.id,
+          name: me.name,
+          email: me.email,
+          profile_image_url: me.profile_image_url,
+          kakaoid: me.kakaoId,
+        };
+        saveUser(next);
+        setUser(next);
+      })
+      .catch(() => {
+        // 실패 시 기존 저장값 유지
+      });
+  }, []);
 
   const handleLogout = async () => {
     setIsLogoutOpen(false);
