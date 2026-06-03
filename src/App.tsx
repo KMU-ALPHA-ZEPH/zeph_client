@@ -58,7 +58,7 @@ export default function App() {
           <Route path="/course/main/step03" element={<CourseAIPage />} />
         </Route>
 
-        <Route element={<AppLayout headerVariant="search" title="인기 코스" />}>
+        <Route element={<AppLayout headerVariant="title" title="인기 코스" />}>
           <Route path="/popular-page" element={<PopularPage />} />
         </Route>
 
