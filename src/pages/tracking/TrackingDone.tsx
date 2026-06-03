@@ -296,12 +296,17 @@ export default function TrackingDone() {
       const blob = new Blob([gpx], { type: 'application/gpx+xml' });
       const file = new File([blob], fileName, { type: 'application/gpx+xml' });
       // Web Share API 가능하면 시스템 공유 시트를 띄우고, 아니면 다운로드로 폴백
-      if (
+      const isMobile =
         typeof navigator !== 'undefined' &&
+        /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+      if (
+        isMobile &&
+        navigator.share &&
         navigator.canShare?.({ files: [file] })
       ) {
         await navigator.share({ files: [file], title: courseName });
       } else {
+        // 데스크톱 또는 share API 미지원 → 파일 다운로드
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;

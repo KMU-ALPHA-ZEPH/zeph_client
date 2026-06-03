@@ -4,25 +4,39 @@ import TabBarLayout from '@/components/layout/TabBarLayout';
 import ScrapCard from '@/pages/scrap/ScrapCard';
 import EditCategoryModal from '@/pages/scrap/EditCategoryModal';
 import { addGroup, getGroups, type GroupResponse } from '@/apis/groups';
-import { getScrapsByGroup, type ScrapPreviewResponse } from '@/apis/scraps';
-import { getCourses } from '@/apis/courses';
+import { getScraps, type ScrapPreviewResponse } from '@/apis/scraps';
+import { getCourseDetail, getCourses } from '@/apis/courses';
 import { LIKED_GROUP_NAME } from '@/apis/likes';
 import { readPinned } from '@/pages/scrap/pinned';
+import { useCourseStore } from '@/stores/courseStore';
+
+const TYPE_TO_FORM: Record<string, 'workout' | 'walk' | 'safety' | null> = {
+  walk: 'walk',
+  safety: 'safety',
+  exercise: 'workout',
+  workout: 'workout',
+};
 
 export default function ScrapPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [search, setSearch] = useState('');
   const [groups, setGroups] = useState<GroupResponse[]>([]);
-  const [scrapsByGroup, setScrapsByGroup] = useState<
-    Record<number, ScrapPreviewResponse[]>
-  >({});
+  const [searchResults, setSearchResults] = useState<ScrapPreviewResponse[]>(
+    [],
+  );
+  const [searching, setSearching] = useState(false);
   const [likedCount, setLikedCount] = useState(0);
   const [pinnedIds, setPinnedIds] = useState<number[]>(() => readPinned());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [navigating, setNavigating] = useState(false);
+
+  const setResult = useCourseStore((s) => s.setResult);
+  const setForm = useCourseStore((s) => s.setForm);
+  const resetCourse = useCourseStore((s) => s.reset);
 
   const loadGroups = async () => {
     setLoading(true);
@@ -36,14 +50,6 @@ export default function ScrapPage() {
       const visible = groupData.filter((g) => g.name !== LIKED_GROUP_NAME);
       setGroups(visible);
       setLikedCount(likedCourses.length);
-      const lists = await Promise.all(
-        visible.map((g) => getScrapsByGroup(g.id).catch(() => [])),
-      );
-      const map: Record<number, ScrapPreviewResponse[]> = {};
-      visible.forEach((g, i) => {
-        map[g.id] = lists[i];
-      });
-      setScrapsByGroup(map);
     } catch {
       setError('스크랩 목록을 불러오지 못했습니다.');
     } finally {
@@ -64,18 +70,79 @@ export default function ScrapPage() {
     });
   }, [groups, pinnedIds]);
 
-  const filtered = useMemo(() => {
-    if (!search.trim()) return sortedGroups;
-    const q = search.toLowerCase();
-    return sortedGroups.filter((g) => {
-      const list = scrapsByGroup[g.id] ?? [];
-      return list.some(
-        (s) =>
-          s.name?.toLowerCase().includes(q) ||
-          s.type?.toLowerCase().includes(q),
-      );
-    });
-  }, [search, sortedGroups, scrapsByGroup]);
+  // 검색 안 함: 카테고리 카드 목록 그대로
+  const filteredGroups = useMemo(() => {
+    if (search.trim()) return [];
+    return sortedGroups;
+  }, [search, sortedGroups]);
+
+  // 검색 함: 백엔드 /v0/scraps?keyword 로 내 스크랩만 직접 받는다.
+  useEffect(() => {
+    const q = search.trim();
+    if (!q) {
+      setSearchResults([]);
+      setSearching(false);
+      return;
+    }
+    setSearching(true);
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      getScraps({ keyword: q })
+        .then((data) => {
+          if (!cancelled) setSearchResults(data);
+        })
+        .catch(() => {
+          if (!cancelled) setSearchResults([]);
+        })
+        .finally(() => {
+          if (!cancelled) setSearching(false);
+        });
+    }, 250);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [search]);
+
+  const totalCount = search.trim()
+    ? searchResults.length
+    : filteredGroups.length;
+
+  const handleOpenCourse = async (scrap: ScrapPreviewResponse) => {
+    if (navigating) return;
+    setNavigating(true);
+    try {
+      const detail = await getCourseDetail(scrap.courseId);
+      resetCourse();
+      setForm({
+        startName: scrap.name,
+        startAddress: scrap.region ?? '',
+        startLat: detail.startLat,
+        startLng: detail.startLng,
+        distanceKm: detail.distanceKm,
+        courseType: TYPE_TO_FORM[detail.type ?? scrap.type] ?? null,
+      });
+      setResult({
+        totalDistanceKm: detail.distanceKm,
+        type: detail.type ?? scrap.type,
+        startLat: detail.startLat,
+        startLng: detail.startLng,
+        pathData: detail.pathData,
+      });
+      navigate('/course/detail', {
+        state: {
+          scrapId: scrap.scrapId,
+          courseId: scrap.courseId,
+          initialName: scrap.name,
+          initialDescription: scrap.description,
+        },
+      });
+    } catch {
+      alert('코스 정보를 불러오지 못했습니다.');
+    } finally {
+      setNavigating(false);
+    }
+  };
 
   const handleAddGroup = async ({
     name,
@@ -112,7 +179,7 @@ export default function ScrapPage() {
       <div className="my-2 h-px bg-gray-400" />
 
       <p className="self-start text-body-sm text-primary">
-        전체 {filtered.length}개
+        전체 {totalCount}개
       </p>
 
       {loading ? (
@@ -123,28 +190,46 @@ export default function ScrapPage() {
         <p className="self-center py-10 text-body-sm text-status-error">
           {error}
         </p>
-      ) : filtered.length === 0 ? (
+      ) : search.trim() && searching && searchResults.length === 0 ? (
+        <p className="self-center py-10 text-body-sm text-gray-500">
+          검색 중...
+        </p>
+      ) : totalCount === 0 ? (
         <p className="self-center py-10 text-body-sm text-gray-500">
           {search.trim()
             ? '검색 결과가 없습니다'
             : '스크랩한 카테고리가 없습니다'}
         </p>
-      ) : (
+      ) : search.trim() ? (
+        // 검색 모드 — 백엔드 /v0/scraps?keyword 결과
         <ul className="flex flex-col gap-3 pb-[110px]">
-          {!search.trim() && (
-            <li>
+          {searchResults.map((s) => (
+            <li key={s.scrapId}>
               <ScrapCard
                 data={{
-                  id: 'liked',
-                  title: '좋아요 표시한 코스',
-                  count: likedCount,
-                  iconType: 'heart',
+                  id: String(s.scrapId),
+                  title: s.name,
+                  description: s.region,
                 }}
-                onClick={() => navigate('/liked')}
+                onClick={() => handleOpenCourse(s)}
               />
             </li>
-          )}
-          {filtered.map((group) => (
+          ))}
+        </ul>
+      ) : (
+        <ul className="flex flex-col gap-3 pb-[110px]">
+          <li>
+            <ScrapCard
+              data={{
+                id: 'liked',
+                title: '좋아요 표시한 코스',
+                count: likedCount,
+                iconType: 'heart',
+              }}
+              onClick={() => navigate('/liked')}
+            />
+          </li>
+          {filteredGroups.map((group) => (
             <li key={group.id}>
               <ScrapCard
                 data={{

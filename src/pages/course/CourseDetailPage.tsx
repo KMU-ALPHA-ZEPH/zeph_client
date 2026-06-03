@@ -10,13 +10,19 @@ import { useSaveToScrap, todayString } from '@/hooks/useSaveToScrap';
 import CourseMap, { type LatLng } from '@/components/CourseMap';
 import {
   extractLatLng,
+  getCourseGpx,
   toCourseType,
   toSlopePreference,
   updateCourse,
 } from '@/apis/courses';
+import { ShareIcon } from '@/components/common/Icon/ShareIcon';
 import { createScrap, deleteScrap } from '@/apis/scraps';
 import ConfirmModal from '@/components/common/ConfirmModal';
 import CourseEditModal from '@/pages/course/CourseEditModal';
+import {
+  buildColoredSegments,
+  buildParkMarkers,
+} from '@/pages/course/courseSegmentColors';
 import { useCourseStore, type CourseForm } from '@/stores/courseStore';
 
 /** form 선택값을 사람이 읽을 수 있는 상세 항목/안내 문구로 변환 */
@@ -97,6 +103,8 @@ export default function CourseDetailPage() {
   const [expanded, setExpanded] = useState(false);
   const [isUnscrapOpen, setIsUnscrapOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [pathMode, setPathMode] = useState<'slope' | 'safety'>('slope');
+  const [shareBusy, setShareBusy] = useState(false);
 
   // 진입 시 navState 로 받은 식별자/이름/설명을 store 에 반영해 다음 화면까지 공유한다.
   useEffect(() => {
@@ -150,6 +158,58 @@ export default function CourseDetailPage() {
     },
   );
 
+  const handleShare = async () => {
+    if (shareBusy) return;
+    if (courseId == null) {
+      alert('아직 저장되지 않은 코스라 공유할 수 없습니다.');
+      return;
+    }
+    setShareBusy(true);
+    try {
+      const gpx = await getCourseGpx(courseId);
+      console.log(
+        '[share] gpx typeof:',
+        typeof gpx,
+        'sample:',
+        String(gpx).slice(0, 80),
+      );
+      const fileName = `${displayName || 'course'}.gpx`;
+      const blob = new Blob([gpx], { type: 'application/gpx+xml' });
+      const file = new File([blob], fileName, { type: 'application/gpx+xml' });
+      const isMobile =
+        typeof navigator !== 'undefined' &&
+        /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+      if (
+        isMobile &&
+        navigator.share &&
+        navigator.canShare?.({ files: [file] })
+      ) {
+        await navigator.share({ files: [file], title: displayName });
+      } else {
+        // 데스크톱 또는 share API 미지원 → 파일 다운로드
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      }
+    } catch (e) {
+      if (
+        e instanceof DOMException &&
+        (e.name === 'AbortError' || e.name === 'NotAllowedError')
+      ) {
+        return;
+      }
+      console.error('[CourseDetailPage] getCourseGpx failed:', e);
+      alert('공유에 실패했습니다.');
+    } finally {
+      setShareBusy(false);
+    }
+  };
+
   const handleUnscrap = async () => {
     if (scrapId == null || scrapId < 0) {
       // 백엔드 scrapId 없는 임시 활성 상태 → 그냥 비활성화만
@@ -179,6 +239,16 @@ export default function CourseDetailPage() {
       (result?.pathData?.points ?? [])
         .map(extractLatLng)
         .filter((p): p is LatLng => p !== null),
+    [result],
+  );
+
+  // 모드별로 segment 색 + 공원 마커 계산
+  const coloredSegments = useMemo(
+    () => buildColoredSegments(result?.pathData?.points, pathMode),
+    [result, pathMode],
+  );
+  const parkMarkers = useMemo(
+    () => buildParkMarkers(result?.pathData?.points),
     [result],
   );
 
@@ -230,12 +300,78 @@ export default function CourseDetailPage() {
       transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
       className="relative h-dvh w-full overflow-hidden bg-surface-white"
     >
-      {/* 배경 지도 + 추천 경로 (살짝 어둡게) */}
+      {/* 배경 지도 + 추천 경로 (살짝 어둡게).
+          segment 모드 활성화 시 coloredSegments 가 단색 라인 대신 그려진다. */}
       <CourseMap
         recommendedPath={recommendedPath}
+        coloredSegments={coloredSegments}
+        parkMarkers={parkMarkers}
         theme="dim"
         className="absolute inset-0 z-0"
       />
+
+      {/* 경사도/안전도 모드 토글 + 색 범례 */}
+      <div className="absolute right-3 top-[calc(60px+env(safe-area-inset-top)+8px)] z-30 flex flex-col items-end gap-1.5">
+        <div className="flex overflow-hidden rounded-[8px] bg-surface-white shadow-base">
+          <button
+            type="button"
+            onClick={() => setPathMode('slope')}
+            className={`px-3 py-1.5 text-body-sm ${
+              pathMode === 'slope'
+                ? 'bg-primary text-white'
+                : 'text-text-secondary'
+            }`}
+          >
+            경사도
+          </button>
+          <button
+            type="button"
+            onClick={() => setPathMode('safety')}
+            className={`px-3 py-1.5 text-body-sm ${
+              pathMode === 'safety'
+                ? 'bg-primary text-white'
+                : 'text-text-secondary'
+            }`}
+          >
+            안전도
+          </button>
+        </div>
+
+        <div className="flex flex-col gap-1 rounded-[8px] bg-surface-white px-3 py-2 shadow-base">
+          {(pathMode === 'slope'
+            ? [
+                { color: '#17e39c', label: '평지' },
+                { color: '#ff7d4a', label: '오르막' },
+                { color: '#4aa9ff', label: '내리막' },
+              ]
+            : [
+                { color: '#17e39c', label: '안전' },
+                { color: '#ffb547', label: '보통' },
+                { color: '#ff5c5c', label: '주의' },
+              ]
+          ).map((item) => (
+            <div key={item.label} className="flex items-center gap-1.5">
+              <span
+                aria-hidden
+                className="inline-block h-[3px] w-4 rounded-full"
+                style={{ backgroundColor: item.color }}
+              />
+              <span className="text-[11px] text-text-secondary">
+                {item.label}
+              </span>
+            </div>
+          ))}
+          <div className="mt-1 flex items-center gap-1.5 border-t border-gray-200 pt-1.5">
+            <span
+              aria-hidden
+              className="flex h-[14px] w-[14px] items-center justify-center rounded-full border border-white bg-[#2ed973] text-[8px] font-bold text-white"
+            >
+              P
+            </span>
+            <span className="text-[11px] text-text-secondary">공원 근처</span>
+          </div>
+        </div>
+      </div>
 
       {/* 상단 뒤로가기 */}
       <div className="absolute inset-x-0 top-0 z-30 flex h-[calc(60px+env(safe-area-inset-top))] items-center px-3 pt-[env(safe-area-inset-top)]">
@@ -301,6 +437,8 @@ export default function CourseDetailPage() {
                 onBookmark={toggleBookmark}
                 canEdit={navState.editable !== false}
                 onEdit={() => setIsEditOpen(true)}
+                onShare={handleShare}
+                shareBusy={shareBusy}
               />
               <div className="h-4" />
               <InfoRow
@@ -352,6 +490,8 @@ export default function CourseDetailPage() {
                 onBookmark={toggleBookmark}
                 canEdit={navState.editable !== false}
                 onEdit={() => setIsEditOpen(true)}
+                onShare={handleShare}
+                shareBusy={shareBusy}
               />
             </div>
           </motion.div>
@@ -395,6 +535,8 @@ function CardHeader({
   onBookmark,
   canEdit,
   onEdit,
+  onShare,
+  shareBusy,
 }: {
   title: string;
   description?: string;
@@ -402,6 +544,8 @@ function CardHeader({
   onBookmark: () => void;
   canEdit?: boolean;
   onEdit?: () => void;
+  onShare?: () => void;
+  shareBusy?: boolean;
 }) {
   return (
     <div className="flex w-full flex-col gap-1">
@@ -412,6 +556,20 @@ function CardHeader({
           {title}
         </h2>
         <div className="flex items-center gap-2">
+          {onShare && (
+            <button
+              type="button"
+              aria-label="코스 공유"
+              onClick={(e) => {
+                e.stopPropagation();
+                onShare();
+              }}
+              disabled={shareBusy}
+              className="flex size-6 items-center justify-center text-gray-500 disabled:opacity-50"
+            >
+              <ShareIcon className="size-[18px]" />
+            </button>
+          )}
           {canEdit && onEdit && (
             <button
               type="button"
