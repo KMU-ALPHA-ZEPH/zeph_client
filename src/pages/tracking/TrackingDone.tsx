@@ -434,6 +434,7 @@ export default function TrackingDone() {
       <CourseMap
         recommendedPath={recommendedPath}
         trackedPath={trackedPath}
+        showEndpoints
         className="absolute inset-0 z-0"
       />
 

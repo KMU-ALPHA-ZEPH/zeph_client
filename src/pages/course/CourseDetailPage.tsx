@@ -306,6 +306,7 @@ export default function CourseDetailPage() {
         recommendedPath={recommendedPath}
         coloredSegments={coloredSegments}
         parkMarkers={parkMarkers}
+        showEndpoints
         theme="dim"
         className="absolute inset-0 z-0"
       />
