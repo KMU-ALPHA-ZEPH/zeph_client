@@ -22,6 +22,8 @@ type CourseMapProps = {
   coloredSegments?: ColoredSegment[];
   /** 공원 근처 표시용 마커 위치(좌표). 단순 점으로만 표시. */
   parkMarkers?: LatLng[];
+  /** 추천 경로의 시작(S)/끝(E) 좌표에 라벨 마커를 그린다. */
+  showEndpoints?: boolean;
   /** 실제 이동 경로 — 진한 색, 더 두껍게 그린다. */
   trackedPath?: LatLng[];
   /** 현재 위치 마커 */
@@ -51,6 +53,7 @@ export default function CourseMap({
   recommendedPath,
   coloredSegments,
   parkMarkers,
+  showEndpoints = false,
   trackedPath,
   currentPosition,
   fitToRecommended = true,
@@ -67,6 +70,7 @@ export default function CourseMap({
   // 매 갱신마다 이전 세그먼트/마커는 지운 뒤 다시 그린다.
   const segmentLinesRef = useRef<KakaoPolyline[]>([]);
   const parkOverlaysRef = useRef<KakaoCustomOverlay[]>([]);
+  const endpointOverlaysRef = useRef<KakaoCustomOverlay[]>([]);
   const fittedRef = useRef(false);
   const { ready, error } = useKakaoMaps();
 
@@ -182,6 +186,53 @@ export default function CourseMap({
       fittedRef.current = true;
     }
   }, [ready, coloredSegments, fitToRecommended, zoomInLevels]);
+
+  // 3-1-b) 시작(S) / 끝(E) 마커
+  useEffect(() => {
+    if (!ready) return;
+    const map = mapRef.current;
+    if (!map) return;
+    const { kakao } = window;
+
+    endpointOverlaysRef.current.forEach((o) => o.setMap(null));
+    endpointOverlaysRef.current = [];
+
+    if (!showEndpoints) return;
+
+    // segments 우선, 없으면 recommendedPath 사용
+    const segPoints = coloredSegments?.flatMap((s) => s.path) ?? [];
+    const pts = segPoints.length > 0 ? segPoints : (recommendedPath ?? []);
+    if (pts.length < 1) return;
+
+    const makeDot = (label: 'S' | 'E', bg: string) =>
+      `<div style="width:24px;height:24px;border-radius:50%;background:${bg};color:white;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.35);">${label}</div>`;
+
+    const start = pts[0];
+    endpointOverlaysRef.current.push(
+      new kakao.maps.CustomOverlay({
+        position: new kakao.maps.LatLng(start.lat, start.lng),
+        content: makeDot('S', '#2ed973'),
+        xAnchor: 0.5,
+        yAnchor: 0.5,
+        zIndex: 8,
+        map,
+      }),
+    );
+
+    if (pts.length > 1) {
+      const end = pts[pts.length - 1];
+      endpointOverlaysRef.current.push(
+        new kakao.maps.CustomOverlay({
+          position: new kakao.maps.LatLng(end.lat, end.lng),
+          content: makeDot('E', '#ff5c5c'),
+          xAnchor: 0.5,
+          yAnchor: 0.5,
+          zIndex: 8,
+          map,
+        }),
+      );
+    }
+  }, [ready, showEndpoints, recommendedPath, coloredSegments]);
 
   // 3-2) 공원 마커
   useEffect(() => {

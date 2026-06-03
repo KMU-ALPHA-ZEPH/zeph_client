@@ -113,6 +113,7 @@ export default function TrackingStart() {
         recommendedPath={recommendedPath}
         currentPosition={myPosition}
         followCurrent={false}
+        showEndpoints
         className="absolute inset-0 z-0"
       />
 

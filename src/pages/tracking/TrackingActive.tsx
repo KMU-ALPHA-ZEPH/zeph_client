@@ -122,6 +122,7 @@ export default function TrackingActive() {
         recommendedPath={recommendedPath}
         trackedPath={trackedPath}
         currentPosition={position}
+        showEndpoints
         className="absolute inset-0 z-0"
       />
 
