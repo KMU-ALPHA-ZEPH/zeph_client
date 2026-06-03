@@ -46,6 +46,16 @@ export async function getScrapsByGroup(
   return data;
 }
 
+/** 내 스크랩 전체 조회 / keyword 검색 (GET /v0/scraps) */
+export async function getScraps(
+  params: { keyword?: string } = {},
+): Promise<ScrapPreviewResponse[]> {
+  const { data } = await api.get<ScrapPreviewResponse[]>('/v0/scraps', {
+    params,
+  });
+  return data;
+}
+
 /** 스크랩의 groupId 를 null 로 바꿔서 그룹에서 제거한다 (스크랩 자체는 유지) */
 export async function unsetScrapGroup(scrapId: number): Promise<void> {
   await api.patch(`/v0/scraps/${scrapId}`, { groupId: null });

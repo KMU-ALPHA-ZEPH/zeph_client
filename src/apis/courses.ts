@@ -218,6 +218,8 @@ export type GetCoursesParams = {
   minDistanceKm?: number;
   maxDistanceKm?: number;
   liked?: boolean;
+  /** 코스 이름 또는 지역/주소 검색어 */
+  keyword?: string;
 };
 
 export async function getCourses(

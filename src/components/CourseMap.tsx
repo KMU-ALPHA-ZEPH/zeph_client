@@ -12,9 +12,16 @@ const CURRENT_DOT_HTML =
 
 export type LatLng = { lat: number; lng: number };
 
+/** 색을 달리해서 그릴 세그먼트 한 조각. path 는 보통 2개의 점([from, to]). */
+export type ColoredSegment = { path: LatLng[]; color: string };
+
 type CourseMapProps = {
   /** AI 추천 경로 — primary 색, 얇고 반투명하게 그린다. */
   recommendedPath?: LatLng[];
+  /** segment 별 색을 직접 지정해서 그릴 때 사용. 있으면 recommendedPath 대신 이걸 그린다. */
+  coloredSegments?: ColoredSegment[];
+  /** 공원 근처 표시용 마커 위치(좌표). 단순 점으로만 표시. */
+  parkMarkers?: LatLng[];
   /** 실제 이동 경로 — 진한 색, 더 두껍게 그린다. */
   trackedPath?: LatLng[];
   /** 현재 위치 마커 */
@@ -42,6 +49,8 @@ const DEFAULT_CENTER: LatLng = { lat: 37.5665, lng: 126.978 }; // 서울시청
  */
 export default function CourseMap({
   recommendedPath,
+  coloredSegments,
+  parkMarkers,
   trackedPath,
   currentPosition,
   fitToRecommended = true,
@@ -55,6 +64,9 @@ export default function CourseMap({
   const recommendedLineRef = useRef<KakaoPolyline | null>(null);
   const trackedLineRef = useRef<KakaoPolyline | null>(null);
   const markerRef = useRef<KakaoCustomOverlay | null>(null);
+  // 매 갱신마다 이전 세그먼트/마커는 지운 뒤 다시 그린다.
+  const segmentLinesRef = useRef<KakaoPolyline[]>([]);
+  const parkOverlaysRef = useRef<KakaoCustomOverlay[]>([]);
   const fittedRef = useRef(false);
   const { ready, error } = useKakaoMaps();
 
@@ -121,6 +133,81 @@ export default function CourseMap({
     if (!ready || !line || !trackedPath) return;
     line.setPath(trackedPath.map((p) => new kakao.maps.LatLng(p.lat, p.lng)));
   }, [ready, trackedPath]);
+
+  // 3-1) 색을 분리한 segment 라인 그리기 (있을 때만). recommendedLine 은 숨긴다.
+  useEffect(() => {
+    if (!ready) return;
+    const map = mapRef.current;
+    if (!map) return;
+    const { kakao } = window;
+
+    // 기존 segment 라인 제거
+    segmentLinesRef.current.forEach((l) => l.setMap(null));
+    segmentLinesRef.current = [];
+
+    if (!coloredSegments || coloredSegments.length === 0) {
+      // segment 모드 해제 — 기본 recommendedLine 다시 노출
+      recommendedLineRef.current?.setMap(map);
+      return;
+    }
+
+    // segment 모드 — 단색 추천 라인 숨김
+    recommendedLineRef.current?.setMap(null);
+
+    coloredSegments.forEach((seg) => {
+      if (seg.path.length < 2) return;
+      const path = seg.path.map((p) => new kakao.maps.LatLng(p.lat, p.lng));
+      const line = new kakao.maps.Polyline({
+        path,
+        strokeWeight: 5,
+        strokeColor: seg.color,
+        strokeOpacity: 0.95,
+        strokeStyle: 'solid',
+        map,
+      });
+      segmentLinesRef.current.push(line);
+    });
+
+    if (fitToRecommended && !fittedRef.current) {
+      const bounds = new kakao.maps.LatLngBounds();
+      coloredSegments.forEach((seg) =>
+        seg.path.forEach((p) =>
+          bounds.extend(new kakao.maps.LatLng(p.lat, p.lng)),
+        ),
+      );
+      map.setBounds(bounds);
+      if (zoomInLevels > 0) {
+        map.setLevel(Math.max(1, map.getLevel() - zoomInLevels));
+      }
+      fittedRef.current = true;
+    }
+  }, [ready, coloredSegments, fitToRecommended, zoomInLevels]);
+
+  // 3-2) 공원 마커
+  useEffect(() => {
+    if (!ready) return;
+    const map = mapRef.current;
+    if (!map) return;
+    const { kakao } = window;
+
+    parkOverlaysRef.current.forEach((o) => o.setMap(null));
+    parkOverlaysRef.current = [];
+
+    if (!parkMarkers || parkMarkers.length === 0) return;
+
+    parkMarkers.forEach((p) => {
+      const overlay = new kakao.maps.CustomOverlay({
+        position: new kakao.maps.LatLng(p.lat, p.lng),
+        content:
+          '<div style="width:20px;height:20px;border-radius:50%;background:#2ed973;color:white;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.3);">P</div>',
+        xAnchor: 0.5,
+        yAnchor: 0.5,
+        zIndex: 5,
+        map,
+      });
+      parkOverlaysRef.current.push(overlay);
+    });
+  }, [ready, parkMarkers]);
 
   // 4) 현재 위치 마커 갱신 + 따라가기
   useEffect(() => {

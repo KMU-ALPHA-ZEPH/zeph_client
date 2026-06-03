@@ -62,6 +62,8 @@ export default function PopularPage() {
   const [compact, setCompact] = useState(false);
   const [alignValue, setAlignValue] = useState<AlignKey>('popular');
   const [isAlignOpen, setIsAlignOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [courses, setCourses] = useState<CourseListItem[]>([]);
   const [filter, setFilter] = useState<FilterValue>(() => readFilter());
   const [loading, setLoading] = useState(true);
@@ -73,6 +75,12 @@ export default function PopularPage() {
   useEffect(() => {
     setFilter(readFilter());
   }, [location.key]);
+
+  // 검색 디바운스 — 250ms 후 실제 API 파라미터로 반영
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 250);
+    return () => clearTimeout(t);
+  }, [search]);
 
   const setResult = useCourseStore((s) => s.setResult);
   const setForm = useCourseStore((s) => s.setForm);
@@ -104,6 +112,7 @@ export default function PopularPage() {
 
         if (filter.minDistance > 0) params.minDistanceKm = filter.minDistance;
         if (filter.maxDistance > 0) params.maxDistanceKm = filter.maxDistance;
+        if (debouncedSearch.trim()) params.keyword = debouncedSearch.trim();
 
         const data = await getCourses(params);
         if (!cancelled) setCourses(data);
@@ -127,6 +136,7 @@ export default function PopularPage() {
     filter.radius,
     filter.minDistance,
     filter.maxDistance,
+    debouncedSearch,
   ]);
 
   // 정렬·반경·거리 필터는 백엔드가 처리하고, 왕복 토글과 탭 필터만 클라이언트에서 적용한다.
@@ -219,6 +229,17 @@ export default function PopularPage() {
 
   return (
     <>
+      <div className="flex h-9 w-full items-center gap-1 overflow-hidden rounded-[15px] bg-gray-300/70 px-[22px] py-1">
+        <SearchIcon />
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="코스 이름이나 지역으로 검색"
+          className="flex-1 bg-transparent text-body-md font-normal text-text-primary outline-none placeholder:text-text-primary/80"
+        />
+      </div>
+
       <PopularWayCourseChoose
         activeTab={activeTab}
         onTabChange={setActiveTab}
@@ -273,5 +294,25 @@ export default function PopularPage() {
         onChange={setAlignValue}
       />
     </>
+  );
+}
+
+function SearchIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      aria-hidden="true"
+    >
+      <circle cx="7" cy="7" r="5" stroke="#8D8D8D" strokeWidth="1.5" />
+      <path
+        d="M11 11L14.5 14.5"
+        stroke="#8D8D8D"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </svg>
   );
 }
