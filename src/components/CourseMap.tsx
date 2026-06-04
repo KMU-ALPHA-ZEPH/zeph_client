@@ -105,7 +105,7 @@ export default function CourseMap({
 
     recommendedLineRef.current = new kakao.maps.Polyline({
       path: [],
-      strokeWeight: 5,
+      strokeWeight: 9,
       strokeColor: NEON,
       strokeOpacity: 0.95,
       strokeStyle: 'solid',
@@ -114,7 +114,7 @@ export default function CourseMap({
 
     trackedLineRef.current = new kakao.maps.Polyline({
       path: [],
-      strokeWeight: 3,
+      strokeWeight: 9,
       strokeColor: TRACKED,
       strokeOpacity: 0.95,
       strokeStyle: 'solid',
@@ -254,7 +254,7 @@ export default function CourseMap({
 
       const line = new kakao.maps.Polyline({
         path,
-        strokeWeight: 5,
+        strokeWeight: 9,
         strokeColor: seg.color,
         strokeOpacity: 0.95,
         strokeStyle: 'solid',
