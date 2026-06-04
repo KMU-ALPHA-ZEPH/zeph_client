@@ -6,49 +6,65 @@ import {
   type KakaoPolyline,
 } from '@/hooks/useKakaoMaps';
 
-// 현재 위치 마커 HTML (네이버 내비처럼 원형 점 + 펄스)
 const CURRENT_DOT_HTML =
   '<div class="run-dot"><span class="run-dot__pulse"></span><span class="run-dot__core"></span></div>';
 
-export type LatLng = { lat: number; lng: number };
-
-/** 색을 달리해서 그릴 세그먼트 한 조각. path 는 보통 2개의 점([from, to]). */
+export type LatLng = { id?: number; lat: number; lng: number };
 export type ColoredSegment = { path: LatLng[]; color: string };
 
 type CourseMapProps = {
-  /** AI 추천 경로 — primary 색, 얇고 반투명하게 그린다. */
   recommendedPath?: LatLng[];
-  /** segment 별 색을 직접 지정해서 그릴 때 사용. 있으면 recommendedPath 대신 이걸 그린다. */
   coloredSegments?: ColoredSegment[];
-  /** 공원 근처 표시용 마커 위치(좌표). 단순 점으로만 표시. */
   parkMarkers?: LatLng[];
-  /** 추천 경로의 시작(S)/끝(E) 좌표에 라벨 마커를 그린다. */
   showEndpoints?: boolean;
-  /** 실제 이동 경로 — 진한 색, 더 두껍게 그린다. */
   trackedPath?: LatLng[];
-  /** 현재 위치 마커 */
   currentPosition?: LatLng | null;
-  /** recommendedPath 전체가 보이도록 한 번 화면을 맞춘다. */
   fitToRecommended?: boolean;
-  /** currentPosition 이 바뀔 때 지도를 그 위치로 따라가게 할지 (러닝 중에만 true) */
   followCurrent?: boolean;
-  /** 추천 경로에 맞춘 뒤 추가로 줌인할 레벨 수 (러닝 중 살짝 더 확대용) */
   zoomInLevels?: number;
-  /** 지도 밝기: light(원본) / dim(살짝 어둡게) / dark(중간 어둡게) */
   theme?: 'light' | 'dim' | 'dark';
   className?: string;
 };
 
-const NEON = '#17e39c'; // 추천 경로 — 형광 민트그린
-const TRACKED = '#ffffff'; // 실제 이동 경로 — 어두운 지도 위 대비용 흰색
-const DEFAULT_CENTER: LatLng = { lat: 37.5665, lng: 126.978 }; // 서울시청
+const NEON = '#17e39c';
+const TRACKED = '#ffffff';
+const DEFAULT_CENTER: LatLng = { lat: 37.5665, lng: 126.978 };
 
-/**
- * 카카오맵 위에 추천 경로 / 실제 이동 경로 / 현재 위치 마커를 그리는 공용 지도.
- *
- * 명령형(kakao SDK)인 지도 객체를 ref 로 들고,
- * props 가 바뀔 때마다 Polyline.setPath / Marker.setPosition 으로 갱신한다.
- */
+const ARROW_SPACING_M = 35;
+const ARROW_SIZE_PX = 8;
+
+function haversineMeters(a: LatLng, b: LatLng) {
+  const R = 6371000;
+  const toRad = (v: number) => (v * Math.PI) / 180;
+
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+
+function interpolatePoint(a: LatLng, b: LatLng, ratio: number): LatLng {
+  return {
+    lat: a.lat + (b.lat - a.lat) * ratio,
+    lng: a.lng + (b.lng - a.lng) * ratio,
+  };
+}
+
+function getAngle(a: LatLng, b: LatLng) {
+  const dx = b.lng - a.lng;
+  const dy = b.lat - a.lat;
+
+  // ➤ 기본 방향이 오른쪽(→)이라서 atan2(dy, dx) 기준으로 회전
+  return -Math.atan2(dy, dx) * (180 / Math.PI);
+}
+
 export default function CourseMap({
   recommendedPath,
   coloredSegments,
@@ -67,38 +83,38 @@ export default function CourseMap({
   const recommendedLineRef = useRef<KakaoPolyline | null>(null);
   const trackedLineRef = useRef<KakaoPolyline | null>(null);
   const markerRef = useRef<KakaoCustomOverlay | null>(null);
-  // 매 갱신마다 이전 세그먼트/마커는 지운 뒤 다시 그린다.
+
   const segmentLinesRef = useRef<KakaoPolyline[]>([]);
   const parkOverlaysRef = useRef<KakaoCustomOverlay[]>([]);
   const endpointOverlaysRef = useRef<KakaoCustomOverlay[]>([]);
+  const arrowOverlaysRef = useRef<KakaoCustomOverlay[]>([]);
+
   const fittedRef = useRef(false);
   const { ready, error } = useKakaoMaps();
 
-  // 1) 지도 + 두 개의 Polyline 초기화 (최초 1회)
   useEffect(() => {
     if (!ready || !containerRef.current || mapRef.current) return;
-    const { kakao } = window;
 
+    const { kakao } = window;
     const first = recommendedPath?.[0] ?? currentPosition ?? DEFAULT_CENTER;
+
     mapRef.current = new kakao.maps.Map(containerRef.current, {
       center: new kakao.maps.LatLng(first.lat, first.lng),
       level: 4,
     });
 
-    // 추천 경로: 형광 민트그린, 두껍게(8), 선명하게
     recommendedLineRef.current = new kakao.maps.Polyline({
       path: [],
-      strokeWeight: 5,
+      strokeWeight: 9,
       strokeColor: NEON,
       strokeOpacity: 0.95,
       strokeStyle: 'solid',
       map: mapRef.current,
     });
 
-    // 실제 이동 경로: 어두운 지도 위 대비를 위해 흰색, 더 두껍게(9)
     trackedLineRef.current = new kakao.maps.Polyline({
       path: [],
-      strokeWeight: 3,
+      strokeWeight: 9,
       strokeColor: TRACKED,
       strokeOpacity: 0.95,
       strokeStyle: 'solid',
@@ -106,92 +122,173 @@ export default function CourseMap({
     });
   }, [ready, recommendedPath, currentPosition]);
 
-  // 2) 추천 경로 갱신 + 화면 맞춤
   useEffect(() => {
     const { kakao } = window;
     const map = mapRef.current;
     const line = recommendedLineRef.current;
+
     if (!ready || !map || !line || !recommendedPath?.length) return;
 
     const path = recommendedPath.map(
       (p) => new kakao.maps.LatLng(p.lat, p.lng),
     );
+
     line.setPath(path);
 
     if (fitToRecommended && !fittedRef.current) {
       const bounds = new kakao.maps.LatLngBounds();
       path.forEach((latLng) => bounds.extend(latLng));
       map.setBounds(bounds);
-      // 경로에 맞춘 뒤 살짝 더 확대 (레벨 숫자가 작을수록 확대)
+
       if (zoomInLevels > 0) {
         map.setLevel(Math.max(1, map.getLevel() - zoomInLevels));
       }
+
       fittedRef.current = true;
     }
   }, [ready, recommendedPath, fitToRecommended, zoomInLevels]);
 
-  // 3) 실제 이동 경로 갱신
+  useEffect(() => {
+    if (!ready) return;
+
+    const map = mapRef.current;
+    if (!map) return;
+
+    const { kakao } = window;
+
+    arrowOverlaysRef.current.forEach((o) => o.setMap(null));
+    arrowOverlaysRef.current = [];
+
+    const segmentPoints = coloredSegments?.flatMap((s) => s.path) ?? [];
+    const pts =
+      segmentPoints.length > 0 ? segmentPoints : (recommendedPath ?? []);
+
+    if (pts.length < 2) return;
+
+    const makeArrow = (angle: number) => `
+      <div style="
+        width:${ARROW_SIZE_PX}px;
+        height:${ARROW_SIZE_PX}px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        transform:rotate(${angle}deg);
+        color:rgba(235,255,250,0.95);
+        font-size:${ARROW_SIZE_PX}px;
+        font-weight:900;
+        line-height:1;
+        text-shadow:0 1px 2px rgba(0,0,0,0.35);
+        pointer-events:none;
+      ">
+        ➤
+      </div>
+    `;
+
+    let distanceFromLastArrow = 0;
+
+    for (let i = 0; i < pts.length - 1; i += 1) {
+      const from = pts[i];
+      const to = pts[i + 1];
+
+      const segmentLength = haversineMeters(from, to);
+      if (segmentLength <= 0) continue;
+
+      const angle = getAngle(from, to);
+      let cursor = ARROW_SPACING_M - distanceFromLastArrow;
+
+      while (cursor < segmentLength) {
+        const ratio = cursor / segmentLength;
+        const point = interpolatePoint(from, to, ratio);
+
+        const overlay = new kakao.maps.CustomOverlay({
+          position: new kakao.maps.LatLng(point.lat, point.lng),
+          content: makeArrow(angle),
+          xAnchor: 0.5,
+          yAnchor: 0.5,
+          zIndex: 7,
+          map,
+        });
+
+        arrowOverlaysRef.current.push(overlay);
+        cursor += ARROW_SPACING_M;
+      }
+
+      distanceFromLastArrow =
+        cursor - segmentLength === ARROW_SPACING_M
+          ? 0
+          : ARROW_SPACING_M - (cursor - segmentLength);
+    }
+  }, [ready, recommendedPath, coloredSegments]);
+
   useEffect(() => {
     const { kakao } = window;
     const line = trackedLineRef.current;
+
     if (!ready || !line || !trackedPath) return;
+
     line.setPath(trackedPath.map((p) => new kakao.maps.LatLng(p.lat, p.lng)));
   }, [ready, trackedPath]);
 
-  // 3-1) 색을 분리한 segment 라인 그리기 (있을 때만). recommendedLine 은 숨긴다.
   useEffect(() => {
     if (!ready) return;
+
     const map = mapRef.current;
     if (!map) return;
+
     const { kakao } = window;
 
-    // 기존 segment 라인 제거
     segmentLinesRef.current.forEach((l) => l.setMap(null));
     segmentLinesRef.current = [];
 
     if (!coloredSegments || coloredSegments.length === 0) {
-      // segment 모드 해제 — 기본 recommendedLine 다시 노출
       recommendedLineRef.current?.setMap(map);
       return;
     }
 
-    // segment 모드 — 단색 추천 라인 숨김
     recommendedLineRef.current?.setMap(null);
 
     coloredSegments.forEach((seg) => {
       if (seg.path.length < 2) return;
+
       const path = seg.path.map((p) => new kakao.maps.LatLng(p.lat, p.lng));
+
       const line = new kakao.maps.Polyline({
         path,
-        strokeWeight: 5,
+        strokeWeight: 9,
         strokeColor: seg.color,
         strokeOpacity: 0.95,
         strokeStyle: 'solid',
         map,
       });
+
       segmentLinesRef.current.push(line);
     });
 
     if (fitToRecommended && !fittedRef.current) {
       const bounds = new kakao.maps.LatLngBounds();
+
       coloredSegments.forEach((seg) =>
         seg.path.forEach((p) =>
           bounds.extend(new kakao.maps.LatLng(p.lat, p.lng)),
         ),
       );
+
       map.setBounds(bounds);
+
       if (zoomInLevels > 0) {
         map.setLevel(Math.max(1, map.getLevel() - zoomInLevels));
       }
+
       fittedRef.current = true;
     }
   }, [ready, coloredSegments, fitToRecommended, zoomInLevels]);
 
-  // 3-1-b) 시작(S) / 끝(E) 마커
   useEffect(() => {
     if (!ready) return;
+
     const map = mapRef.current;
     if (!map) return;
+
     const { kakao } = window;
 
     endpointOverlaysRef.current.forEach((o) => o.setMap(null));
@@ -199,15 +296,17 @@ export default function CourseMap({
 
     if (!showEndpoints) return;
 
-    // segments 우선, 없으면 recommendedPath 사용
-    const segPoints = coloredSegments?.flatMap((s) => s.path) ?? [];
-    const pts = segPoints.length > 0 ? segPoints : (recommendedPath ?? []);
+    const segmentPoints = coloredSegments?.flatMap((s) => s.path) ?? [];
+    const pts =
+      segmentPoints.length > 0 ? segmentPoints : (recommendedPath ?? []);
+
     if (pts.length < 1) return;
 
     const makeDot = (label: 'S' | 'E', bg: string) =>
       `<div style="width:24px;height:24px;border-radius:50%;background:${bg};color:white;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.35);">${label}</div>`;
 
     const start = pts[0];
+
     endpointOverlaysRef.current.push(
       new kakao.maps.CustomOverlay({
         position: new kakao.maps.LatLng(start.lat, start.lng),
@@ -221,6 +320,7 @@ export default function CourseMap({
 
     if (pts.length > 1) {
       const end = pts[pts.length - 1];
+
       endpointOverlaysRef.current.push(
         new kakao.maps.CustomOverlay({
           position: new kakao.maps.LatLng(end.lat, end.lng),
@@ -234,11 +334,12 @@ export default function CourseMap({
     }
   }, [ready, showEndpoints, recommendedPath, coloredSegments]);
 
-  // 3-2) 공원 마커
   useEffect(() => {
     if (!ready) return;
+
     const map = mapRef.current;
     if (!map) return;
+
     const { kakao } = window;
 
     parkOverlaysRef.current.forEach((o) => o.setMap(null));
@@ -256,19 +357,22 @@ export default function CourseMap({
         zIndex: 5,
         map,
       });
+
       parkOverlaysRef.current.push(overlay);
     });
   }, [ready, parkMarkers]);
 
-  // 4) 현재 위치 마커 갱신 + 따라가기
   useEffect(() => {
     const { kakao } = window;
     const map = mapRef.current;
+
     if (!ready || !map || !currentPosition) return;
+
     const latLng = new kakao.maps.LatLng(
       currentPosition.lat,
       currentPosition.lng,
     );
+
     if (markerRef.current) {
       markerRef.current.setPosition(latLng);
     } else {
@@ -281,6 +385,7 @@ export default function CourseMap({
         map,
       });
     }
+
     if (followCurrent) map.panTo(latLng);
   }, [ready, currentPosition, followCurrent]);
 
@@ -296,6 +401,7 @@ export default function CourseMap({
               : 'size-full'
         }
       />
+
       {error && (
         <div className="absolute inset-0 grid place-items-center bg-gray-100 px-6 text-center text-[13px] text-gray-500">
           지도를 불러올 수 없습니다.
