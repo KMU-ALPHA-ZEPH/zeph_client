@@ -10,6 +10,7 @@ import { extractLatLng } from '@/apis/courses';
 import { useRunTracking } from '@/hooks/useRunTracking';
 import { useCourseStore } from '@/stores/courseStore';
 import { useTrackingStore } from '@/stores/trackingStore';
+import { formatPace } from '@/utils/format';
 
 function formatElapsed(totalSec: number) {
   const pad = (n: number) => String(n).padStart(2, '0');
@@ -89,8 +90,8 @@ export default function TrackingActive() {
     return () => clearInterval(id);
   }, [isPaused]);
 
-  // 페이스(속도 km/h) = 거리 / 시간
-  const speedKmh = elapsedSec > 0 ? distanceKm / (elapsedSec / 60) : 0;
+  // 페이스(초/km) = 시간 / 거리. 다른 화면(완료/통계)과 동일하게 formatPace 로 표시한다.
+  const paceSecPerKm = distanceKm > 0 ? elapsedSec / distanceKm : 0;
 
   const courseName = form.startName || '추천 코스';
 
@@ -105,7 +106,7 @@ export default function TrackingActive() {
       distanceKm,
       elapsedSec,
       // store 는 초/km 페이스 단위로 저장한다.
-      paceSecPerKm: distanceKm > 0 ? elapsedSec / distanceKm : 0,
+      paceSecPerKm,
       trackedPath,
       trackedPoints,
       startTime: startTimeRef.current,
@@ -129,7 +130,11 @@ export default function TrackingActive() {
       <div className="absolute bottom-[109px] left-1/2 z-20 flex w-[319px] -translate-x-1/2 flex-col gap-[23px]">
         {/* 거리 / 페이스 통계 */}
         <div className="flex gap-[19px]">
-          <StatCard value={speedKmh.toFixed(1)} unit="/km" label="페이스" />
+          <StatCard
+            value={formatPace(paceSecPerKm)}
+            unit="m/km"
+            label="페이스"
+          />
           <StatCard value={distanceKm.toFixed(2)} unit="km" label="거리" />
         </div>
 
