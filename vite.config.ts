@@ -11,7 +11,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const pwaOptions: Partial<VitePWAOptions> = {
   registerType: 'autoUpdate',
   includeAssets: [
-    'icons/apple-touch-icon.png',
+    'icons/180.png',
     'icons/favicon-32.png',
     'icons/favicon-16.png',
   ],
@@ -25,8 +25,8 @@ const pwaOptions: Partial<VitePWAOptions> = {
     theme_color: '#17d89b',
     description: 'ZEPH - 러닝 코스 추천 서비스',
     icons: [
-      { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
-      { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
+      { src: '/icons/192.png', sizes: '192x192', type: 'image/png' },
+      { src: '/icons/512.png', sizes: '512x512', type: 'image/png' },
       {
         src: '/icons/maskable-192.png',
         sizes: '192x192',
