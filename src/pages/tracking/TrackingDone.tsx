@@ -90,36 +90,59 @@ export default function TrackingDone() {
   const storedDescription = useCourseStore((s) => s.currentCourseDescription);
   const setCurrent = useCourseStore((s) => s.setCurrent);
   const saved = scrapId !== null;
+  const getCreatedScrapId = (response: unknown): number | null => {
+    if (!response || typeof response !== 'object') return null;
+
+    const data = response as {
+      id?: number;
+      scrapId?: number;
+      data?: {
+        id?: number;
+        scrapId?: number;
+      };
+    };
+
+    return (
+      data.scrapId ?? data.id ?? data.data?.scrapId ?? data.data?.id ?? null
+    );
+  };
+
+  const ensureCourseSaved = async () => {
+    if (courseId != null) return courseId;
+
+    const savedCourse = await saveCourse({
+      name: storedName || summary?.courseName || form.startName || '추천 코스',
+      description: storedDescription?.trim() || undefined,
+      type: toCourseType(form.courseType),
+      distanceKm: result?.totalDistanceKm ?? summary?.distanceKm ?? 0,
+      pathData: result?.pathData ?? { points: [] },
+      roundTrip: result?.roundTrip ?? form.roundTrip ?? true,
+      preferLighting: form.lighting === 'bright',
+      preferConvenience: form.facility === 'prefer',
+      slopePreference: toSlopePreference(form.slope),
+    });
+
+    setCurrent({ courseId: savedCourse.id });
+    return savedCourse.id;
+  };
   const { requestSave, saveToScrapElement } = useSaveToScrap(
     async (groupId) => {
       try {
         // record 와 같은 코스에 스크랩이 묶이도록 store 의 courseId 를 우선 사용한다.
         // 없을 때만 새 코스 생성용 courseData 를 함께 전달.
-        await createScrap({
+        const targetCourseId = await ensureCourseSaved();
+
+        const created = await createScrap({
           groupId,
-          courseId: courseId ?? 0,
-          courseData:
-            courseId != null
-              ? undefined
-              : {
-                  name:
-                    storedName ||
-                    summary?.courseName ||
-                    form.startName ||
-                    '추천 코스',
-                  description: storedDescription?.trim() || undefined,
-                  type: toCourseType(form.courseType),
-                  distanceKm:
-                    result?.totalDistanceKm ?? summary?.distanceKm ?? 0,
-                  pathData: result?.pathData ?? { points: [] },
-                  roundTrip: result?.roundTrip ?? form.roundTrip ?? true,
-                  preferLighting: form.lighting === 'bright',
-                  preferConvenience: form.facility === 'prefer',
-                  slopePreference: toSlopePreference(form.slope),
-                },
+          courseId: targetCourseId,
         });
-        // 새로 스크랩되었으므로 scrapId 는 별도 조회 없이 임시로 -1 로 표시(활성 상태 유지)
-        setCurrent({ scrapId: -1 });
+
+        const createdScrapId = getCreatedScrapId(created);
+
+        setCurrent({
+          courseId: targetCourseId,
+          scrapId: createdScrapId ?? -1,
+        });
       } catch (e) {
         console.error('[TrackingDone] createScrap failed:', e);
         alert('스크랩 저장에 실패했습니다.');
@@ -278,13 +301,10 @@ export default function TrackingDone() {
   const [shareBusy, setShareBusy] = useState(false);
   const handleShare = async () => {
     if (shareBusy) return;
-    if (courseId == null) {
-      alert('아직 저장되지 않은 코스라 공유할 수 없습니다.');
-      return;
-    }
     setShareBusy(true);
     try {
-      const gpx = await getCourseGpx(courseId);
+      const targetCourseId = await ensureCourseSaved();
+      const gpx = await getCourseGpx(targetCourseId);
       const fileName = `${courseName || 'course'}.gpx`;
       const blob = new Blob([gpx], { type: 'application/gpx+xml' });
       const file = new File([blob], fileName, { type: 'application/gpx+xml' });

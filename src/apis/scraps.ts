@@ -19,8 +19,17 @@ export type CreateScrapRequest = {
   courseData?: CreateCourseRequest;
 };
 
-export async function createScrap(body: CreateScrapRequest): Promise<void> {
-  await api.post('/v0/scraps', body);
+export type CreateScrapResponse = {
+  scrapId?: number;
+  id?: number;
+  courseId?: number;
+};
+
+export async function createScrap(
+  body: CreateScrapRequest,
+): Promise<CreateScrapResponse> {
+  const { data } = await api.post<CreateScrapResponse>('/v0/scraps', body);
+  return data;
 }
 
 export type ScrapPreviewResponse = {
@@ -46,7 +55,6 @@ export async function getScrapsByGroup(
   return data;
 }
 
-/** 내 스크랩 전체 조회 / keyword 검색 (GET /v0/scraps) */
 export async function getScraps(
   params: { keyword?: string } = {},
 ): Promise<ScrapPreviewResponse[]> {
@@ -56,12 +64,10 @@ export async function getScraps(
   return data;
 }
 
-/** 스크랩의 groupId 를 null 로 바꿔서 그룹에서 제거한다 (스크랩 자체는 유지) */
 export async function unsetScrapGroup(scrapId: number): Promise<void> {
   await api.patch(`/v0/scraps/${scrapId}`, { groupId: null });
 }
 
-/** 스크랩 자체를 삭제한다. */
 export async function deleteScrap(scrapId: number): Promise<void> {
   await api.delete(`/v0/scraps/${scrapId}`);
 }
