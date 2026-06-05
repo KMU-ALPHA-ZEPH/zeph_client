@@ -30,7 +30,6 @@ import {
 } from '@/apis/records';
 import CourseMap, { type LatLng } from '@/components/CourseMap';
 import ConfirmModal from '@/components/common/ConfirmModal';
-import { pathDistanceKm } from '@/utils/geo';
 import { formatDuration, formatPace } from '@/utils/format';
 
 function Stat({
@@ -154,15 +153,9 @@ export default function TrackingDone() {
       try {
         const detail = await getRecordDetail(replayRunId);
         if (cancelled) return;
-        // 거리는 "실제 뛴 거리"가 아니라 "뛰기 전 만들어진 코스의 거리"를 표시한다.
-        // (코스 경로 좌표 길이로 계산. 경로가 없으면 기록 거리로 폴백)
-        const courseDistanceKm =
-          detail.coursePath.length > 1
-            ? pathDistanceKm(detail.coursePath)
-            : detail.distanceKm;
         setStoreSummary({
           courseName: detail.courseName,
-          distanceKm: courseDistanceKm,
+          distanceKm: detail.distanceKm,
           elapsedSec: detail.durationSec,
           paceSecPerKm: detail.avgPace > 0 ? detail.avgPace : 0,
           trackedPath: detail.actualPath,
@@ -172,7 +165,7 @@ export default function TrackingDone() {
           pausedSec: 0,
         });
         setResult({
-          totalDistanceKm: courseDistanceKm,
+          totalDistanceKm: detail.distanceKm,
           type: undefined,
           startLat: detail.coursePath[0]?.lat ?? 0,
           startLng: detail.coursePath[0]?.lng ?? 0,

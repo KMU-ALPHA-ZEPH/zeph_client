@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import dayjs from 'dayjs';
 import { useNavigate } from 'react-router-dom';
 import { PauseIcon } from '@/components/common/Icon/PauseIcon';
 import { PlayIcon } from '@/components/common/Icon/PlayIcon';
@@ -57,7 +58,7 @@ export default function TrackingActive() {
   const [showEndModal, setShowEndModal] = useState(false);
 
   const startTimestampRef = useRef<number>(Date.now());
-  const startTimeRef = useRef<string>(new Date().toISOString());
+  const startTimeRef = useRef<string>(dayjs().format('YYYY-MM-DDTHH:mm:ss'));
 
   const pausedTotalMsRef = useRef(0);
   const pausedAtRef = useRef<number | null>(null);
@@ -140,7 +141,7 @@ export default function TrackingActive() {
       trackedPath,
       trackedPoints,
       startTime: startTimeRef.current,
-      endTime: new Date().toISOString(),
+      endTime: dayjs().format('YYYY-MM-DDTHH:mm:ss'),
       pausedSec: Math.floor(finalPausedMs / 1000),
     });
 
