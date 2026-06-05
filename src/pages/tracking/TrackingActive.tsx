@@ -55,13 +55,12 @@ export default function TrackingActive() {
   const [isPaused, setIsPaused] = useState(false);
   const [showEndModal, setShowEndModal] = useState(false);
 
-  // 트래킹 시작 시각 — 마운트 시점 한 번만 캡처.
+  const startTimestampRef = useRef<number>(Date.now());
   const startTimeRef = useRef<string>(new Date().toISOString());
-  // 일시정지 누적 초 + 일시정지가 시작된 시각.
-  const [pausedSec, setPausedSec] = useState(0);
+
+  const pausedTotalMsRef = useRef(0);
   const pausedAtRef = useRef<number | null>(null);
 
-  // 추천 경로(배경) — pathData.points 에서 좌표 추출
   const recommendedPath: LatLng[] = useMemo(
     () =>
       (result?.pathData?.points ?? [])
@@ -70,54 +69,83 @@ export default function TrackingActive() {
     [result],
   );
 
-  // GPS 추적: 일시정지가 아닐 때만 위치를 받아 trackedPath/거리에 누적
   const { trackedPath, trackedPoints, position, distanceKm } =
     useRunTracking(!isPaused);
 
-  // 경과 시간 타이머 (일시정지 시 멈춤)
+  const getAccurateElapsedSec = () => {
+    const now = Date.now();
+
+    const currentPausedMs =
+      isPaused && pausedAtRef.current != null ? now - pausedAtRef.current : 0;
+
+    const elapsedMs =
+      now -
+      startTimestampRef.current -
+      pausedTotalMsRef.current -
+      currentPausedMs;
+
+    return Math.max(0, Math.floor(elapsedMs / 1000));
+  };
+
   useEffect(() => {
     if (isPaused) {
-      pausedAtRef.current = Date.now();
+      if (pausedAtRef.current == null) {
+        pausedAtRef.current = Date.now();
+      }
       return;
     }
+
     if (pausedAtRef.current != null) {
-      const delta = Math.round((Date.now() - pausedAtRef.current) / 1000);
-      if (delta > 0) setPausedSec((s) => s + delta);
+      pausedTotalMsRef.current += Date.now() - pausedAtRef.current;
       pausedAtRef.current = null;
     }
-    const id = setInterval(() => setElapsedSec((s) => s + 1), 1000);
+
+    setElapsedSec(getAccurateElapsedSec());
+
+    const id = setInterval(() => {
+      setElapsedSec(getAccurateElapsedSec());
+    }, 1000);
+
     return () => clearInterval(id);
   }, [isPaused]);
 
-  // 페이스(속도 km/h) = 거리 / 시간
   const speedKmh = elapsedSec > 0 ? distanceKm / (elapsedSec / 3600) : 0;
 
   const courseName = form.startName || '추천 코스';
 
   const finishRun = () => {
-    // 종료 시점에 일시정지 중이면 마지막 멈춤 구간도 합산
-    let finalPausedSec = pausedSec;
+    let finalPausedMs = pausedTotalMsRef.current;
+
     if (pausedAtRef.current != null) {
-      finalPausedSec += Math.round((Date.now() - pausedAtRef.current) / 1000);
+      finalPausedMs += Date.now() - pausedAtRef.current;
     }
+
+    const finalElapsedSec = Math.max(
+      0,
+      Math.floor(
+        (Date.now() - startTimestampRef.current - finalPausedMs) / 1000,
+      ),
+    );
+
+    setElapsedSec(finalElapsedSec);
+
     setSummary({
       courseName,
       distanceKm,
-      elapsedSec,
-      // store 는 초/km 페이스 단위로 저장한다.
-      paceSecPerKm: distanceKm > 0 ? elapsedSec / distanceKm : 0,
+      elapsedSec: finalElapsedSec,
+      paceSecPerKm: distanceKm > 0 ? finalElapsedSec / distanceKm : 0,
       trackedPath,
       trackedPoints,
       startTime: startTimeRef.current,
       endTime: new Date().toISOString(),
-      pausedSec: finalPausedSec,
+      pausedSec: Math.floor(finalPausedMs / 1000),
     });
+
     navigate('/tracking/done');
   };
 
   return (
     <div className="relative h-dvh w-full overflow-hidden bg-surface-white">
-      {/* 배경 지도: 추천 경로 + 실제 이동 경로 + 현재 위치 마커 */}
       <CourseMap
         recommendedPath={recommendedPath}
         trackedPath={trackedPath}
@@ -127,13 +155,11 @@ export default function TrackingActive() {
       />
 
       <div className="absolute bottom-[109px] left-1/2 z-20 flex w-[319px] -translate-x-1/2 flex-col gap-[23px]">
-        {/* 거리 / 페이스 통계 */}
         <div className="flex gap-[19px]">
-          <StatCard value={speedKmh.toFixed(1)} unit="km/h" label="페이스" />
+          <StatCard value={speedKmh.toFixed(1)} unit="km/h" label="속도" />
           <StatCard value={distanceKm.toFixed(2)} unit="km" label="거리" />
         </div>
 
-        {/* 러닝 시간 + 컨트롤 */}
         <div className="flex h-[82px] items-center justify-between gap-2 rounded-[10px] bg-surface-white px-6 py-[15px] shadow-[0px_4px_10px_rgba(0,0,0,0.25)]">
           <div className="flex shrink-0 flex-col whitespace-nowrap">
             <span className={`text-black ${textStyles['number-medium']}`}>
@@ -143,6 +169,7 @@ export default function TrackingActive() {
               {isPaused ? '일시정지됨' : '동안 러닝 중 ···'}
             </span>
           </div>
+
           <div className="flex w-[108px] shrink-0 items-center gap-3">
             <button
               type="button"
@@ -154,6 +181,7 @@ export default function TrackingActive() {
                 {isPaused ? <PlayIcon /> : <PauseIcon />}
               </span>
             </button>
+
             <button
               type="button"
               aria-label="러닝 종료"
